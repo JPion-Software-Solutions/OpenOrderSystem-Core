@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-OpenOrderSystem.Core-c9538df0-3b1e-469c-8a53-92b90be65fcc</UserSecretsId>
-    <Version>1.1.0</Version>
+    <Version>0.1.0</Version>
 	<RootNamespace>OpenOrderSystem.Core</RootNamespace>
   </PropertyGroup>
 
