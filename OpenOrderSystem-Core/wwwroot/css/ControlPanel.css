@@ -1,0 +1,28 @@
+﻿header { 
+    height:100px;
+    width: calc(100dvw - 300px);
+    position:fixed;
+    z-index:2;
+    opacity:.9;
+}
+}
+
+header .backdrop {
+    background-color: var(--ylnmn-blue);
+}
+
+.control-panel-content {
+    margin-top: 100px;
+    padding-top: 10px;
+}
+
+.report-btn:hover {
+    cursor: pointer;
+}
+
+#active_report {
+    min-height: 600px;
+    padding: 15px;
+    background-color: var(--ylnmn-blue);
+    border-radius: 9px;
+}

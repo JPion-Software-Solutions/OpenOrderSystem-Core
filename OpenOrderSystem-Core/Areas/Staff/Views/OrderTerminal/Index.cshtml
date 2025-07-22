@@ -1,0 +1,291 @@
+﻿@using OpenOrderSystem.Core.Services
+@inject ConfigurationService _config
+@{
+    var utcTime = DateTime.UtcNow;
+    TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
+    var currentTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local);
+}
+<div class="printer-tray">
+    <i id="printer_connection_status" class="fa-sharp fa-solid fa-print mx-1 printer-status-icon"></i>
+    <i id="printer_paper_status" class="fa-sharp fa-solid fa-toilet-paper-under fa-rotate-180 mx-1 printer-status-icon"></i>
+    <i id="printer_error_status" class="fa-sharp fa-solid fa-triangle-exclamation mx-1 default printer-status-icon"></i>
+</div>
+<div id="notification_window_backdrop" hidden></div>
+<div id="notification_window" class="closed">
+    <div class="notification-head">
+        <button id="notification_window_close" class="btn-close toggle-notification-window-btn float-end pe-3"></button>
+        <h2 class="date ps-2"></h2>
+        <h3 class="time ps-2"></h3>
+        <hr />
+        <h3 class="text-center">Notifications</h3>
+        <hr />
+    </div>
+    <div id="notifications"></div>
+</div>
+<div id="alert_banner_contaner"></div>
+<div class="toolbar visually-hidden d-flex">
+    <div class="list-group list-group-horizontal text-center flex-grow-1">
+        <a href="#" class="list-group-item py-0 d-flex">
+            <i class="fa-sharp fa-light fa-up fs-3 my-auto"></i>
+        </a>
+        <a href="#" class="list-group-item py-0 d-flex toggle-notification-window-btn">
+            <i class="fa-sharp fa-light fa-bell m-auto fs-3 px-0 active-notifications"></i>
+        </a>
+        <a asp-action="WriteTicket" class="list-group-item py-0 my-auto fs-3 d-block">
+            <span class="fa-layers fa-fw">
+                <i class="fa-solid fa-circle text-success"></i>
+                <i class="fa-sharp fa-solid fa-plus text-white" data-fa-transform="shrink-7"></i>
+            </span>
+        </a>
+        <div class="list-group-item py-0 d-flex">
+            <button class="reload-btn btn btn-clean list-group-item py-0 fs-3">
+                <span class="fa-layers fa-fw btn btn-clean">
+                    <i class="fa-solid fa-circle text-warning"></i>
+                    <i class="fa-sharp fa-light fa-rotate-right text-black" data-fa-transform="shrink-7"></i>
+                </span>
+            </button>
+        </div>
+        <div class="list-group-item py-0 d-flex">
+            <button class="logout-btn btn btn-clean list-group-item py-0 fs-3">
+                <span class="fa-layers fa-fw btn btn-clean">
+                    <i class="fa-solid fa-circle text-danger"></i>
+                    <i class="fa-sharp fa-regular fa-power-off text-white" data-fa-transform="shrink-7"></i>
+                </span>
+            </button>
+        </div>
+        <div class="list-group-item py-0">
+            <span class="time-basic d-block py-0 my-0"></span>
+            <span class="date d-block py-0 my-0"></span>
+        </div>
+    </div>
+</div>
+<div class="d-flex button-tray">
+    <a asp-action="WriteTicket" asp-area="Staff" asp-controller="OrderTerminal" class="my-auto btn btn-clean fs-1 d-block">
+        <span class="fa-layers fa-fw">
+            <i class="fa-solid fa-circle text-success"></i>
+            <i class="fa-sharp fa-solid fa-plus text-white" data-fa-transform="shrink-7"></i>
+        </span>
+    </a>
+    <button class="reload-btn btn btn-clean fs-1">
+        <span class="fa-layers fa-fw">
+            <i class="fa-solid fa-circle text-warning"></i>
+            <i class="fa-sharp fa-light fa-rotate-right text-black" data-fa-transform="shrink-7"></i>
+        </span>
+    </button>
+    <button class="logout-btn btn btn-clean fs-1">
+        <span class="fa-layers fa-fw">
+            <i class="fa-solid fa-circle text-danger"></i>
+            <i class="fa-sharp fa-regular fa-power-off text-white" data-fa-transform="shrink-7"></i>
+        </span>
+    </button>
+    <form id="logout_form" asp-action="PrincessLogout" method="post" enctype="text/plain">
+    </form>
+</div>
+
+<header class="w-100 text-light bg-dark placeholder-glow" style="min-height:130px">
+    <div class="h1 text-center py-3 d-flex w-100 header-bg">
+        <span class="d-block mx-auto text-center">Order Terminal</span>
+    </div>
+    <ul class="list-group list-group-horizontal text-center">
+        <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+            <a href="#received_orders_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+                <div class="my-auto mx-auto">
+                    Received
+                    <small id="received_counter" class="badge counter-badge bg-primary text-white px-2 py-1 rounded-pill" hidden>
+                    </small>
+                </div>
+            </a>
+        </li>
+
+        <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+            <a href="#in_progress_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+                <div class="my-auto mx-auto">
+                    In-Progress
+                    <small id="in_progress_counter" class="badge counter-badge bg-primary text-white px-2 py-1 rounded-pill" hidden>
+                    </small>
+                </div>
+            </a>
+        </li>
+
+        <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+            <a href="#ready_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+                <div class="my-auto mx-auto">
+                    Ready
+                    <small id="ready_counter" class="badge counter-badge bg-primary text-white px-2 py-1 rounded-pill" hidden>
+                    </small>
+                </div>
+            </a>
+        </li>
+
+        <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+            <a href="#complete_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+                <div class="my-auto mx-auto">
+                    Completed
+                    <small id="complete_counter" class="badge counter-badge bg-primary text-white px-2 py-1 rounded-pill" hidden>
+                    </small>
+                </div>
+            </a>
+        </li>
+        <li class="list-group-item text-white flex-fill bg-secondary d-flex px-0">
+            <a href="#" class="toggle-notification-window-btn text-decoration-none wh-max d-flex flex-grow-1">
+                <i class="fa-sharp fa-light fa-bell m-auto fs-3 px-0 active-notifications"></i>
+            </a>
+        </li>
+        <li class="list-group-item bg-info flex-fill text-white fw-bolder">
+            <h6 class="time-basic my-0 py-0">
+                <span id="clock_hour">@(currentTime.Hour > 12 ? currentTime.Hour - 12 : currentTime.Hour)</span>:<span id="clock_minute">@currentTime.Minute</span>
+                <span id="clock_am_pm">@(currentTime.Hour < 12 ? "AM" : "PM")</span>
+            </h6>
+            <h6 class="date my-0 py-0">@($"{currentTime.ToString("MMMM")} {currentTime.Day}, {currentTime.Year}")</h6>
+        </li>
+    </ul>
+</header>
+
+<div class="accordion" id="order_terminal">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="received_orders_heading">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#received_orders" aria-expanded="true" aria-controls="received_orders">
+                Unconfirmed Orders
+            </button>
+        </h2>
+        <div id="received_orders" class="accordion-collapse collapse show" aria-labelledby="received_orders_heading">
+            <div id="received_orders_body" class="accordion-body placeholder-glow" style="min-height:50px; width:100%">
+                <span class="placeholder col-12" style="min-height:50px"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="in_progress_heading">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#in_progress" aria-expanded="true" aria-controls="in_progress">
+                In-progress Orders
+            </button>
+        </h2>
+        <div id="in_progress" class="accordion-collapse collapse show" aria-labelledby="in_progress_heading">
+            <div id="in_progress_orders_body" class="accordion-body placeholder-glow" style="min-height:50px; width:100%">
+                <span class="placeholder col-12" style="min-height:50px"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="ready_heading">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#ready" aria-expanded="true" aria-controls="ready">
+                Ready for Pickup
+            </button>
+        </h2>
+        <div id="ready" class="accordion-collapse collapse show" aria-labelledby="ready_heading">
+            <div id="ready_orders_body" class="accordion-body placeholder-glow" style="min-height:50px; width:100%">
+                <span class="placeholder col-12" style="min-height:50px"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="complete_heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#complete" aria-expanded="false" aria-controls="complete">
+                Completed Orders
+            </button>
+        </h2>
+        <div id="complete" class="accordion-collapse collapse" aria-labelledby="complete-heading">
+            <div id="complete_orders_body" class="accordion-body placeholder-glow" style="min-height:50px; width:100%">
+                <span class="placeholder col-12" style="min-height:50px"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade info-modal" id="order_info_modal" tabindex="-1" role="dialog" aria-labelledby="order_info_modal_title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title clearable-modal-field" id="order_info_modal_title"></h5>
+                <button type="button" class="ms-auto close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body d-flex flex-column">
+                <div id="order_info_modal_customer_name" class="h5 clearable-modal-field"></div>
+                <div id="order_info_modal_customer_phone" class="h6 clearable-modal-field"></div>
+                <div id="order_info_modal_customer_email" class="h6 clearable-modal-field"></div>
+                <ul id="order_info_modal_order_detail" class="clearable-modal-field"></ul>
+                <div id="order_info_modal_order_totals" class="mt-auto text-end">
+                    <h5 id="order_info_modal_subtotal" class="clearable-modal-field"></h5>
+                    <h5 id="order_info_modal_tax" class="clearable-modal-field"></h5>
+                    <h5 id="order_info_modal_total" class="clearable-modal-field"></h5>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirm_cancel_modal" tabindex="-1" aria-labelledby="confirm_cancel_modal_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirm_cancel_modal_label"><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h5>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="cancel_warning_text"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm_cancel_btn"><i class="fas fa-trash-alt"></i> Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section AppendHead {
+    <link rel="stylesheet" href="~/css/printerStatus.css" />
+}
+
+@section Scripts {
+    <!-- Terminal interactivity scripts -->
+    <script src="~/js/Notifications_1.1.0.js"></script>
+    <script src="~/js/SOTClient_1.0.1.js"></script>
+    <script>
+        window.addEventListener('scroll', (event) => {
+            if (window.scrollY > 133) {
+                $('.toolbar').removeClass('visually-hidden fade')
+            }
+            else {
+                $('.toolbar').addClass('fade');
+            }
+        });
+    </script>
+    <script>
+        document.getElementById('order_info_modal').addEventListener('hidden.bs.modal', () => {
+            const modalFields = document.getElementsByClassName('clearable-modal-field');
+            for (let i = 0; i < modalFields.length; ++i) {
+                modalFields[i].innerHTML = '';
+            }
+        })
+    </script>
+    <script>
+        const hour = document.getElementById('clock_hour');
+        const minute = document.getElementById('clock_minute');
+        const amPm = document.getElementById('clock_am_pm');
+
+        setInterval(() => {
+            const time = new Date();
+            hour.innerText = time.getHours() > 12 ? time.getHours() - 12 : time.getHours();
+            minute.innerText = time.getMinutes();
+            amPm.innerText = time.getHours() < 12 ? 'AM' : 'PM';
+        }, 1000);
+    </script>
+    <script>
+        $('.logout-btn').on('click', logout)
+        function logout() {
+            document.getElementById('logout_form').submit();
+        }
+        $('.reload-btn').on('click', reload)
+        function reload() {
+            window.location.reload();
+        }
+    </script>
+}

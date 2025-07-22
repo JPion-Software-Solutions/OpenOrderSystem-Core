@@ -1,0 +1,19 @@
+﻿@{
+    Layout = "_HtmlBaseLayout";
+}
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}
+@section AppendHead {
+    <link rel="stylesheet" href="~/css/staffArea.css" />
+    @await RenderSectionAsync("AppendHead", required: false)
+}
+@section PrependBody {
+    @await RenderSectionAsync("PrependBody", required: false)
+}
+@section AppendBody {
+    @await RenderSectionAsync("AppendBody", required: false)
+}
+
+@RenderBody()

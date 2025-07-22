@@ -1,0 +1,155 @@
+#dev_warning {
+    position: fixed;
+    pointer-events: none;
+    bottom: .25rem;
+    right: .25rem;
+    opacity: .75;
+    background-color: orangered;
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem; 
+}
+
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.h-100 {
+    min-height: 100vh!important;
+    height: auto!important;
+}
+
+wh-max {
+    height: 100%;
+    width: 100%;
+}
+
+html {
+  height: 100vh;
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    height: 100vh;
+}
+
+.text-justify {
+    text-align:justify;
+}
+
+
+/*.row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+[class*="col-"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}*/
+
+.order-round {
+    border-radius: .5rem 2rem 2rem .5rem !important;
+}
+
+@media screen and (max-width: 425px) {
+    .logo {
+        height: 150px ;
+        text-align: center;
+    }
+
+    
+}
+
+.desaturate {
+    filter: grayscale(100%);
+}
+
+.btn-clean {
+    background: none;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+}
+
+.confirm-delete-popup {
+    --bs-popover-border-color: #2B4570;
+}
+
+.popover-header {
+    margin-top: 0;
+}
+
+.img-logo {
+    max-width:100px;
+}
+
+@media (min-width: 769px) {
+    .img-logo {
+        max-width: 130px;
+    }
+}
+
+.backdrop {
+    width: 100dvw;
+    height: 100dvh;
+    position: absolute;
+    z-index: -10;
+}
+
+.announcement-backdrop {
+    background-color: azure;
+}
+
+.announcement-container {
+    min-height: 100dvh;
+    display:flex;
+    flex-direction:column;
+}
+
+.announcement {
+    background-image: url("../media/images/parchment.jpg");
+    background-position: center;
+    background-repeat:no-repeat;
+    background-size:cover;
+    padding: 2rem;
+    flex-grow: 1;
+}
+
+.text {
+    font-size: 1.2rem;
+    color: black;
+    max-width: 72ch;
+}
+
+@media (min-width: 1470px){
+    .text {
+        font-size:1.5rem;
+    }
+}
+
+.announcement .img-logo {
+    height:100px;
+    max-width: none;
+}
+
+@media (min-height: 769px) {
+    .announcement .img-logo {
+        height: 250px;
+        width:250px;
+    }
+}

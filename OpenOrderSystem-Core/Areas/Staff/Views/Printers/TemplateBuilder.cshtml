@@ -1,0 +1,332 @@
+﻿@using OpenOrderSystem.Core.Data.DataModels
+@using OpenOrderSystem.Core.Services
+@inject MediaManagerService _mediaService
+@model PrintTemplate
+@{
+    Layout = "_LayoutManager";
+    ViewData["Title"] = ViewData["HeaderTitle"] = "Print Template Builder";
+
+    _mediaService.FetchMedia("images", true);
+
+    var images = System.Text.Json.JsonSerializer.Serialize(_mediaService.GetMedia("images"));
+}
+
+<form id="save_form" class="w-50 mb-2" asp-action="SaveTemplate" method="post">
+    <div class="form-floating">
+        <input class="form-control" asp-for="Name" placeholder="Template Name" />
+        <label class="form-label" asp-for="Name">Template Name</label>
+        <span class="text-danger-emphasis" asp-validation-for="Name"></span>
+    </div>
+    <input asp-for="Id" hidden />
+    <input asp-for="BuildInstructions" hidden />
+</form>
+
+@foreach (var step in Model.Instructions)
+{
+    <div class="row">
+        <div class="col-2 fw-bold">@step.Instruction.ToString()</div>
+        <div class="col-6">@step.Data</div>
+        <div class="col-1">
+            <button class="btn btn-danger"><i class="fa-sharp fa-regular fa-trash-can"></i></button>
+        </div>
+    </div>   
+}
+<div class="dropdown">
+    <button class="dropdown-toggle btn btn-outline-success btn-dark text-light" data-bs-toggle="dropdown" data-bs-auto-close="outside">Add Step</button>
+    <div class="dropdown-menu dropdown-menu-dark">
+        <a href="#" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#formatting_steps">Formatting Steps</a>
+        <div id="formatting_steps" class="collapse">
+            <hr class="dropdown-divider" />
+            <a href="#" class="dropdown-item formatting-step-btn" data-instruction="@((int)PrintInstruction.HeaderText1)">Set Header 1</a>
+            <a href="#" class="dropdown-item formatting-step-btn" data-instruction="@((int)PrintInstruction.HeaderText2)">Set Header 2</a>
+            <a href="#" class="dropdown-item formatting-step-btn" data-instruction="@((int)PrintInstruction.AlignLeft)">Set Align Left</a>
+            <a href="#" class="dropdown-item formatting-step-btn" data-instruction="@((int)PrintInstruction.AlignCenter)">Set Align Center</a>
+            <a href="#" class="dropdown-item formatting-step-btn" data-instruction="@((int)PrintInstruction.AlignRight)">Set Align Right</a>
+            <a href="#" class="dropdown-item formatting-step-btn" data-instruction="@((int)PrintInstruction.LargeText)">Set Large Text</a>
+            <a href="#" class="dropdown-item formatting-step-btn" data-instruction="@((int)PrintInstruction.NormalText)">Set Normal Text</a>
+            <hr class="dropdown-divider" />
+        </div>
+
+        <a href="#" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#static_steps">Static Content Steps</a>
+        <div id="static_steps" class="collapse">
+            <hr class="dropdown-divider" />
+            <a href="#" class="dropdown-item static-step-btn" data-instruction="@((int)PrintInstruction.PrintFormatLine)">Add Horrizontal Line</a>
+            <a href="#" class="dropdown-item static-step-btn" data-instruction="@((int)PrintInstruction.PrintStaticText)">Add Single Line</a>
+            <a href="#" class="dropdown-item static-step-btn" data-instruction="@((int)PrintInstruction.PrintAllLines)">Add Multiple Lines</a>
+            <a href="#" id="add_img" class="dropdown-item" data-instruction="@((int)PrintInstruction.PrintImage)" data-images="@images">Add Image</a>
+            <hr class="dropdown-divider" />
+        </div>
+
+        <a href="#" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#dynamic_steps">Dynamic Content Steps</a>
+        <div id="dynamic_steps" class="collapse">
+            <hr class="dropdown-divider" />
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintTodaysDate)">Add Today's' Date</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintOrderLinesA)">Add Order Detail (Customer)</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintOrderLinesC)">Add Order Detail (Staff)</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintBarcode)">Add Order Barcode</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintSubtotal)">Add Order Subtotal</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintTax)">Add Order Tax</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintTotal)">Add Order Total</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintDiscount)">Add Order Discount Totals</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintPromoCode)">Add Order Promo Code</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintOrderNum)">Add Order Number</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintOrderDate)">Add Order Date</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintCustomerName)">Add Order Customer Name</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintCustomerPhone)">Add Order Customer Phone</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintReportDate)">Add Report Date</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintReportGross)">Add Report Gross Sales</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintReportCustomerCount)">Add Report Order Count</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintReportSales)">Add Report Sales Summary</a>
+            <a href="#" class="dropdown-item runtime-step-btn" data-instruction="@((int)PrintInstruction.PrintReportPromo)">Add Report Promo Summary</a>
+            <hr class="dropdown-divider" />
+        </div>
+
+        <a href="#" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#function_steps">Printer Function Steps</a>
+        <div id="function_steps" class="collapse">
+            <hr class="dropdown-divider" />
+            <a href="#" class="dropdown-item function-step-btn" data-instruction="@((int)PrintInstruction.FeedLine)">Feed Single Line</a>
+            <a href="#" class="dropdown-item function-step-btn multi-feed-lines-btn" data-instruction="@((int)PrintInstruction.FeedLines)">Feed Multiple Lines</a>
+            <a href="#" class="dropdown-item function-step-btn" data-instruction="@((int)PrintInstruction.CutPaperFull)">Cut Paper (full)</a>
+            <a href="#" class="dropdown-item function-step-btn" data-instruction="@((int)PrintInstruction.CutPaper)">Cut Paper (Partial)</a>
+            <a href="#" class="dropdown-item function-step-btn multi-feed-lines-btn" data-instruction="@((int)PrintInstruction.CutPaperFullFeed)">Feed and Cut Paper (full)</a>
+            <a href="#" class="dropdown-item function-step-btn multi-feed-lines-btn" data-instruction="@((int)PrintInstruction.CutPaperFeed)">Feed and Cut Paper (Partial)</a>
+            <hr class="dropdown-divider" />
+        </div>
+    </div>
+    <button id="save_template" class="btn btn-outline-success btn-dark text-light">Save</button>
+</div>
+<form id="add_step_form" asp-action="AddBuildStep">
+    <input id="add_name" name="name" value="@Model.Name" />
+    <input id="add_id" name="id" value="@Model.Id" />
+    <input id="add_instructions" name="buildInstructions" value="@Model.BuildInstructions" />
+    <input id="instruction" name="instruction" />
+    <input id="data" name="data" />
+</form>
+
+<div id="step_context_modal" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="step_context_title" class="modal-title"></h5>
+                <button type="button" class="btn-close clear-modal" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="step_instruction_context" class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary clear-modal" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="submit_with_context" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const createSimpleTextField = (label) => {
+            const ctx = $('#step_instruction_context');
+            const inputField = document.createElement('input');
+            inputField.setAttribute('class', 'form-control');
+            inputField.setAttribute('placeholder', label);
+            inputField.setAttribute('id', `${label}_input`);
+
+            const inputLabel = document.createElement('label');
+            inputLabel.setAttribute('for', `${label}_input`);
+            inputLabel.setAttribute('class', 'control-label text-white');
+            inputLabel.textContent = label;
+
+            const container = document.createElement('div');
+            container.setAttribute('class', 'form-floating');
+            container.appendChild(inputField);
+            container.appendChild(inputLabel);
+
+            return container;
+        }
+
+        const updateData = (value) => {
+            console.log(value)
+            $('#data').val(value);
+        }
+
+        const sendStep = () => {
+            $('#add_step_form').submit();
+        }
+
+        const bindDataInput = (input) => {
+            if (input && typeof (input) == 'string') {
+                $(input).on('input', () => {
+                    updateData($(input).val());
+                });
+            }
+            else if (input && input.tagName && input.tagName === 'input') {
+                input.addEventListener('input', () => {
+                    updateData($(input).val());
+                })
+            }
+            else {
+                console.error('Failed to bind input field to data field');
+            }
+        }
+
+        const bindSaveBtn = () => {
+            $('#submit_with_context').on('click', () => {
+                $('#add_step_form').submit();
+            });
+        }
+
+        $('.clear-modal').on('click', () => {
+            $('#step_context_modal').on('hidden.bs.modal', () => {
+                $('#step_instruction_context').children().remove();
+            });
+            $('#data').val('');
+        });
+
+        $('#Name').on('input', () => {
+            $('#add_name').val($('#Name').val());
+        });
+
+        $('.formatting-step-btn').on('click', (e) => {
+            e.preventDefault();
+            const instruction = $(e.target).data('instruction');
+            $('#instruction').val(instruction);
+            $('#add_step_form').submit();
+        });
+
+        $('#add_img').on('click', (e) => {
+            e.preventDefault();
+            const images = $(e.target).data('images');
+            $('#instruction').val($(e.target).data('instruction'))
+            $('#step_context_title').text("Add Image to Template");
+
+            const preview = document.createElement('img');
+            preview.setAttribute('id', 'image_preview');
+            preview.setAttribute('class', 'img img-fluid img-thumbnail mx-auto')
+            preview.setAttribute('style', 'max-width: 100px;')
+
+            const selector = document.createElement('select');
+            selector.setAttribute('class', 'form-control');
+
+
+            const selectorLabel = document.createElement('label');
+            selectorLabel.setAttribute('class', 'control-label');
+            selectorLabel.textContent = "Image Selector";
+
+            const selectorContainer = document.createElement('div');
+            selectorContainer.setAttribute('class', 'form-group');
+            selectorContainer.appendChild(selectorLabel);
+            selectorContainer.appendChild(selector);
+
+            if (images.length > 0)
+                preview.src = images[0].Path;
+
+            for (let i = 0; i < images.length; ++i) {
+                const option = document.createElement('option');
+                option.text = images[i].Name;
+                option.value = images[i].Path;
+                selector.appendChild(option);
+            }
+
+            selector.addEventListener('change', (e) => {
+                const path = $(e.target).val();
+
+                $('#image_preview').attr('src', path);
+                $('#data').val(path);
+            })
+
+            $('#step_instruction_context')
+                .append(preview)
+                .append(selectorContainer);
+
+            $('#step_context_modal').modal('show');
+
+            bindSaveBtn();
+        });
+
+        $('.static-step-btn').on('click', (e) => {
+            e.preventDefault();
+
+            const target = $(e.target);
+            const instruction = target.data('instruction');
+            
+            $('#instruction').val(instruction);
+
+            if (instruction === @((int)PrintInstruction.PrintStaticText)) {
+                const input = createSimpleTextField('Text');
+                $('#step_context_title').text("Add Text To Template");
+                $('#step_instruction_context')
+                    .append(input);
+
+                bindDataInput("#Text_input");
+            }
+            else if (instruction === @((int)PrintInstruction.PrintAllLines)) {
+                const instructions = document.createElement('p');
+                instructions.innerText = "To print text on multiple lines, separate each line with a comma.";
+
+                const input = createSimpleTextField('Text');
+                $('#step_context_title').text("Add Multiline Text To Template");
+                $('#step_instruction_context')
+                    .append(instructions)
+                    .append(input);
+
+                bindDataInput("#Text_input");
+
+            }
+            else {
+                const instructions = document.createElement('p');
+                instructions.innerText = "Enter one or more characters in the Segment field to define the repeating unit. In the Repeats field, enter a number to set how many times the segment repeats. The generated line will display the segment repeated accordingly. For example, entering =* as the segment and 5 as the repeats will produce =*=*=*=*=*.";
+                
+                const segment = createSimpleTextField('Segment');
+                segment.setAttribute('class', segment.getAttribute('class') + ' line-maker-input');
+                
+                const repeat = createSimpleTextField('Repeat');
+                repeat.setAttribute('class', repeat.getAttribute('class') + ' line-maker-input');
+                repeat.setAttribute('type', 'number');
+
+                $('#step_context_title').text("Add Line To Template");
+                $('#step_instruction_context')
+                    .append(instructions)
+                    .append(segment)
+                    .append(repeat);
+
+                $('.line-maker-input').on('input', () => {
+                    const data = {
+                        format: $('#Segment_input').val(),
+                        repeat: ('#Repeat_input').val()
+                    }
+
+                    updateData(JSON.stringify(data));
+                });
+            }
+
+            $('#step_context_modal').modal('show');
+            bindSaveBtn();
+        });
+
+        $('.runtime-step-btn').on('click', (e) => {
+            e.preventDefault();
+            $('#instruction').val($(e.target).data('instruction'))
+            sendStep();
+        })
+
+        $('.function-step-btn').on('click', (e) => {
+            e.preventDefault();
+            $('#instruction').val($(e.target).data('instruction'))
+            
+            if (!$(e.target).hasClass('multi-feed-lines-btn')) sendStep();
+        })
+
+        $('.multi-feed-lines-btn').on('click', (e) => {
+            e.preventDefault();
+            const lines = createSimpleTextField('Feed_Lines');
+
+            $('#step_context_title').text("How many blank lines?");
+            $('#step_instruction_context').append(lines);
+            bindDataInput('#Feed_Lines_input');
+            bindSaveBtn();
+            $('#step_context_modal').modal('show');
+        })
+
+        document.getElementById('save_template').addEventListener('click', e => {
+            document.getElementById('save_form').submit();
+        });
+    </script>
+}

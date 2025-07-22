@@ -1,0 +1,20 @@
+﻿@{
+    Layout = "_LayoutBase";
+}
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}
+@section AppendHead {
+    @await RenderSectionAsync("AppendHead", required: false)
+}
+@section PrependBody {
+    @await RenderSectionAsync("PrependBody", required: false)
+}
+@section AppendBody {
+    @await RenderSectionAsync("AppendBody", required: false)
+}
+
+<div class="container-lg shadow-lg h-100 bg-white px-0 @ViewBag.ContainerClasses">
+    @RenderBody()
+</div>

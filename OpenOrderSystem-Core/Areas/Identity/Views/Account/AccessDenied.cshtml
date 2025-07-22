@@ -1,0 +1,29 @@
+﻿@{
+    Layout = "_HTMLBaseLayout";
+}
+<div class="row flex-grow-1">
+    <h1 class="text-center text-uppercase text-danger col-12">Access denied</h1>
+    <div class="col-2 p-4">
+        <h1 class="text-center">
+            <i class="fa-sharp fa-regular fa-octagon-exclamation fa-beat-fade fa-2xl" style="color: #c51b1b;"></i>
+       </h1>
+    </div>
+    <div class="col-6 p-4">
+        <div class="d-flex">
+            <div class="vr"></div>
+            <p class="text-dark fw-bold ms-2">You are attempting to access a restricted resource that your account does not have permission to access! If you believe you reached this page in error, please contact the site administrator.</p>
+        </div>
+        <h5 class="col-12"><a id="logout" href="#">Click here</a> to return to the login page</h5>
+    </div>
+
+    <form id="logout_form" asp-action="Logout" method="post">
+        <input type="hidden" name="returnUrl" value="@ViewBag.returnUrl" />
+    </form>
+</div>
+@section Scripts {
+    <script>
+        document.getElementById('logout').addEventListener('click', () => {
+            $('#logout_form').submit();
+        });
+    </script>
+}

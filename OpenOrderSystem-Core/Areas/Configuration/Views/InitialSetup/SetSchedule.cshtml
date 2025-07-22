@@ -1,0 +1,58 @@
+﻿@using OpenOrderSystem.Core.Areas.Configuration.ViewModels.InitialSetup
+@model SetScheduleVM
+@{
+}
+<div class="d-flex flex-column">
+    <div class="flex-grow-1">
+        <div class="mb-4 text-center fw-bold text-uppercase w-50 mx-auto">
+            <div class="h5">Step 3: Set the schedule</div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped bg-info progress-bar-animated"
+                     role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                     style="width: 60%"></div>
+            </div>
+        </div>
+
+        <h1 class="text-uppercase text-center text-monospace">Daily Schedule</h1>
+
+        <div class="row">
+            <div class="col-md-5 rounded rounded-3 p-md-4 bg-dark text-white">
+                <p class="text-justify">Here we have the daily schedule. This schedule allows you to control exactly when customers will and will not be able to place an order. You can change this later as needed in the admin settings panel, but for now, make sure you set your schedule to a reasonable time so everyone has ample time to complete orders before closing. This way, you avoid disapointing customers thinking they are going to get their order fullfilled after the staff has gone home.</p>
+            </div>
+            <div class="col-md-7">
+                <form asp-action="SetSchedule">
+                    @for (int i = 0; i < Model.OpenTimes.Length; ++i)
+                    {
+                        <span class="text-danger text-center text-uppercase" asp-validation-for="DayLabels[i]"></span>
+                        <div class="row mb-3">
+                            <div class="col-md-3 text-md-end text-monospace text-uppercase align-content-center">
+                                @Model.DayLabels[i]
+                            </div>
+                            <div class="col-md form-floating">
+                                <span class="text-danger" asp-validation-for="OpenTimes[i]"></span>
+                                <input class="form-control" asp-for="OpenTimes[i]" placeholder="Open" type="time" />
+                                <label for="OpenTimes_@i">Open</label>
+                            </div>
+                            <div class="col-md form-floating">
+                                <span class="text-danger" asp-validation-for="CloseTimes[i]"></span>
+                                <input class="form-control" asp-for="CloseTimes[i]" placeholder="Close" type="time" />
+                                <label for="CloseTimes_@i">Close</label>
+                            </div>
+                        </div>
+                    }
+                </form>
+            </div>
+        </div>
+        <div class="text-end mt-4">
+            <button id="nextBtn" class="btn btn-primary px-4 fw-bold">Next</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $('#nextBtn').on("click", () => {
+            $('form').submit();
+        });
+    </script>
+}

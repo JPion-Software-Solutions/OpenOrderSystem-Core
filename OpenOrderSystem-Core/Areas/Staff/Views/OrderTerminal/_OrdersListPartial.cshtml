@@ -1,0 +1,375 @@
+﻿@using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
+@using OpenOrderSystem.Core.Data.DataModels
+@using System.Text.RegularExpressions
+@model OrderListVM
+
+<ul class="list-group list-group-flush">
+    @if (Model.HasOrders)
+    {
+        for (int i = 0; i < Model.Orders.Count; ++i)
+        {
+            //alternating colors
+            var colorVarientClass = i % 2 == 0 ? "order-terminal-item-primary" : "order-terminal-item-secondary";
+            <li class="list-group-item my-1 order-terminal-item @Model.ListItemClasses @colorVarientClass d-flex row justify-contact-between">
+                <div class="col">
+                    <h5 class="">
+                        @Model.Orders[i].Customer?.Name
+                    </h5>
+                    <h6 class="">
+                        @{
+                            var fancyAssPhoneNumber = "(";
+                            var phone = Model.Orders[i].Customer?.Phone ?? "Error Retrieving Phone";
+                            for(var k = 0; k < phone.Length; ++k)
+                            {
+                                var d = phone[k];
+                                if (k == 2)
+                                    fancyAssPhoneNumber += $"{d}) ";
+                                else if (k == 5)
+                                    fancyAssPhoneNumber += $"{d}-";
+                                else
+                                    fancyAssPhoneNumber += d;
+                            }
+                        }
+                        @fancyAssPhoneNumber
+                    </h6>
+                    @if (!string.IsNullOrEmpty(Model.Orders[i].DiscountId))
+                    {
+                        <h6>Promo: @Model.Orders[i].DiscountId</h6>
+                    }
+                    @for (int j = 0; j < Model.Orders[i].LineItems.Count; ++j)
+                    {
+                        <hr />
+                        var orderLine = Model.Orders[i].LineItems[j];
+                        orderLine.MenuItem.Varient = orderLine.MenuItemVarient;
+
+                        <ul class="order-line-list">
+                            <li class="order-line-item">
+                                @orderLine.MenuItem.Name &mdash; @orderLine.MenuItem?.MenuItemVarients?[orderLine.MenuItem.Varient].Descriptor
+                                @if (Model.ShowAllInfo)
+                                {
+                                    var modified = false;
+                                    @if (Model.Orders[i].LineItems[j].AddedIngredients.Any())
+                                    {
+                                        modified = true;
+                                        <h6>Add:</h6>
+                                        <ul class="mod-list">
+                                            @foreach (var ingredient in Model.Orders[i].LineItems[j].AddedIngredients)
+                                            {
+                                                <li class="mod-list-item">
+                                                    @ingredient.Name
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    @if (Model.Orders[i].LineItems[j].RemovedIngredients.Any())
+                                    {
+                                        modified = true;
+                                        <h6>Remove:</h6>
+                                        <ul class="mod-list">
+                                            @foreach (var ingredient in Model.Orders[i].LineItems[j].RemovedIngredients)
+                                            {
+                                                <li class="mod-list-item">
+                                                    @ingredient.Name
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Model.Orders[i].LineItems[j].LineComments))
+                                    {
+                                        modified = true;
+                                        <h6>Line Comments:</h6>
+                                        <ul>
+                                            <li style="list-style:none">@Model.Orders[i].LineItems[j].LineComments</li>
+                                        </ul>
+                                    }
+                                    @if (!modified)
+                                    {
+                                        <h6>As-Is No Modifications</h6>
+                                    }
+                                }
+                            </li>
+                        </ul>
+                    }
+                </div>
+                <div class="col-4 order-terminal-btn-container d-flex float-end">
+                    @if (Model.EnabledButtons[OrderTerminalButtons.Info])
+                    {
+                        <a href="#" class="order-info-btn ms-auto" id="info_order_@Model.Orders[i].Id" data-bs-toggle="modal" data-bs-target="#info_modal_order_@Model.Orders[i].Id" data-order-id="@Model.Orders[i].Id">
+                            <span class="fa-stack fa-2x order-btn">
+                                <i class="fa-sharp fa-light fa-solid fa-circle fa-stack-2x text-primary"></i>
+                                <i class="fa-sharp fa-light fa-info fa-stack-1x text-primary"></i>
+                            </span>
+                        </a>
+                    }
+                    @if (Model.EnabledButtons[OrderTerminalButtons.Timer])
+                    {
+                        <a href="#" class="order-timer-btn @(Model.Orders[i].CheckTimer() == TimerStatus.LessThanTwo ? "fa-beat-fade text-danger" : "")" id="info_order_@Model.Orders[i].Id" data-bs-toggle="modal" data-bs-target="#timer_modal_@Model.Orders[i].Id" data-order-id="@Model.Orders[i].Id">
+                            <span class="fa-stack fa-2x order-btn">
+                                <i class="fa-sharp fa-light fa-solid fa-circle fa-stack-2x text-primary"></i>
+                                <i class="fa-sharp fa-light fa-stopwatch fa-stack-1x text-primary"></i>
+                            </span>
+                        </a>
+                    }
+                    @if (Model.EnabledButtons[OrderTerminalButtons.Next])
+                    {
+                        <a href="#" class="order-next-btn" id="next_@Model.Orders[i].Id" data-order-id="@Model.Orders[i].Id">
+                            <span class="fa-stack fa-2x order-btn">
+                                <i class="fa-sharp fa-light fa-solid fa-circle fa-stack-2x text-primary"></i>
+                                <i class="fa-sharp fa-light fa-arrow-right fa-stack-1x text-primary"></i>
+                            </span>
+                        </a>
+                    }
+                    @if (Model.EnabledButtons[OrderTerminalButtons.Edit])
+                    {
+                        <a asp-action="EditOrder" asp-route-orderId="@Model.Orders[i].Id" class="order-edit-btn" id="edit_@Model.Orders[i].Id">
+                            <span class="fa-stack fa-2x order-btn">
+                                <i class="fa-sharp fa-light fa-solid fa-circle fa-stack-2x text-primary"></i>
+                                <i class="fa-sharp fa-thin fa-pen-to-square fa-stack-1x text-primary"></i>
+                            </span>
+                        </a>
+                    }
+                    @if (Model.EnabledButtons[OrderTerminalButtons.Cancel])
+                    {
+                        <a href="#" class="order-cancel-btn" id="cancel_order_@Model.Orders[i].Id" data-bs-toggle="modal" data-bs-target="#cancel_order_confirm_@(Model.Orders[i].Id)">
+                            <span class="fa-stack fa-2x order-btn">
+                                <i class="fa-sharp fa-light fa-solid fa-circle fa-stack-2x text-primary"></i>
+                                <i class="fa-sharp fa-light fa-ban fa-stack-1x text-primary"></i>
+                            </span>
+                        </a>
+                        <div id="cancel_order_confirm_@(Model.Orders[i].Id)" class="modal" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Cancel Order #@Model.Orders[i].Id</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Are you sure you want to cancel order#@Model.Orders[i].Id for @(Model.Orders[i].Customer?.Name)?</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-danger confirm-order-cancel-btn" data-order-id="@Model.Orders[i].Id"><i class="fa-sharp fa-regular fa-thumbs-up"></i> Yes</button>
+                                        <button type="button" class="btn btn-success" data-bs-dismiss="modal"><i class="fa-sharp fa-regular fa-thumbs-down"></i> No</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.EnabledButtons[OrderTerminalButtons.Print])
+                    {
+                        <a href="#" class="order-print-btn" id="info_order_@Model.Orders[i].Id" data-order-id="@Model.Orders[i].Id">
+                            <span class="fa-stack fa-2x order-btn">
+                                <i class="fa-sharp fa-light fa-solid fa-circle fa-stack-2x text-primary"></i>
+                                <i class="fa-sharp fa-light fa-print fa-stack-1x text-primary"></i>
+                            </span>
+                        </a>
+                    }
+                    @if (Model.EnabledButtons[OrderTerminalButtons.Done])
+                    {
+                        <a href="#" class="order-complete-btn" id="info_order_@Model.Orders[i].Id" data-order-id="@Model.Orders[i].Id">
+                            <span class="fa-stack fa-2x order-btn">
+                                <i class="fa-sharp fa-light fa-solid fa-circle fa-stack-2x text-primary"></i>
+                                <i class="fa-sharp fa-light fa-check fa-stack-1x text-primary"></i>
+                            </span>
+                        </a>
+                    }
+                </div>
+            </li>
+        }
+    }
+    else
+    {
+        <li class="list-group-item d-flex text-center">
+            @Model.NullMessage.ToUpper()
+        </li>
+    }
+</ul>
+@for (int i = 0; i < Model.Orders.Count; ++i)
+{
+    <!-- Order# @Model.Orders[i].Id Detail Modal -->
+    var id = Model.Orders[i].Id;
+    <div class="modal fade info-modal" id="info_modal_order_@id" tabindex="-1" role="dialog" aria-labelledby="info_modal_title_order_@id" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="info_modal_title_order_@id">Order#: @id</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body d-flex flex-column">
+                    <div class="h5">
+                        @Model.Orders[i].Customer?.Name
+                    </div>
+                    <div class="h6">
+                        @{
+                            var fancyAssPhoneNumber = "(";
+                            var phone = Model.Orders[i].Customer?.Phone ?? "Error Loading Phone";
+                            for (var k = 0; k < phone.Length; ++k)
+                            {
+                                var d = phone[k];
+                                if (k == 2)
+                                    fancyAssPhoneNumber += $"{d}) ";
+                                else if (k == 5)
+                                    fancyAssPhoneNumber += $"{d}-";
+                                else
+                                    fancyAssPhoneNumber += d;
+                            }
+                        }
+                        @fancyAssPhoneNumber
+                    </div>
+                    <div class="h6">
+                        @Model.Orders[i].Customer?.Email
+                    </div>
+                    <ul>
+                        @for (int j = 0; j < Model.Orders[i].LineItems?.Count; ++j)
+                        {
+                            var item = Model.Orders[i].LineItems?[j].MenuItem ?? new MenuItem();
+                            var varient = Model.Orders[i].LineItems?[j].MenuItem?.MenuItemVarients?[Model.Orders[i].LineItems?[j].MenuItem?.Varient ?? 0];
+                            <li>
+                                @varient?.Descriptor &mdash; @item.Name &mdash; @item.Price.ToString("C")
+
+                                @{
+                                    var modified = false;
+                                }
+
+                                @if (Model.Orders[i].LineItems[j].AddedIngredients.Any())
+                                {
+                                    modified = true;
+                                    <h6>Add:</h6>
+                                    <ul class="mod-list">
+                                        @foreach (var ingredient in Model.Orders[i].LineItems[j].AddedIngredients)
+                                        {
+                                            <li class="mod-list-item">
+                                                @ingredient.Name
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                @if (Model.Orders[i].LineItems[j].RemovedIngredients.Any())
+                                {
+                                    modified = true;
+                                    <h6>Remove:</h6>
+                                    <ul class="mod-list">
+                                        @foreach (var ingredient in Model.Orders[i].LineItems[j].RemovedIngredients)
+                                        {
+                                            <li class="mod-list-item">
+                                                @ingredient.Name
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Orders[i].LineItems[j].LineComments))
+                                {
+                                    modified = true;
+                                    <h6>Line Comments:</h6>
+                                    <ul>
+                                        <li style="list-style:none">@Model.Orders[i].LineItems[j].LineComments</li>
+                                    </ul>
+                                }
+                                @if (!modified)
+                                {
+                                    <h6>As-Is No Modifications</h6>
+                                }
+
+                            </li>
+                        }
+                    </ul>
+                    <div class="mt-auto text-end">
+                        <h5>Subtotal: @Model.Orders[i].Subtotal.ToString("C")</h5>
+                        <h5>Tax: @Model.Orders[i].Tax.ToString("C")</h5>
+                        <h5>Total: @Model.Orders[i].Total.ToString("C")</h5>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    if (Model.EnabledButtons[OrderTerminalButtons.Timer])
+    {
+        var orderReadyTime = Model.Orders[i].OrderInprogress?.AddMinutes(Model.Orders[i].MinutesToReady) ?? DateTime.UtcNow;
+        var timeUntilReady = orderReadyTime - DateTime.UtcNow;
+        var minutesRemain = timeUntilReady.Minutes + Math.Round((decimal)((decimal)timeUntilReady.Seconds / 60));
+        var timerDisabled = Model.Orders[i].MinutesToReady == 999999;
+        <!-- Timer modal for order#: @id -->
+        <div class="modal fade timer-modal" id="timer_modal_@id" tabindex="-1" role="dialog" aria-labelledby="timer_modal_title_@id" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="timer_modal_title_@id">Order#: @id Timer Adjust</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-end text-muted fs-5">
+                            @(!timerDisabled ? $"~{minutesRemain} Minutes Left" : "Timer Disabled") 
+                        </div>
+      
+                        <div class="row gap-2 align-content-center align-self-center text-center">
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="1" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+1</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="2" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+2</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="3" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+3</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="4" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+4</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="5" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+5</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="10" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+10</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="15" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+15</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="20" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <span class="fa-layers-text fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11">+20</span>
+                                </span>
+                            </button>
+                            <button class="btn-add-time btn btn-primary text-white d-flex p-4 col-3"@(timerDisabled ? "disabled" : "") data-time="@(999999 - Model.Orders[i].MinutesToReady)" data-order-id="@id">
+                                <span class="fa-layers h1 mx-auto my-auto">
+                                    <i class="fa-sharp fa-light fa-stopwatch"></i>
+                                    <i class="fa-light fa-infinity fw-900" style="color:gold" data-fa-transform="shrink-4 down-11 right-11"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}

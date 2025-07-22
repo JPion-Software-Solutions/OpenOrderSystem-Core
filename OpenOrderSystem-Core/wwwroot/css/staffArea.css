@@ -1,0 +1,161 @@
+﻿* {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif!important;
+}
+body {
+    background-color: aliceblue;
+}
+
+.accordion-button:not(.collapsed) {
+    color: darkslateblue;
+    font-weight:700;
+    background-color: lightblue;
+}
+
+.accordion-button {
+    color: darkslateblue;
+    font-weight: 500;
+    background-color: lightsteelblue;
+}
+
+.order-btn {
+    font-size: 1.4em!important;
+}
+
+.header-bg {
+    background-color: #180810;
+}
+
+header {
+    height: 133px;
+}
+
+.bg-secondary {
+    background-color: #124e78 !important;
+}
+
+.order-terminal-item {
+    border-style: outset !important;
+    border-color: cadetblue;
+    border-width: 6px !important;
+    border-radius: 10px!important;
+}
+
+.accordion-body :nth-child(2n){
+    filter: brightness(120%)!important;
+}
+
+/*.order-terminal-item-secondary {
+    filter: brightness(120%)!important;
+}*/
+
+.order-terminal-item-received {
+    background-color: #FFCB82;
+}
+.order-terminal-item-in-progress {
+    background-color: #C6CAED;
+}
+.order-terminal-item-ready {
+    background-color: #9CEC5B;
+}
+.order-terminal-item-complete {
+    color:ghostwhite;
+    background-color: #A4508B;
+}
+
+.create-container {
+    background-color: #041114 !important;
+    color: #BBADAF;
+}
+
+.manager-sidebar-nav {
+    background-color: #040034;
+    color: #BBADAF !important;
+}
+
+.manager-sidebar-nav a, manager-sidebar-nav button {
+    color: #BBADAF !important;
+}
+
+.manager-main {
+    background-color: #3B312C;
+    color: #BBADAF;
+}
+
+.rotate-left-90 {
+    transform: rotate(-90deg);
+    transform-origin: left;
+
+    display: block;
+}
+
+.button-tray {
+    position: absolute;
+    height:50px;
+    width: 100px;
+    top: 10px;
+    right: 40px;
+}
+
+@media (min-width: 992px) {
+    .button-tray {
+        right: calc((100dvw - 960px) / 2 + 40px);
+    }
+}
+
+@media (min-width: 1200px) {
+    .button-tray {
+        right: calc((100dvw - 1140px) / 2 + 40px);
+    }
+}
+
+@media (min-width: 1400px) {
+    .button-tray {
+        right: calc((100dvw - 1320px) / 2 + 40px);
+    }
+}
+
+.button-clean {
+    padding: initial!important;
+}
+
+.toolbar {
+    position: fixed;
+    height: 60px;
+    background-color: #180810;
+    color: white;
+    top: 15px;
+    right: 20px;
+    z-index:11;
+    padding: 10px;
+    border-radius:8px;
+    font-size: .82rem
+}
+
+.toolbar .list-group-item {
+    background-color: #333333;
+    color: white;
+}
+
+.alert {
+    position: fixed;
+    width: 100dvw;
+    min-height: 50px;
+    bottom: 100dvh;
+}
+
+.alert.info {
+    background-color: #79ABBA;
+}
+
+.alert.warning {
+    background-color: #FFDA1F;
+}
+
+.alert.danger {
+    background-color: #CC0000;
+}
+
+#disconnectWarning {
+    z-index:90000;
+    bottom:unset!important;
+}

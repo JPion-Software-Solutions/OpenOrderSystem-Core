@@ -1,0 +1,65 @@
+﻿@using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
+@model OrderHeaderVM
+@{
+    var utcTime = DateTime.UtcNow;
+    TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
+    var currentTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local);
+}
+
+<div class="h1 text-center py-3 d-flex w-100 header-bg">
+    <span class="d-block mx-auto text-center">Order Terminal</span>
+</div>
+<ul class="list-group list-group-horizontal text-center">
+    <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+        <a href="#recieved_orders_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+            <div class="my-auto mx-auto">
+                Recieved
+                <small class="badge bg-primary text-white px-2 py-1 rounded-pill" @(Model.Recieved == 0 ? "hidden" : "")>
+                    @Model.Recieved
+                </small>
+            </div>
+        </a>
+    </li>
+
+    <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+        <a href="#in_progress_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+            <div class="my-auto mx-auto">
+                In-Progress
+                <small class="badge bg-primary text-white px-2 py-1 rounded-pill" @(Model.InProgress == 0 ? "hidden" : "")>
+                    @Model.InProgress
+                </small>
+            </div>
+        </a>
+    </li>
+
+    <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+        <a href="#ready_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+            <div class="my-auto mx-auto">
+                Ready
+                <small class="badge bg-primary text-white px-2 py-1 rounded-pill" @(Model.Ready == 0 ? "hidden" : "")>
+                    @Model.Ready
+                </small>
+            </div>
+        </a>
+    </li>
+
+    <li class="list-group-item text-white flex-fill bg-secondary d-flex">
+        <a href="#complete_heading" class="text-decoration-none wh-max d-flex flex-grow-1">
+            <div class="my-auto mx-auto">
+                Completed
+                <small class="badge bg-primary text-white px-2 py-1 rounded-pill" @(Model.Complete == 0 ? "hidden" : "")>
+                    @Model.Complete
+                </small>
+            </div>
+        </a>
+    </li>
+    <li class="list-group-item text-white flex-fill bg-secondary d-flex px-0">
+        <a href="#" class="notification-window-opener text-decoration-none wh-max d-flex flex-grow-1">
+            <i class="fa-sharp fa-light fa-bell m-auto fs-3 px-0 active-notifications"></i>
+        </a>
+    </li>
+    <li class="list-group-item bg-info flex-fill text-white fw-bolder">
+        <h6 class="time-basic my-0 py-0">@currentTime.ToShortTimeString()</h6>
+        <h6 class="date my-0 py-0">@($"{currentTime.ToString("MMMM")} {currentTime.Day}, {currentTime.Year}")</h6>
+    </li>
+</ul>

@@ -1,0 +1,32 @@
+﻿@using OpenOrderSystem.Core.Areas.Identity.ViewModels.Account
+@model LoginVM
+@{
+    Layout = "_LayoutBase";
+}
+
+<div class="mx-auto my-auto d-flex flex-column">
+@*  <div class="mx-auto mb-3">
+    </div> *@
+    
+    <div class="account-form">
+        <h1 class="text-center text-uppercase">Login</h1>
+        <form asp-action="Login" method="post">
+            <div class="text-danger" asp-validation-summary="ModelOnly"></div>
+            <div class="form-floating my-2">
+                <span class="text-danger" asp-validation-for="Username"></span>
+                <input class="form-control" asp-for="Username" placeholder="Username" />
+                <label asp-for="Username"></label>
+            </div>
+            <div class="form-floating my-2">
+                <span class="text-danger" asp-validation-for="Password"></span>
+                <input class="form-control" asp-for="Password" placeholder="Password" />
+                <label asp-for="Password"></label>
+            </div>
+            <div class="d-flex mb-2">
+                <button class="btn account-form-btn mx-auto px-4 mt-3" type="submit">Login</button>
+            </div>
+
+            <input hidden readonly asp-for="ReturnUrl" />
+        </form>
+    </div>
+</div>

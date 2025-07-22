@@ -1,0 +1,54 @@
+﻿:root {
+    --oxford-blue: #0b102e;
+    --ylnmn-blue: #45567a;
+    --charcoal: #2D3A47;
+    --rose-quartz: #2d3a47;
+    --uranian-blue: #b6d9f2;
+    --lavender-web-light: #dedae6;
+    --lavender-web-medium: #ded7f2;
+    --alice-blue: #e1e8f5;
+    --dark-background: var(--charcoal);
+    --dark-primary-background: var(--oxford-blue);
+    --dark-secondary-background: var(--ylnmn-blue);
+    --dark-foreground: #ffffff;
+    --dark-foreground-special: var(--lavender-web-light);
+    --light-background: var(--alice-blue);
+    --light-primary-background: var(--uranian-blue);
+    --light-secondary-background: var(--rose-quartz);
+    --light-foreground: #000000;
+    --light-foreground-special: var(--oxford-blue);
+}
+
+.jp-dark{
+    color: var(--dark-foreground);
+    background-color: var(--dark-background);
+}
+
+.jp-dark .jp-primary {
+    background-color: var(--dark-primary-background)!important;
+}
+
+.jp-dark .jp-secondary {
+    background-color: var(--dark-secondary-background);
+}
+
+jp-dark .jp-special {
+    color: var(--dark-foreground-special);
+}
+
+.jp-light {
+    color: var(--light-foreground);
+    background-color: var(--light-foreground);
+}
+
+.jp-light .jp-primary {
+    background-color: var(--light-primary-background);
+}
+
+.jp-light .jp-secondary {
+    background-color: var(--light-secondary-background);
+}
+
+jp-light .jp-special {
+    color: var(--light-foreground-special);
+}

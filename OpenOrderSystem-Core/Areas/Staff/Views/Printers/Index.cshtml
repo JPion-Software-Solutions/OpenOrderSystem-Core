@@ -1,0 +1,123 @@
+﻿@using OpenOrderSystem.Core.Services;
+    using OpenOrderSystem.Core.Services
+@inject PrinterService PrinterService
+@model Dictionary<string, PrinterStatus>
+
+@{
+    ViewData["Title"] = "Printer Status";
+    Layout = "_LayoutManager";
+    
+    var icons = new Dictionary<string, Dictionary<string, string>>
+    {
+        {
+            "generic", new Dictionary<string, string>
+            {
+                { "ready", "fa-check-circle" },
+                { "warning", "fa-exclamation-triangle fa-fade" },
+                { "error", "fa-times-circle fa-fade" }
+            }
+        },
+        {
+            "printer", new Dictionary<string, string>
+            {
+                { "ready", "fa-print" },
+                { "warning", "fa-print-slash fa-fade" },
+                { "error", "fa-print-slash fa-fade" }
+            }
+        },
+        {
+            "paper", new Dictionary<string, string>
+            {
+                { "ready", "fa-light fa-toilet-paper-blank fa-rotate-180" },
+                { "warning", "fa-light fa-toilet-paper-blank fa-fade fa-rotate-180" },
+                { "error", "fa-light fa-toilet-paper-xmark fa-fade fa-rotate-180" }
+            }
+        }
+    };
+}
+
+@functions {
+    string GetIcon(Dictionary<string, string> icons, bool isReady, bool isWarning, bool isError) =>
+        isReady ? icons["ready"] : isWarning ? icons["warning"] : icons["error"];
+}
+
+@section AppendHead {
+    <style>
+        .rotate-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            text-align: start;
+        }
+
+        .icon-container {
+            white-space: nowrap;
+            max-width: 10px;
+            text-align: right;
+        }
+    </style>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Printer ID</th>
+            <th>Printer Name</th>
+            <th>Last Online</th>
+            <th class="rotate-text">Jobs Waiting</th>
+            <th class="rotate-text">Printer Status</th>
+            <th class="rotate-text">Paper Status</th>
+            <th class="rotate-text">Cover Open</th>
+            <th class="rotate-text">Error</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var printerEntry in Model)
+        {
+            var printerId = printerEntry.Key;
+            var printer = printerEntry.Value;
+            var printerName = PrinterService.GetPrinterName(printerId);
+
+            var classes = new Dictionary<string, string>
+            {
+                { "status", printer.IsReady ? "text-success" : (                                //printer ready
+                    printer.IsBridgeActive && !printer.IsConnected ? "text-warning" :           //printer bridge online, printer offline
+                    "text-danger"                                                               //bridge offline.
+                )},
+                { "paper", printer.IsPaperOut || !printer.IsReady ? "text-danger" : (           //paper out or printer not ready
+                    printer.IsPaperLow ? "text-warning" :                                       //paper low
+                    "text-success"                                                              //no paper error
+                )},
+                { "error", printer.IsErrorState || !printer.IsReady ? "text-danger" :           //general error or printer not ready
+                    "text-success"                                                              //no general errors reported
+                },
+                { "cover", printer.IsCoverOpen || !printer.IsReady ? "text-danger" :            //cover error or printer not ready
+                    "text-success"                                                              //no cover error reported
+                }
+            };
+
+            var statusIcon = GetIcon(icons["printer"], printer.IsReady, printer.IsBridgeActive, true);
+            var paperIcon = GetIcon(icons["paper"], printer.IsReady && !(printer.IsPaperLow || printer.IsPaperOut), printer.IsReady && printer.IsPaperLow && !printer.IsPaperOut, true);
+            var errorIcon = GetIcon(icons["generic"], printer.IsReady && !printer.IsErrorState, false, true);
+            var coverIcon = GetIcon(icons["generic"], printer.IsReady && !printer.IsCoverOpen, false, true);
+
+            <tr>
+                <td>@printerId</td>
+                <td>@printerName</td>
+                <td>@printer.LastOnline.ToString("g")</td>
+                <td class="icon-container">@printer.JobsWaiting</td>
+                <td class="@classes["status"] icon-container"><i class="fas @statusIcon"></i></td>
+                <td class="@classes["paper"] icon-container"><i class="fas @paperIcon"></i></td>
+                <td class="@classes["cover"] icon-container"><i class="fas @coverIcon"></i></td>
+                <td class="@classes["error"] icon-container"><i class="fas @errorIcon"></i></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<script>
+    setTimeout(() => {
+        window.location.reload();
+    }, 20000)
+</script>

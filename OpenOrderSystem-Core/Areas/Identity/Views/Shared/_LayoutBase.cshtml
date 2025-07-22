@@ -1,0 +1,21 @@
+﻿@{
+    Layout = "_HtmlBaseLayout";
+}
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}
+@section AppendHead {
+    <link rel="stylesheet" href="~/css/accountArea.css" />
+    @await RenderSectionAsync("AppendHead", required: false)
+}
+@section PrependBody {
+    @await RenderSectionAsync("PrependBody", required: false)
+}
+@section AppendBody {
+    @await RenderSectionAsync("AppendBody", required: false)
+}
+
+<div class="h-100 pb-3 d-flex">
+    @RenderBody()
+</div>

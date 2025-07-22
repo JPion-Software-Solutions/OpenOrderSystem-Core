@@ -1,0 +1,67 @@
+﻿@using OpenOrderSystem.Core.Areas.Configuration.ViewModels.InitialSetup
+@model CreateAdminVM
+@{
+}
+
+<div class="d-flex flex-column">
+    <div class="flex-grow-1">
+        <div class="mb-4 text-center fw-bold text-uppercase w-50 mx-auto">
+            <div class="h5">Step 1: Create Admin Account</div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped bg-info progress-bar-animated"
+                     role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"
+                     style="width: 20%"></div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-7">
+                <h3 class="text-uppercase text-warning text-center">Notice:</h3>
+                <p class="text-justify px-2">Before we do anything else, we need to create an admin account that you’ll use to manage your site. This account is very important as it will have total control over the site settings. You can create additional admin accounts as needed, but you should only use admin accounts for those that absolutely need them. It is recommended that you choose a very strong password and admin accounts require two-factor authentication to be enabled.</p>
+            </div>
+            <div class="col-md-5 rounded rounded-3 p-md-4 text-uppercase bg-dark">
+                <form id="newAdminForm" class="" action="CreateAdmin" method="post">
+                    <div class="text-danger" asp-validation-summary="ModelOnly"></div>
+                    <h3 class="text-center text-white">Create Admin</h3>
+                    <hr />
+                    <div class="form-floating mb-2">
+                        <input class="form-control" asp-for="Username" placeholder="Username" />
+                        <label asp-for="Username"></label>
+                        <span class="text-danger" asp-validation-for="Username"></span>
+                    </div>
+                    <div class="form-floating mb-2">
+                        <input class="form-control" asp-for="Password" placeholder="Password" />
+                        <label asp-for="Password"></label>
+                        <span class="text-danger" asp-validation-for="Password"></span>
+                    </div>
+                    <div class="form-floating mb-2">
+                        <input class="form-control" asp-for="ConfirmPassword" placeholder="Confirm Password" />
+                        <label asp-for="ConfirmPassword"></label>
+                        <span class="text-danger" asp-validation-for="ConfirmPassword"></span>
+                    </div>
+                    <div class="form-floating mb-2">
+                        <input class="form-control" asp-for="Email" placeholder="Email" />
+                        <label asp-for="Email"></label>
+                        <span class="text-danger" asp-validation-for="Email"></span>
+                    </div>
+                    <div class="form-floating mb-2">
+                        <input class="form-control" asp-for="PhoneNumber" placeholder="Phone Number" />
+                        <label asp-for="PhoneNumber"></label>
+                        <span class="text-danger" asp-validation-for="PhoneNumber"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="text-end mt-4">
+            <button id="nextBtn" class="btn btn-primary px-4 fw-bold">Next</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $('#nextBtn').on('click', () => {
+            $('#newAdminForm').submit();
+        });
+    </script>
+}

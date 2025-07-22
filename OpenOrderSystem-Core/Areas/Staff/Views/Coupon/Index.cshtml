@@ -1,0 +1,308 @@
+﻿@using Microsoft.AspNetCore.Html
+@using OpenOrderSystem.Core.Areas.Staff.ViewModels.Coupon
+@using OpenOrderSystem.Core.Data.DataModels.DiscountCodes
+@model IndexVM
+@{
+    Layout = "_LayoutManager";
+    ViewData["HeaderTitle"] = new HtmlString("Promo Manager");
+}
+
+<div class="px-4">
+    <h2>Fixed Amount Discounts</h2>
+    <p>
+        <a class="btn jp-dark jp-secondary" asp-action="Create" asp-route-couponType="@typeof(FixedAmountDiscountCode).ToString()">Add Fixed Promo</a>
+    </p>
+    <table class ="table table-dark table-striped table-hover ">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Redemptions</th>
+                <th>Discount</th>
+                <th>Minimum Spend</th>
+                <th>Date Created</th>
+                <th>Expiration</th>
+                <th>Active</th>
+                <th>Valid On</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.FixedDiscounts != null && Model.FixedDiscounts.Any())
+            {
+                @foreach (var discount in Model.FixedDiscounts)
+                {
+                    <tr>
+                        <td>@discount.Code</td>
+                        <td>@discount.Name</td>
+                        <td>@discount.Redemptions @(discount.MaxRedemptions == null ? "" : $"of {discount.MaxRedemptions}")</td>
+                        <td>@discount.Discount.ToString("C")</td>
+                        <td>@discount.MinimumSpend?.ToString("C")</td>
+                        <td>@discount.Created.ToString("g")</td>
+                        <td>@(discount.Expiration == null ? "Non-Expiring" : discount.Expiration?.ToString("g"))</td>
+                        <td class="@(discount.IsArchived ? "text-danger" : "text-success")">@(discount.IsArchived ? "INVALID" : "ACTIVE")</td>
+                        <td style="width: 250px">
+                            @if (discount.WhiteListItemsVarients != null)
+                            {
+                                <ul>
+                                    @foreach (var item in discount.WhiteListItemsVarients)
+                                    {
+                                        <li>@item.Descriptor @item.MenuItem?.Name</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <span>Any Menu Item</span>
+                            }
+                        </td>
+                        <td style="width: 30px">
+                            <a href="#" class="btn-copy text-success" title="Copy URL to clipboard" data-url="@($"https://{Context.Request.Host}?promo={discount.Code}")"><i class="fa-sharp fa-regular fa-clipboard"></i></a>
+                            <a asp-action="Edit" asp-route-code="@discount.Code" class="text-primary" title="Edit @discount.Code"><i class="fa-sharp fa-light fa-pen-to-square"></i></a>
+                            <a href="#" class="btn-archive text-warning" data-promo-code="@discount?.Code" data-archived="@discount?.IsArchived" title="Delete @discount?.Code"><i class="fa-sharp fa-light fa-box-archive"></i></a>
+                            <a href="#" class="btn-delete text-danger" data-promo-code="@discount?.Code" title="Delete @discount?.Code"><i class="fa-sharp fa-light fa-trash-can"></i></a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <th class="text-center h4" colspan="10">
+                        -- No Fixed Discount Codes --
+                    </th>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h2>% off Discounts</h2>
+    <p>
+        <a class="btn jp-dark jp-secondary" asp-action="Create" asp-route-couponType="@typeof(PercentDiscountCode).ToString()">Add Discount Promo</a>
+    </p>
+    <table class="table table-dark table-striped table-hover ">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Redemptions</th>
+                <th>Discount %</th>
+                <th>Date Created</th>
+                <th>Expiration</th>
+                <th>Active</th>
+                <th>Valid On</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.PercentDiscounts != null && Model.PercentDiscounts.Any())
+            {
+                @foreach (var discount in Model.PercentDiscounts)
+                {
+                    <tr>
+                        <td>@discount.Code</td>
+                        <td>@discount.Name</td>
+                        <td>@discount.Redemptions @(discount.MaxRedemptions == null ? "" : $"of {discount.MaxRedemptions}")</td>
+                        <td>@(discount.DiscountPercent)%</td>
+                        <td>@discount.Created.ToString("g")</td>
+                        <td>@(discount.Expiration == null ? "Non-Expiring" : discount.Expiration?.ToString("g"))</td>
+                        <td class="@(discount.IsArchived ? "text-danger" : "text-success")">@(discount.IsArchived ? "INVALID" : "ACTIVE")</td>
+                        <td style="width: 250px">
+                            @if (discount.WhiteListItemsVarients != null)
+                            {
+                                <ul>
+                                    @foreach (var item in discount.WhiteListItemsVarients)
+                                    {
+                                        <li>@item.Descriptor @item.MenuItem?.Name</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <span>Any Menu Item</span>
+                            }
+                        </td>
+                        <td style="width: 30px">
+                            <a href="#" class="btn-copy text-success" title="Copy URL to clipboard" data-url="@($"https://{Context.Request.Host}?promo={discount.Code}")"><i class="fa-sharp fa-regular fa-clipboard"></i></a>
+                            <a asp-action="Edit" asp-area="Staff" asp-controller="Coupon" asp-route-code="@discount.Code" class="text-primary" title="Edit @discount.Code"><i class="fa-sharp fa-light fa-pen-to-square"></i></a>
+                            <a href="#" class="btn-archive text-warning" data-promo-code="@discount?.Code" data-archived="@discount?.IsArchived" title="Delete @discount?.Code"><i class="fa-sharp fa-light fa-box-archive"></i></a>
+                            <a href="#" class="btn-delete text-danger" data-promo-code="@discount?.Code" title="Delete @discount?.Code"><i class="fa-sharp fa-light fa-trash-can"></i></a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <th class="text-center h4" colspan="9">
+                        -- No % off Discount Codes --
+                    </th>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h2>Buy / Get Promo</h2>
+    <p>
+        <a class="btn jp-dark jp-secondary" asp-action="Create" asp-route-couponType="@typeof(BuyXGetXForYDiscountCode).ToString()">Add Buy/Get Promo</a>
+    </p>
+    <table class="table table-dark table-striped table-hover ">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Redemptions</th>
+                <th>Qtys</th>
+                <th>Discount %</th>
+                <th>Date Created</th>
+                <th>Expiration</th>
+                <th>Active</th>
+                <th>Valid On</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.BogoDiscounts != null && Model.BogoDiscounts.Any())
+            {
+                @foreach (var discount in Model.BogoDiscounts)
+                {
+                    <tr>
+                        <td>@discount.Code</td>
+                        <td>@discount.Name</td>
+                        <td>@discount.Redemptions @(discount.MaxRedemptions == null ? "" : $"of {discount.MaxRedemptions}")</td>
+                        <td>Buy @discount.BuyQty Get @discount.GetQty</td>
+                        <td>@(discount.DiscountPercent)%</td>
+                        <td>@discount.Created.ToString("g")</td>
+                        <td>@(discount.Expiration == null ? "Non-Expiring" : discount.Expiration?.ToString("g"))</td>
+                        <td class="@(discount.IsArchived ? "text-danger" : "text-success")">@(discount.IsArchived ? "INVALID" : "ACTIVE")</td>
+                        <td style="width: 250px">
+                            @if (discount.WhiteListItemsVarients != null)
+                            {
+                                <ul>
+                                    @foreach (var item in discount.WhiteListItemsVarients)
+                                    {
+                                        <li>@item.Descriptor @item.MenuItem?.Name</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <span>Any Menu Item</span>
+                            }
+                        </td>
+                        <td style="width: 30px">
+                            <a href="#" class="btn-copy text-success" title="Copy URL to clipboard" data-url="@($"https://{Context.Request.Host}?promo={discount.Code}")"><i class="fa-sharp fa-regular fa-clipboard"></i></a>
+                            <a asp-action="Edit" asp-route-code="@discount.Code" class="text-primary" title="Edit @discount.Code"><i class="fa-sharp fa-light fa-pen-to-square"></i></a>
+                            <a href="#" class="btn-archive text-warning" data-promo-code="@discount?.Code" data-archived="@discount?.IsArchived" title="Delete @discount?.Code"><i class="fa-sharp fa-light fa-box-archive"></i></a>
+                            <a href="#" class="btn-delete text-danger" data-promo-code="@discount?.Code" title="Delete @discount?.Code"><i class="fa-sharp fa-light fa-trash-can"></i></a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <th class="text-center h4" colspan="10">
+                        -- No BOGO Discount Codes --
+                    </th>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<form id="delete_modal" asp-action="DeleteCoupon" method="post" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Are you sure?</h5>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to permanently delete promo code <span id="del_id"></span>? This 
+                   action cannot be undone and will erase any statistics related to 
+                   this promo code. Consider archiving the code instead to disable 
+                   it without deleting the statistics.
+               </p>
+               <input id="del_id_input" name="code" type="hidden" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Continue</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<form id="archive_modal" asp-action="ArchiveCoupon" method="post" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Are you sure?</h5>
+            </div>
+            <div class="modal-body">
+                <p id="archive_warn" class="archive-warn-msg">
+                    Are you sure you want to archive the promo code <span class="arc_id"></span>? 
+                    This will disable the promo code immediately while keeping the code registered 
+                    in the system. This action is reversable.
+                </p>
+                <p id="unarchive_warn" class="archive-warn-msg">
+                    Are you sure you want to unarchive the promo code <span class="arc_id"></span>? 
+                    This will attempt to mark the promo code as valid, but if another invalidating 
+                    factor (past expiration or over redemption limit) is present the code will 
+                    remain invalid until updated.
+                </p>
+                <input id="arc_id_input" name="code" type="hidden" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Continue</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        $('.btn-archive').on("click", (event) => {
+            event.preventDefault();
+            const target = $(event.target).hasClass('btn-archive') ? $(event.target) : $(event.target).parents(`.${'btn-archive'}`);
+            const code = target.data('promo-code');
+            const archived = target.data('archived') === "True";
+
+            $('#arc_id_input').val(code);
+            $('.arc_id').text(code);
+            $('.archive-warn-msg').hide();
+
+            if (archived) {
+                $('#unarchive_warn').show();
+            }
+            else {
+                $('#archive_warn').show();
+            }
+
+            $('#archive_modal').modal('show');
+        });
+
+        $('.btn-delete').on('click', (event) => {
+            event.preventDefault();
+            const target = $(event.target).hasClass('btn-delete') ? $(event.target) : $(event.target).parents(`.${'btn-delete'}`);
+            const code = target.data('promo-code');
+
+            $('#del_id_input').val(code);
+            $('#del_id').text(code);
+
+            console.log(code);
+
+            $('#delete_modal').modal('show');
+        });
+
+        $('.btn-copy').on('click', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            const target = $(event.target).hasClass('btn-copy') ? $(event.target) : $(event.target).parents(`.${'btn-copy'}`);
+            const url = target.data('url');
+            navigator.clipboard.writeText(url);
+            alert("Copied promo link to clipboard!")
+        });
+    </script>
+}

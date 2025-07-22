@@ -1,0 +1,79 @@
+﻿@using Microsoft.AspNetCore.Html
+@using OpenOrderSystem.Core.Data.DataModels    
+@using OpenOrderSystem.Core.Data.DataModels.DiscountCodes
+@model PercentDiscountCode
+
+@{
+    ViewData["Title"] = "Edit Percent Discount Code";
+    ViewData["HeaderTitle"] = new HtmlString("Edit Promo Code &mdash; Percentage Off");
+    Layout = "_LayoutManager";
+}
+
+<form asp-action="EditPercentDiscount" class="row row-cols-3 px-4">
+    <div class="col">
+        <h3>Promo Information</h3>
+        <div class="form-group">
+            <label asp-for="Code" class="control-label">Promo Code</label>
+            <input asp-for="Code" class="form-control" readonly />
+            <span asp-validation-for="Code" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Name" class="control-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="DiscountPercent" class="control-label">Discount Percentage</label>
+            <input asp-for="DiscountPercent" class="form-control" type="number" min="0" max="100" step="0.01" />
+            <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="MinimumSpend" class="control-label">Minimum Purchase (optional)</label>
+            <input asp-for="MinimumSpend" class="form-control" type="number" step="0.01" />
+            <span asp-validation-for="MinimumSpend" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="MaxRedemptions" class="control-label">Max Redemptions (optional)</label>
+            <input asp-for="MaxRedemptions" class="form-control" type="number" />
+            <span asp-validation-for="MaxRedemptions" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Expiration" class="control-label">Expiration (optional)</label>
+            <input asp-for="Expiration" class="form-control" type="datetime-local" value="@Model.Expiration?.ToString("yyyy-MM-ddTHH:mm")" />
+            <span asp-validation-for="Expiration" class="text-danger"></span>
+        </div>
+        <input asp-for="Created" hidden />
+    </div>
+    <div class="flex-grow-1 row row-cols-2 mx-3">
+        <div class="col-12">
+            <h3 class="text-center">Valid Items</h3>
+            <h6 class="text-center text-muted">Leave all unchecked to allow promo code on any menu item</h6>
+        </div>
+        @if (ViewData.ContainsKey("Menu"))
+        {
+            foreach (var menuItem in ViewData["Menu"] as List<MenuItemVarient> ?? new List<MenuItemVarient>())
+            {
+                var label = $"{menuItem.Descriptor} {menuItem.MenuItem?.Name}";
+                <div class="form-check">
+                    <input class="form-check-input" id="whitelist_@label.Replace(" ", "_").ToLower()" name="whitelist" type="checkbox" value="@menuItem.Id"
+                    @(Model.WhiteListItemsVarients?.Any(w => w.Id == menuItem.Id) == true ? "checked" : "") />
+                    <label class="form-check-label" for="whitelist_@label.Replace(" ", "_").ToLower()">@label</label>
+                </div>
+            }
+        }
+    </div>
+    <div class="col-12 pt-2 d-flex">
+        <div class="form-group ms-auto">
+            <input type="submit" value="Save Changes" class="btn btn-primary px-5" />
+        </div>
+    </div>
+    <div class="col-12 text-end">
+        <a asp-action="Index">Back to List</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

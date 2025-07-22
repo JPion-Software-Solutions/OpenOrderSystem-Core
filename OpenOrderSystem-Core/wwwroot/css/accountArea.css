@@ -1,0 +1,56 @@
+﻿body, html {
+    height: 100vh;
+    background-color: papayawhip;
+}
+
+.account-form {
+    background-color: midnightblue;
+    color: azure;
+    border-radius: 2rem 5rem;
+    padding: 2.5rem;
+    width: 85vw;
+    border: .5rem ridge lightseagreen; 
+}
+
+.account-form-btn {
+    background-color:azure;
+    color: midnightblue;
+    font-weight: 700;
+}
+
+.account-form-btn:hover
+{
+    background-color: skyblue;
+    color: darkslateblue;
+    transition-duration: 500ms;
+}
+
+.logo-login {
+    max-width: 150px;
+}
+
+@media (min-width: 768px) {
+    .account-form {
+        max-width: 400px;
+    }
+
+    .logo-login {
+        max-width: 200px
+    }
+}
+
+@media (min-width: 992px) {
+    .account-form {
+        max-width: 550px;
+    }
+
+    .logo-login {
+        max-width: 250px
+    }
+}
+
+@media (min-width: 1200px) {
+    .account-form {
+        max-width: 600px;
+    }
+}

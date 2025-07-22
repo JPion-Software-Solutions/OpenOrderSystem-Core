@@ -1,0 +1,49 @@
+﻿@using OpenOrderSystem.Core.Areas.Configuration.ViewModels.InitialSetup
+@model PrinterSetupVM
+@{
+}
+<div class="d-flex flex-column">
+    <div class="flex-grow-1">
+        <div class="mb-4 text-center fw-bold text-uppercase w-50 mx-auto">
+            <div class="h5">Step 5: Configure the printer</div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped bg-info progress-bar-animated"
+                     role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"
+                     style="width: 80%"></div>
+            </div>
+        </div>
+
+        <h1 class="text-uppercase text-center text-monospace">Printer Setup</h1>
+
+        <div class="row">
+            <div class="col-md-5 rounded rounded-3 p-md-4 text-white bg-dark">
+                <p class="text-justify">Almost done! The last thing we need to do is setup the printer. This will allow us to talk to the printer and print tickets containing all the information within an order. Please enter the printer information and click the test print button to confirm the printer is working.</p>
+            </div>
+            <div class="col-md-7">
+                <form asp-action="PrinterSetup">
+                    <div class="form-floating">
+                        <span class="text-danger" asp-validation-for="PrinterAddress"></span>
+                        <input class="form-control" asp-for="PrinterAddress" placeholder="Printer Address" />
+                        <label asp-for="PrinterAddress"></label>
+                    </div>
+                    <div class="form-floating">
+                        <span class="text-danger" asp-validation-for="PrinterPort"></span>
+                        <input class="form-control" asp-for="PrinterPort" placeholder="Printer Port" />
+                        <label asp-for="PrinterPort"></label>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="text-end mt-4">
+            <button id="nextBtn" class="btn btn-primary px-4 fw-bold">Next</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $('#nextBtn').on("click", () => {
+            $('form').submit();
+        });
+    </script>
+}

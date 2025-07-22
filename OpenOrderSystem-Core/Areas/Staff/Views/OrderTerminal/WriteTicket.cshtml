@@ -1,0 +1,316 @@
+﻿@using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
+@using OpenOrderSystem.Core.Data.DataModels;
+    using OpenOrderSystem.Core.Data.DataModels
+@model WriteTicketVM
+
+<div class="row">
+    <div class="col-5 px-3 bg-info-subtle">
+        <h1>Order:</h1>
+        <form id="submit_form" asp-action="WriteTicket" method="post">
+            <div class="form-floating">
+                <input asp-for="CustomerName" class="form-control bg-dark-subtle mb-1" autocomplete="off" placeholder="Customer Name" />
+                <label asp-for="CustomerName" class="form-label"></label>
+                <span asp-validation-for="CustomerName" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <input asp-for="CustomerPhone" class="form-control bg-dark-subtle" autocomplete="off" placeholder="Customer Phone" />
+                <label asp-for="CustomerPhone" class="form-label"></label>
+                <span asp-validation-for="CustomerPhone" class="text-danger"></span>
+            </div>
+            <div class="input-group pt-1">
+                <div class="form-floating">
+                    <input asp-for="PromoCode" list="availablePromoCodes" class="form-control bg-dark-subtle" autocomplete="off" placeholder="Customer Phone" />
+                    <label asp-for="PromoCode" class="form-label"></label>
+                    <span asp-validation-for="PromoCode" class="text-danger"></span>
+                </div>
+                <datalist id="availablePromoCodes">
+                    @foreach (var code in Model.AvailablePromoCodes)
+                    {
+                        <option value="@code.Code" />
+                    }
+                </datalist>
+                <button id="promoCodeBtn" class="btn btn-primary" data-cart-id="@Model.CartId">Check</button>
+            </div>
+            <p id="promoErr" class="text-danger-emphasis">@Model.Promo?.ErrorReason</p>
+            <p id="promoSuccess" class="text-success-emphasis text-center"></p>
+            <input asp-for="CartId" hidden />
+            <input id="ready_to_submit" value="@Model.Cart?.Order?.LineItems?.Any()" hidden />
+            <div class="row">
+                <div class="col mt-3">
+                    <button class="btn btn-success col-12 mb-3" @(Model.Cart?.Order?.LineItems?.Any() ?? false ? "" : "disabled")>Submit</button><br />
+                    <a asp-action="Index" class="btn btn-secondary col-12">Cancel</a>
+                </div>
+                <div class="col text-end">
+                    @{
+                        var discount = Model.Cart?.Discount;
+                        var beforeDiscount = Model.Cart?.Order?.LineItemTotal;
+                        var afterDiscount = beforeDiscount - discount;
+                        var tax = afterDiscount * .06;
+                        var total = tax + afterDiscount;
+                    }
+                    @if(discount > 0)
+                    {
+                        <h3>Promo: @Model.PromoCode</h3>
+                        <h4 class="ms-2">before: @beforeDiscount?.ToString("C")</h4>
+                        <h4 class="ms-2">discount: -@discount?.ToString("C")</h4>
+                        <h4 class="ms-2">after: @afterDiscount?.ToString("C")</h4>
+                        <hr />
+                    }
+                    <h3>Subtotal: @afterDiscount?.ToString("C")</h3>
+                    <h3>Tax: @tax?.ToString("C")</h3>
+                    <h3>Total: @total?.ToString("C")</h3>
+                </div>
+            </div>
+        </form>
+        <hr style="border-top: 2px solid black;" />
+        @if (Model.Cart?.Order?.LineItems?.Count == 0)
+        {
+            <h4 class="text-center">&mdash; ORDER EMPTY &mdash;</h4>
+        }
+        else
+        {
+            <ul>
+                @for (int i = 0; i < Model.Cart?.Order.LineItems.Count; ++i)
+                {
+                    var item = Model.Cart?.Order.LineItems[i];
+                    <li class="my-2">
+                        <div class="d-flex">
+                            <div class="my-auto fs-5">
+                                @item?.ToString()
+                            </div>
+                            <div class="ms-auto">
+                                <div id="edit_modal_@i" class="modal text-white" data-bs-theme="dark" tabindex="-1">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <form asp-action="ModifyTicketItem" method="post" class="modal-content">
+                                            <input name="cartId" readonly hidden value="@Model.CartId" />
+                                            <input name="position" readonly hidden value="@i" />
+                                            <input name="varient" readonly hidden value="@item?.MenuItemVarient" />
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit @item?.ToString()</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row row-cols-2 px-3">
+                                                    @foreach (var ingredient in item?.MenuItem?.ProductCategory?.Ingredients ?? new List<Ingredient>())
+                                                    {
+                                                        <div class="col form-check py-2">
+                                                            <input id="item_@(i)_ingredient_@ingredient.Id" name="ingredients" type="checkbox" class="form-check-input" value="@ingredient.Id" @(item?.Ingredients?.AsQueryable().FirstOrDefault(i => i.Id == ingredient.Id) != null ? "checked" : "") />
+                                                            <label for="item_@(i)_ingredient_@ingredient.Id" class="form-check-label">@ingredient.Name</label>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div class="form-floating">
+                                                    <textarea name="comments" class="form-control" placeholder="Additional Comments Here" rows="4">@item?.LineComments</textarea>
+                                                    <label class="form-label">Additional Comments</label>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-bs-target="#edit_modal_@i">Close</button>
+                                                <button type="submit" class="btn btn-primary">Save changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <form class="d-flex gap-1" asp-action="RemoveItemFromTicket" method="post">
+                                    <input name="cartId" value="@Model.CartId" hidden />
+                                    <input name="position" value="@i" hidden />
+                                    <button class="btn btn-warning" type="button" data-bs-toggle="modal" data-bs-target="#edit_modal_@i"><i class="fa-sharp fa-thin fa-pen-to-square"></i></button>
+                                    <button class="btn btn-danger" type="submit"><i class="fa-sharp fa-thin fa-trash-can"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+    <div class="col px-3">
+        <h1>Menu Items:</h1>
+        <table class="table table-striped">
+            <thead>
+                <tr class="fw-bolder text-center">
+                    <th>Item Name</th>
+                    <th>Varients/Prices</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Menu.Count; i++)
+                {
+                    <tr>
+                        <td>@Model.Menu[i].Name</td>
+                        <td class="d-flex">
+                            <div class="ms-auto d-flex">
+                                @for (int j = 0; j < Model.Menu[i].MenuItemVarients?.Count; j++)
+                                {
+                                    var varient = Model.Menu[i].MenuItemVarients?[j];
+                                    @* var name = $"{Model.Menu[i]?.MenuItemVarients?[j].Id}"; *@
+                                    var name = $"{Model.Menu[i].MenuItemVarients?[j].Descriptor} - {Model.Menu[i].MenuItemVarients?[j].Price.ToString("C")}";
+                                    <form asp-action="AddItemToTicket" method="post">
+                                        <input name="cartId" hidden value="@Model.CartId" />
+                                        <input name="itemId" hidden value="@Model.Menu[i].Id" />
+                                        <input name="varient" hidden value="@j" />
+                                        <button type="submit" class="btn btn-success mx-1">@name</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="time_out_modal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Are you still there?</h5>
+                <a type="button" class="btn-close btn-continue" data-bs-dismiss="modal" aria-label="Close"></a>
+            </div>
+            <div class="modal-body">
+                <div class="progress my-2" role="progressbar" aria-label="Info striped example">
+                    <div id="time_remain" class="progress-bar progress-bar-striped bg-info" style="width: 100%"></div>
+                </div>
+                <p>Are you still working on this order? You may safely ignore this message if you wish to cancel this order and return to the order terminal.</p>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-danger" asp-action="Index">No</a>
+                <button type="button" class="btn btn-success btn-continue" data-bs-dismiss="modal">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const retarget = (initialTarget, targetClass) => {
+            return target = $(initialTarget).hasClass(targetClass) ? $(initialTarget) : $(initialTarget).parents(`.${targetClass}`);
+        }
+        const readyToSubmit = '@Model.Cart?.Order.LineItems.Any()' === 'True';
+
+        //check-in with server
+        $.ajax({
+            type: "PUT",
+            url: "/API/Order/TerminalCheckin",
+            success: (data, status, xhr) => {
+                $.ajax({
+                    type: "GET",
+                    url: "/API/Staff/TerminalService/Alerts",
+                    success: (data, status, xhr) => {
+                        if (status == "success") {
+                            if (data.newOrderAlert) {
+                                terminal_client.alerts.newOrderAlert.play();
+                            }
+                            if (data.timeLowAlert) {
+                                terminal_client.alerts.timerLow.play();
+                            }
+                        }
+                    }
+                })
+            }
+
+        });
+
+        var countdown = 59;
+
+        setInterval(() => {
+            countdown--;
+            var timer = countdown <= 10 ? countdown / 10 * 100 : 100;
+
+            document.getElementById('time_remain').style = `width: ${timer}%`;
+
+            if (countdown == 10) {
+                $('#time_out_modal').modal('show');
+            }
+
+            if (countdown < 1) {
+                document.location.assign("/staff/orderTerminal");
+            }
+
+        }, 1000);
+
+        $('#promoCodeBtn').on('click', (event) => {
+            event.preventDefault();
+            const code = $('#PromoCode').val();
+            const cartId = retarget(event.target, "btn").data('cart-id');
+
+            $.ajax({
+                method: 'PUT',
+                url: '/API/Cart/ApplyDiscount',
+                headers: {
+                    Accept: '*/*',
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    cartId: cartId,
+                    promoCode: code
+                }),
+                success: (data, status, xhr) => {
+                    console.log("code accepted.")
+                    if (status == 'success') {
+                        $('#promoSuccess').text(data);
+                        window.location.reload();
+                    }
+                },
+                error: (data, status) => {
+                    $('#promoErr').text(data.responseText.replaceAll('"', ''))
+                }
+            })
+        });
+
+        $('.btn-continue').on('click', () => {
+
+            //check-in with server
+            $.ajax({
+                type: "PUT",
+                url: "/API/Order/TerminalCheckin",
+                success: (data, status, xhr) => {
+                    $.ajax({
+                        type: "GET",
+                        url: "/API/Staff/TerminalService/Alerts",
+                        success: (data, status, xhr) => {
+                            if (status == "success") {
+                                if (data.newOrderAlert) {
+                                    terminal_client.alerts.newOrderAlert.play();
+                                }
+                                if (data.timeLowAlert) {
+                                    terminal_client.alerts.timerLow.play();
+                                }
+                            }
+                        }
+                    })
+                }
+
+            });
+
+            countdown = 59;
+        });
+
+        $('input').on('input', (event) => {
+            var input = $(event.target);
+            sessionStorage.setItem(input.attr('id'), input.val());
+        })
+
+        $('#submit_form').on('submit', (e) => {
+            console.log(readyToSubmit);
+            if (!readyToSubmit) {
+                e.preventDefault();
+            }
+            else {
+                sessionStorage.removeItem("CustomerName");
+                sessionStorage.removeItem("CustomerPhone");
+                sessionStorage.removeItem("PromoCode");
+            }
+        });
+
+        if (!$('#CustomerName').val())
+            $('#CustomerName').val(sessionStorage.getItem("CustomerName"));
+
+        if (!$('#CustomerPhone').val())
+            $('#CustomerPhone').val(sessionStorage.getItem("CustomerPhone"));
+
+        if (!$('#PromoCode').val())
+            $('#PromoCode').val(sessionStorage.getItem("PromoCode"));
+    </script>
+}

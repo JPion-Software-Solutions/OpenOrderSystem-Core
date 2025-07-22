@@ -1,0 +1,119 @@
+﻿@using OpenOrderSystem.Core.Services
+@inject MediaManagerService _mediaService
+
+@{
+    ViewData["HeaderTitle"] = "Media Manager";
+    Layout = "_LayoutManager";
+    _mediaService
+        .SetDisplayName("images.user", "Images")
+        .FetchMedia("images.user");
+}
+<hr />
+
+<form asp-action="Upload" enctype="multipart/form-data" method="post">
+    <div class="input-group mb-3 w-75 mx-auto">
+        <input type="file" class="form-control" id="file" name="file" />
+        <button class="btn btn-dark" type="submit"><i class="fa-regular fa-cloud-arrow-up me-1"></i> Upload</button>
+    </div>
+</form>
+
+<hr />
+<div class="accordion accordion-flush accordion-dark" id="media">
+    @foreach (var mediaKey in _mediaService.Media.Keys)
+    {
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button show" type="button" data-bs-toggle="collapse" data-bs-target="#media_@mediaKey.Replace('.','_')" aria-expanded="false" aria-controls="media_@mediaKey.Replace('.','_')">
+                    @_mediaService.GetDisplayName(mediaKey)
+                </button>
+            </h2>
+            <div id="media_@mediaKey.Replace('.','_')" class="accordion-collapse collapse show" data-bs-parent="#media">
+                <div class="accordion-body">
+                    <div class="card-group row row-cols-4 g-4">
+                        @foreach (var media in _mediaService.Media[mediaKey])
+                        {
+                            <div class="col">
+                                <div class="card border-info" style="height:100%">
+                                    @media.GetHtml(null, "card-img-top")
+                                    <div class="card-body">
+                                        <h5 class="card-title">@media.Name</h5>
+                                        <p class="card-text">
+                                            @media.Description
+                                        </p>
+                                    </div>
+                                    <div class="card-footer text-end">
+                                        <form class="edit-media-form" asp-action="Edit" method="get">
+                                            <input id="mediaType" name="mediaType" value="@mediaKey" hidden readonly />
+                                            <input id="name" name="name" value="@media.Name" hidden readonly />
+                                            <button class="btn-clean" type="submit"><i class="fa-sharp fa-light fa-pen-to-square text-info-emphasis"></i></button>                                            
+                                        </form>
+                                        <form class="delete-form d-inline" asp-action="Delete" method="post">
+                                            <input id="mediaType" name="mediaType" value="@mediaKey" hidden readonly />
+                                            <input id="name" name="name" value="@media.Name" hidden readonly />
+                                            <button class="btn-clean" type="submit"><i class="fa-sharp fa-regular fa-trash-can text-danger-emphasis"></i></button>
+                                        </form>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div id="confirm_delete_modal" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Are you sure?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Are you sure you want to permanantly delete this media file? This action cannot be undone and may result in anything using this media file not functioning correctly.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm_delete_btn" type="button" class="btn btn-danger"><i class="fa-sharp fa-regular fa-thumbs-up"></i> Yes</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-sharp fa-regular fa-thumbs-down"></i> No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var deleteConfirm = false;
+        var deleteForm;
+
+        $('.delete-form').on('submit', (event) => {
+            if (!deleteConfirm) {
+                event.preventDefault();
+                $('#confirm_delete_modal').modal('show');
+                deleteForm = $(event.target);
+            }
+        });
+
+        $('#confirm_delete_btn').on('click', () => {
+            deleteConfirm = true;
+            deleteForm.submit();
+        });
+
+        $('.edit-media-form').on('submit', (event) => {
+            event.preventDefault()
+            var values = $(event.target).serializeArray();
+            $.ajax({
+                method: 'GET',
+                data: values,
+                url: $(event.target).attr('action'),
+                success: (data, status, xhr) => {
+                    $('body').append($.parseHTML(data));
+                    $('#edit_modal').modal('show');
+                }
+            });
+        });
+    </script>
+}

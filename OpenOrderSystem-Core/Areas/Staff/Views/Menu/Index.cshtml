@@ -1,0 +1,106 @@
+﻿@using OpenOrderSystem.Core.Data.DataModels
+@model IEnumerable<MenuItem>
+
+@{
+    ViewData["Title"] = "Menu Item Manager";
+    Layout = "_LayoutManager";
+    ViewData["HeaderTitle"] = "Menu Manager";
+}
+
+<p class="">
+    <a asp-action="Create" class="btn jp-dark jp-secondary">Add Item to Menu</a>
+</p>
+<table class="table table-dark table-striped table-hover mx-4 mx-auto">
+    <thead>
+        <tr>
+            <th>Priority</th>
+            <th>
+                @Html.DisplayNameFor(model => model.ImageUrl)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                Category
+            </th>
+            <th>
+                Varients
+            </th>
+            <th>
+                Base Ingredients
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @item?.Priority
+        </td>
+        <td class="text-center">
+            <img src="@item?.ImageUrl" class="img-fluid" style="max-width:75px;" />
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Name)
+        </td>
+        <td style="max-width: 200px;">
+            @Html.DisplayFor(modelItem => item.Description)
+        </td>
+        <td>
+            @item.ProductCategory?.Name
+        </td>
+        <td>
+            <ul>
+                @foreach (var varient in item?.MenuItemVarients ?? new List<MenuItemVarient>())
+                {
+                    <li>@varient.Descriptor &mdash; @varient.Price.ToString("C")</li>
+                }
+            </ul>
+        </td>
+        <td>
+            <ul>
+                @foreach (var ingredient in item?.Ingredients ?? new List<Ingredient>())
+                {
+                    <li>@ingredient.Name</li>
+                }
+            </ul>
+        </td>
+        <td>
+            <a asp-action="Edit" asp-route-id="@item?.Id" class="text-primary" title="Edit @item?.Name"><i class="fa-sharp fa-light fa-pen-to-square"></i></a> 
+            <a href="#" class="delete-btn text-danger" data-id="@item?.Id" title="Delete @item?.Name"><i class="fa-sharp fa-light fa-trash-can"></i></a>
+        </td>
+    </tr>
+}
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        const retarget = (initialTarget, targetClass) => {
+            return target = $(initialTarget).hasClass(targetClass) ? $(initialTarget) : $(initialTarget).parents(`.${targetClass}`);
+        }
+
+        $('.delete-btn').on('click', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            var target = retarget(event.target, "delete-btn");
+            var id = target.data('id');
+
+            $.ajax({
+                method: "GET",
+                url: `/Staff/Manager/Menu/Delete?id=${id}`,
+                success: (data, status, xhr) => {
+                    if (status == 'success') {
+                        const modal = $.parseHTML(data, true);
+                        $('body').append(modal);
+                        initDeleteModal();
+                    }                    
+                }
+            });
+        });
+    </script>
+}

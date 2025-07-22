@@ -1,0 +1,211 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["HeaderTitle"] = "Dashboard";
+    ViewData["Title"] = "Dashboard";
+    Layout = "_LayoutManager";
+}
+<div class="row">
+    <div class="col-7">
+        <h1>End of Day Reports</h1>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Customer Count</th>
+                    <th>Gross Sales</th>
+                    <th>Discounts</th>
+                    <th>Net Sales</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="loading_placeholder">
+                    <td colspan="6" class="text-center fa-fade">Loading <i class="fa-duotone fa-solid fa-loader fa-spin-pulse" style="--fa-primary-color: #ffffff; --fa-secondary-color: #8f8f8f;"></i></td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="loadBtn" class="btn btn-primary px-4 mt-3">Load More...</button>
+    </div>
+    <div class="col">
+        <div class="report-viewer mx-2">
+            <h1>Report Viewer</h1>
+            <div id="active_report" class="">
+                <div class="h3 text-center">&mdash; NO ACTIVE REPORT &mdash;</div>
+                <div class="text-center">Click report to load into viewer.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+        const retarget = (initialTarget, targetClass) => {
+            return target = $(initialTarget).hasClass(targetClass) ? $(initialTarget) : $(initialTarget).parents(`.${targetClass}`);
+        }
+
+        const today = new Date();
+        const current = new Date(today.toLocaleDateString());
+        const loadTo = new Date(today.toLocaleDateString());
+
+        const load = (count = 15) => {
+            $('#loading_placeholder').show();
+            loadTo.setDate(loadTo.getDate() - count);
+            
+            const callback = () => {
+                if (current.toDateString() !== loadTo.toDateString()) {
+                    $.ajax({
+                        method: 'GET',
+                        url: `/Staff/OrderTerminal/FetchEndOfDayReport?filter=date:${current.toLocaleDateString().replaceAll('/', '-')}!`,
+                        success: (data, status) => {
+                            const displayDate = today.toLocaleDateString() === current.toLocaleDateString() ?
+                                "Current Day" : current.toDateString();
+                            const rowInner =
+                                `
+                                <td>${displayDate}</td>
+                                <td>${data.orderCount}</td>
+                                <td>$${(data.grossSales).toFixed(2)}</td>
+                                <td>-$${(data.promoReport.sales * -1).toFixed(2)}</td>
+                                <td>$${(data.grossSales + data.promoReport.sales).toFixed(2)}</td>
+                            `
+
+                            const row = document.createElement('tr');
+                            row.innerHTML = rowInner;
+                            row.setAttribute('data-date', current.toLocaleDateString());
+                            row.setAttribute('class', 'report-btn');
+
+                            $('#loading_placeholder').before(row);
+
+                            $('.report-btn').off('click').on('click', (event) => {
+                                const topElement = retarget(event.target, 'report-btn');
+                                const dateToRetrieve = topElement.data('date');
+                                $.ajax({
+                                    method: 'GET',
+                                    url: `/Staff/OrderTerminal/FetchEndOfDayReport?filter=date:${dateToRetrieve.replaceAll('/', '-')}!`,
+                                    success: (data, status) => {
+                                        //parse data into viewer...
+                                        const activeReport = document.getElementById('active_report');
+                                        const hr = document.createElement('hr');
+                                        const br = document.createElement('br');
+
+                                        while (activeReport && activeReport.hasChildNodes()) {
+                                            activeReport.removeChild(activeReport.firstChild);
+                                        }
+
+                                        const rDate = document.createElement('h3');
+                                        rDate.setAttribute('class', 'text-center');
+                                        rDate.innerText = `End of Day: ${dateToRetrieve}`;
+                                        activeReport.appendChild(rDate);
+
+
+                                        const rSummaryHeader = document.createElement('h4')
+                                        rSummaryHeader.innerText = "Summary";
+
+                                        activeReport.appendChild(hr.cloneNode());
+                                        activeReport.appendChild(rSummaryHeader);
+                                        activeReport.appendChild(hr.cloneNode());
+
+                                        const rCustomerCount = document.createElement('div');
+                                        rCustomerCount.setAttribute('class', 'h6 fw-bold')
+                                        rCustomerCount.innerText = `Customers: ${data.orderCount}`;
+                                        activeReport.appendChild(rCustomerCount);
+
+                                        const rGrossSales = rCustomerCount.cloneNode();
+                                        rGrossSales.innerText = `Gross Sales: $${(data.grossSales).toFixed(2)}`;
+                                        activeReport.appendChild(rGrossSales);
+
+                                        const rDiscounts = rCustomerCount.cloneNode();
+                                        rDiscounts.innerText = `Discounts: $${(data.promoReport.sales * -1).toFixed(2)}`;
+                                        activeReport.appendChild(rDiscounts);
+
+                                        const rNetSales = rCustomerCount.cloneNode();
+                                        rNetSales.innerText = `Net Sales: $${(data.grossSales + data.promoReport.sales).toFixed(2)}`;
+                                        activeReport.appendChild(rNetSales);
+
+                                        activeReport.appendChild(hr.cloneNode());
+                                        const rItemsHeader = rSummaryHeader.cloneNode();
+                                        rItemsHeader.innerText = "Item Sales";
+                                        activeReport.appendChild(rItemsHeader);
+                                        activeReport.appendChild(hr.cloneNode());
+
+                                        for (let i = 0; i < Object.keys(data.salesReport).length; ++i) {
+                                            const key = Object.keys(data.salesReport)[i];
+                                            const name = key
+                                                .replaceAll('_', ' ')
+                                            const qty = `Qty: ${data.salesReport[key].qty}`;
+                                            const sales = `Sales: $${data.salesReport[key].sales.toFixed(2)}`;
+
+                                            const rItemName = document.createElement('h6');
+                                            rItemName.setAttribute('class', 'text-capitalize')
+                                            rItemName.innerText = name;
+                                            activeReport.appendChild(rItemName);
+
+                                            const rItemQty = document.createElement("div");
+                                            rItemQty.innerText = qty;
+                                            activeReport.appendChild(rItemQty);
+
+                                            const rItemSales = document.createElement("div");
+                                            rItemSales.innerText = sales;
+                                            activeReport.appendChild(rItemSales);
+
+                                            const varients = data.salesReport[key].varientSalesData;
+                                            const rVarients = document.createElement('ul');
+                                            for (let j = 0; j < Object.keys(varients).length; ++j) {
+                                                const vKey = Object.keys(varients)[j];
+                                                const vQty = varients[vKey].qty;
+                                                const vSales = `$${varients[vKey].sales.toFixed(2)}`;
+
+                                                const rVarSale = document.createElement('li');
+                                                rVarSale.innerHTML = `${vKey} x${vQty} &mdash; ${vSales}`;
+                                                rVarients.appendChild(rVarSale);
+                                            }
+
+                                            activeReport.appendChild(rVarients);
+                                        }
+
+                                        activeReport.appendChild(hr.cloneNode());
+                                        const rDiscountHeader = rSummaryHeader.cloneNode();
+                                        rDiscountHeader.innerText = "Promo Codes";
+                                        activeReport.appendChild(rDiscountHeader);
+                                        activeReport.appendChild(hr.cloneNode());
+
+                                        const promoCodes = data.promoReport.varientSalesData;
+                                        if (Object.keys(promoCodes).length == 0) {
+                                            const rNoPromo = document.createElement('div');
+                                            rNoPromo.innerHTML = '&mdash; NO PROMO CODES REDEEMED &mdash;';
+                                            activeReport.appendChild(rNoPromo);
+                                        }
+                                        else {
+                                            const rPromoList = document.createElement('ul');
+                                            for (let i = 0; i < Object.keys(promoCodes).length; ++i) {
+                                                const key = Object.keys(promoCodes)[i];
+                                                const rListItem = document.createElement('li');
+                                                rListItem.innerHTML = `${key} x${promoCodes[key].qty} &mdash; $${(promoCodes[key].sales * -1).toFixed(2)}`;
+                                                rPromoList.appendChild(rListItem);
+                                            }
+                                            activeReport.appendChild(rPromoList);
+                                        }
+                                    }
+                                });
+                            });
+
+                            current.setDate(current.getDate() - 1);
+                            callback();
+                        }
+                    })
+                }
+                else {
+                    $('#loading_placeholder').hide();
+                }
+            };
+
+            callback();
+        };
+
+        $('#loadBtn').on('click', () => {
+            load();
+        });
+
+        load();
+    </script>
+}

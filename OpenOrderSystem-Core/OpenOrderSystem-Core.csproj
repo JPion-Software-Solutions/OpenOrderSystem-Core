@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-OpenOrderSystem.Core-c9538df0-3b1e-469c-8a53-92b90be65fcc</UserSecretsId>
+    <Version>1.1.0</Version>
+	<RootNamespace>OpenOrderSystem.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Areas\Identity\Pages\**" />
+    <Compile Remove="wwwroot\lib\mdbootstrap\**" />
+    <Content Remove="Areas\Identity\Pages\**" />
+    <Content Remove="wwwroot\lib\mdbootstrap\**" />
+    <EmbeddedResource Remove="Areas\Identity\Pages\**" />
+    <EmbeddedResource Remove="wwwroot\lib\mdbootstrap\**" />
+    <None Remove="Areas\Identity\Pages\**" />
+    <None Remove="wwwroot\lib\mdbootstrap\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="config\siteSettings.json" />
+    <Content Remove="wwwroot\js\ActiveTimer_0.0.6.js" />
+    <Content Remove="wwwroot\js\Notifications_1.1.0.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="wwwroot\css\printerStatus.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ESCPOS_NET" Version="3.0.0" />
+    <PackageReference Include="K4os.Hash.xxHash" Version="1.0.8" />
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.5.0" />
+    <PackageReference Include="Magick.NET.Core" Version="14.5.0" />
+    <PackageReference Include="Microsoft.AspNet.WebPages" Version="3.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.6" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+    <PackageReference Include="Quartz.AspNetCore" Version="3.14.0" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.14.0" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Twilio" Version="7.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\Configuration\Data\" />
+    <Folder Include="Areas\Staff\Data\" />
+    <Folder Include="wwwroot\media\images\user\" />
+    <Folder Include="wwwroot\media\temp\" />
+    <Folder Include="wwwroot\NewFolder\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="bin\Release\net8.0\OgDbData.sql" />
+    <None Include="config\siteSettings.json" />
+    <None Include="wwwroot\js\ActiveTimer_0.0.6.js" />
+    <None Include="wwwroot\js\Notifications_1.1.0.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PizzaPartry.tools">
+      <HintPath>C:\Users\jp811\source\repos\PizzaPartry.tools\PizzaPartry.tools\bin\Release\net8.0\PizzaPartry.tools.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

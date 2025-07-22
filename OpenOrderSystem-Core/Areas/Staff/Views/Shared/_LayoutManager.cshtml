@@ -1,0 +1,42 @@
+﻿@{
+    Layout = "_HTMLBaseLayout";
+}
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}
+@section AppendHead {
+    <link rel="stylesheet" href="~/css/staffArea.css" />
+    <link rel="stylesheet" href="~/css/jpTheme.css" />
+    <link rel="stylesheet" href="~/css/ControlPanel.css" />
+    @await RenderSectionAsync("AppendHead", required: false)
+}
+@section PrependBody {
+    @await RenderSectionAsync("PrependBody", required: false)
+}
+@section AppendBody {
+    @await RenderSectionAsync("AppendBody", required: false)
+}
+
+<div class="h-100 row p-0 jp-dark" data-bs-theme="dark">
+
+    <nav class="col d-md-flex d-none flex-column nav nav-pills jp-primary" style="height:100dvh; position:fixed; width: 300px">
+        <h3 class="text-center">Control Panel</h3>
+        <div class="flex-grow-1">
+            <partial name="_AdminNavLinks" />
+        </div>
+        <div>
+            <form asp-area="Identity" asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="nav-link"><i class="fa-solid fa-user-lock"></i> Logout</button>
+            </form>
+        </div>
+    </nav>
+    <div class="col" style="margin-left:300px">
+        <header class="jp-dark jp-secondary jp-special d-flex flex-column">
+            <h1 class="text-center my-auto">@ViewBag.HeaderTitle</h1>
+        </header>
+        <div class="control-panel-content">
+            @RenderBody()
+        </div>
+    </div>
+</div>

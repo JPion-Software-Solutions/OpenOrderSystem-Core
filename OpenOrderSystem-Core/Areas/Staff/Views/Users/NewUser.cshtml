@@ -1,0 +1,80 @@
+﻿@using OpenOrderSystem.Core.Areas.Staff.ViewModels.Users
+@model NewUserVM
+
+@{
+    ViewData["Title"] = "Create New User";
+    Layout = "_LayoutManager";
+}
+
+<h1 class="ps-4">New User</h1>
+
+<hr />
+<div class="row bg-dark text-light px-4 py-2 mb-5">
+    <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+    <form id="new_user_form" class="col-5" asp-action="NewUser" method="post" autocomplete="off">
+        <div class="row mb-2">
+            <div class="form-check col-4">
+                <input type="radio" id="isStaff" name="Roles" value="terminal_user" title="Staff users can only access the order terminal, they cannot modify any site settings including making menu changes" checked />
+                <label for="isStaff">Standard</label>
+            </div>
+            <div class="form-check col-4">
+                <input type="radio" id="isManager" name="Roles" value="manager,terminal_user" title="Managers can access the order terminal as well as make menu or hours changes." />
+                <label for="isManager">Manager</label>
+            </div>
+            <div class="form-check col-4">
+                <input type="radio" id="isAdmin" name="Roles" value="admin,manager,terminal_user" title="Administrators have full access to all app settings including adding/removing users. This should be reserved only for those that require those elevated privilages!" />
+                <label for="isAdmin">Administrator</label>
+            </div>
+        </div>
+        <div class="form-floating mb-2">
+            <input asp-for="Username" class="form-control" placeholder="" autocomplete="off" aria-autocomplete="none" />
+            <label asp-for="Username"></label>
+            <span class="text-danger" asp-validation-for="Username"></span>
+        </div>
+        <div class="form-floating mb-2">
+            <input asp-for="Password" class="form-control" placeholder="" autocomplete="off" aria-autocomplete="none" />
+            <label asp-for="Password"></label>
+            <span class="text-danger" asp-validation-for="Password"></span>
+        </div>
+        <div class="form-floating mb-2">
+            <input asp-for="ConfirmPassword" class="form-control" placeholder="" autocomplete="off" aria-autocomplete="none" />
+            <label asp-for="ConfirmPassword"></label>
+            <span class="text-danger" asp-validation-for="ConfirmPassword"></span>
+        </div>
+        <div class="form-floating mb-2 hidden-fields" hidden>
+            <input asp-for="Email" class="form-control" placeholder="" autocomplete="off" aria-autocomplete="none" />
+            <label asp-for="Email"></label>
+            <span class="text-danger" asp-validation-for="Email"></span>
+        </div>
+        <div class="form-floating mb-2 hidden-fields" hidden>
+            <input asp-for="Phone" class="form-control" placeholder="" autocomplete="off" aria-autocomplete="none" />
+            <label asp-for="Phone"></label>
+            <span class="text-danger" asp-validation-for="Phone"></span>
+        </div>
+        <div class="form-group d-flex">
+            <button class="btn btn-secondary ms-auto me-1" type="reset">Clear</button>
+            <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $('[name="Roles"]').on('change', (event) => {
+            var roles = $('input:checked').val();
+            if (roles === "terminal_user") {
+                $('.hidden-fields').prop('hidden', true);
+            }
+            else {
+                $('.hidden-fields').prop('hidden', false);
+            }
+        });
+
+        $(document).ready( () => {
+            console.log("fuck you auto complete!!!");
+            setTimeout(() => {
+                document.getElementById('new_user_form').reset();
+            }, 500);
+        });
+    </script>
+}

@@ -1,0 +1,103 @@
+﻿@using Microsoft.AspNetCore.Html
+@using OpenOrderSystem.Core.Areas.Staff.ViewModels.Categories.Product
+@using OpenOrderSystem.Core.ViewModels.Shared
+@model CreateEditVM
+
+@{
+    ViewData["Title"] = Model.Action == CrudAction.Create ? "New Menu Category" : "Edit Menu Category";
+    ViewData["HeaderTitle"] = Model.Action == CrudAction.Create ? $"Add New Menu Category" : new HtmlString($"Edit Menu Category &mdash; #{Model.Id}: {Model.Name}");
+    Layout = "_LayoutManager";
+}
+
+
+<div class="row bg-dark px-2 gap-2 py-4">
+    <div class="col-3">
+        <form id="ce_form" action="@(Model.Action == CrudAction.Edit ? "Edit" : "Create")" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-1">
+                <label asp-for="Priority" class="control-label"></label>
+                <input asp-for="Priority" title="Higher priority will change where item shows up. Negitive priority will hide item." class="form-control" />
+                <span asp-validation-for="Priority" class="text-danger"></span>
+            </div>
+
+            <!-- Hidden form fields start -->
+
+            <input asp-for="IngredientIds" hidden />
+            <input asp-for="MenuItemIds" hidden />
+            <input asp-for="Id" hidden />
+            @Html.AntiForgeryToken()
+
+            <!-- Hidden form fields end -->
+        </form>
+    </div>
+    <div class="col">
+        <span asp-validation-for="IngredientIds" class="text-danger"></span>
+        <h5>Ingredients</h5>
+        <div class="row row-cols-2">
+            @foreach (var ingredient in Model.Ingredients)
+            {
+                <div class="form-check col">
+                    <input class="ingredient-check form-check-input" type="checkbox" value="@ingredient.Id" id="ingredient_check_@ingredient.Id" @(Model.GetLinkedIngredients().Contains(ingredient.Id) ? "checked" : "")>
+                    <label class="form-check-label" for="ingredient_check_@ingredient.Id">@ingredient.Name</label>
+                </div>
+            }
+        </div>
+        <p class="text-success-emphasis">Each ingredient may be assigned to many menu categories. Selecting ingredients here will not effect any other categories the ingredient belongs to.</p>
+    </div>
+    <div class="col">
+        <h5>Menu Items</h5>
+        <div class="row row-cols-2">
+            @foreach (var item in Model.MenuItems)
+            {
+                <div class="form-check col">
+                    <input class="menu-item-check form-check-input" type="checkbox" value="@item.Id" id="ingredient_check_@item.Id" @(item.ProductCategoryId == Model.Id ? "checked" : "")>
+                    <label class="form-check-label" for="ingredient_check_@item.Id">@item.Name</label>
+                </div>
+            }
+        </div>
+        <p class="text-warning-emphasis">NOTE: Each menu item can only be assigned to ONE menu category. Selecting any menu items here will move them into this category upon saving.</p>
+
+    </div>
+    <div class="d-flex w-100 text-end">
+        <div class="ms-auto">
+            <button id="submit" class="btn btn-primary px-5 mb-1"><i class="fa-sharp fa-floppy-disk me-1"></i> Save</button>
+            <br />
+            <a class="" asp-action="Index">Back to List</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $('#submit').on('click', () => {
+            var ids = [];
+            $('.ingredient-check:checked').each((i, elm) => {
+                ids.push(+$(elm).val());
+            });
+            $('#IngredientIds').val(JSON.stringify(ids));
+
+            ids = [];
+
+            $('.menu-item-check:checked').each((i, elm) => {
+                ids.push(+$(elm).val());
+            });
+            $('#MenuItemIds').val(JSON.stringify(ids));
+
+            $('#ce_form').submit();
+        });
+    </script>
+}
+

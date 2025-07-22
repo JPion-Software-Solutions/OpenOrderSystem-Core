@@ -1,0 +1,20 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<a class="nav-link  @(Context.Request.Path.ToString().ToLower().Contains("dashboard") ? "active" : "")" asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-chart-line-up"></i> Dashboard</a>
+<a class="nav-link  @(Context.Request.Path.ToString().ToLower().Contains("menu") ? "active" : "")" asp-controller="Menu" asp-action="Index"><i class="fa-solid fa-sharp fa-burger-soda"></i> Menu</a>
+<a class="nav-link @(Context.Request.Path.ToString().ToLower().Contains("media") ? "active" : "")" asp-controller="Media" asp-action="Index"><i class="fa-solid fa-camera-retro"></i> Media</a>
+<a class="nav-link @(Context.Request.Path.ToString().ToLower().Contains("ingredients") ? "active" : "")" asp-controller="Ingredients" asp-action="Index"><i class="fa-solid fa-pepper-hot"></i> Ingredients</a>
+
+<a href="#" class="nav-link dropdown-toggle" data-bs-target="#categories_sub" data-bs-toggle="collapse"><i class="fa-sharp fa-solid fa-list"></i> Categories</a>
+<div id="categories_sub" class="collapse @(Context.Request.Path.ToString().ToLower().Contains("categories") ? "show" : "")">
+    <a class="nav-link ms-4 @(Context.Request.Path.ToString().ToLower().Contains("categories/product") ? "active" : "jp-primary")" asp-controller="ProductCategories" asp-action="Index">Menu</a>
+    <a class="nav-link ms-4 @(Context.Request.Path.ToString().ToLower().Contains("categories/ingredient") ? "active" : "jp-primary")" asp-controller="IngredientCategories" asp-action="Index">Ingredients</a>
+</div>
+
+<a class="nav-link @(Context.Request.Path.ToString().ToLower().Contains("coupon") ? "active" : "")" asp-controller="Coupon" asp-action="Index"><i class="fa-solid fa-money-check-dollar"></i> Discounts</a>
+<a class="nav-link @(Context.Request.Path.ToString().ToLower().Contains("printers") ? "active" : "")" asp-controller="Printers" asp-action="Index"><i class="fa-solid fa-print"></i> Printers</a>
+<a class="nav-link @(User.IsInRole("admin") ? "" : "disabled") @(Context.Request.Path.ToString().ToLower().Contains("users") ? "active" : "")" asp-controller="Users" asp-action="Index"><i class="fa-solid fa-users"></i> Users</a>

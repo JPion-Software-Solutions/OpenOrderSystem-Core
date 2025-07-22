@@ -1,0 +1,266 @@
+﻿@using Microsoft.AspNetCore.Html
+@using OpenOrderSystem.Core.Areas.Staff.ViewModels.Menu
+@using OpenOrderSystem.Core.Services
+@model CreateEditVM
+@inject MediaManagerService _mediaService
+@{
+    ViewData["Title"] = "Create";
+    ViewData["ContainerClasses"] = "create-container";
+    ViewData["HeaderTitle"] = Model.Action == CreateEditVM.Actions.Create ? $"Add New Menu Item" : new HtmlString($"Edit Menu Item &mdash; #{Model.Id}: {Model.Name}");
+    Layout = "_LayoutManager";
+    _mediaService.FetchMedia("images", true);
+}
+
+<div class="row bg-dark text-light px-4 py-2 mb-5">
+    <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+    <div class="col-4">
+        <h4>Product Information:</h4>
+        <form id="new_menu_item_form" action="@(Model.Action == CreateEditVM.Actions.Create ? "/Staff/Manager/Menu/Create" : "/Staff/Manager/Menu/Edit")" enctype="multipart/form-data" method="post">
+            <div class="form-group mb-2">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Description" class="control-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="6"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-1">
+                <label asp-for="Priority" class="control-label"></label>
+                <input asp-for="Priority" title="Higher priority will change where item shows up. Negitive priority will hide item." class="form-control" />
+                <span asp-validation-for="Priority" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="CategoryId" class="control-label">Category</label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option class="text-muted" selected hidden disabled>&mdash; MAKE SELECTION &mdash;</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2 text-wrap">
+                @foreach (var categoryId in Model.AvailableIngredients.Keys)
+                {
+                    <div id="ingredients_@categoryId" class="ingredients-check-group row" @(categoryId == Model.CategoryId ? "" : "hidden")>
+                        <h5>Included Ingredients:</h5>
+                        @if (Model.AvailableIngredients[categoryId].Any())
+                        {
+                            @foreach (var ingredient in Model.AvailableIngredients[categoryId])
+                            {
+                                <div class="form-check ms-4 col-5">
+                                    <input id="ingredient_@(categoryId)_@(ingredient.Id)" class="form-check-input ingredients-check" type="checkbox" value="@ingredient.Id" />
+                                    <label for="ingredient_@(categoryId)_@(ingredient.Id)" class="form-check-label">@ingredient.Name</label>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <h5 class="text-center">&mdash; selected category is not customizable &mdash;</h5>
+                        }
+                    </div>
+                }
+            </div>
+
+            <input asp-for="ImageUrl" hidden />
+            <input asp-for="Varients" hidden />
+            <input asp-for="Ingredients" hidden />
+            <input asp-for="Id" hidden />
+            @Html.AntiForgeryToken()
+        </form>
+    </div>
+    <div class="ms-3 col-4">
+        <h4>Price Varients:</h4>
+        <div id="varients">
+            <span class="text-danger" asp-validation-for="Varients"></span>
+            <label> </label>
+        </div>
+        <button id="add_varient" class="btn btn-success">
+            <i class="fa-sharp fa-sparkles"></i> New Varient
+        </button>
+    </div>
+    <div class="ms-3 col">
+        <h4>Image Selection:</h4>
+        <div class="form-group mb-2">
+            <label for="image_selector">Image Selection</label>
+            <select id="image_selector" class="form-select">
+                <option class="text-muted" value="" selected hidden disabled>&mdash; MAKE SELECTION &mdash;</option>
+                @foreach (var image in _mediaService.GetMedia("images"))
+                {
+                    <option value="@image.Path">@image.Name</option>
+                }
+            </select>
+            <span class="text-danger" asp-validation-for="ImageUrl"></span>
+        </div>
+        <div class="text-center">
+            <h5 class="text-start">Preview:</h5>
+            <img id="image_preview" class="img-fluid" style="max-width:200px" src="" />
+        </div>
+    </div>
+    <div class="d-flex">
+        <button id="save" class="btn btn-primary ms-auto px-5"><i class="fa-sharp fa-floppy-disk me-1"></i> Save</button>
+    </div>
+    <a class="text-end" asp-action="Index">Back to List</a>
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const retarget = (initialTarget, targetClass) => {
+            return target = $(initialTarget).hasClass(targetClass) ? $(initialTarget) : $(initialTarget).parents(`.${targetClass}`);
+        }
+
+        const bindVariantInputs = () => {
+            $('.del-varient-btn').on('click', (event) => {
+                const target = retarget(event.target, 'del-varient-btn');
+                const varientNum = target.data('varient');
+                $(`#varient_${varientNum}`).remove();
+            });
+
+            $('.varient-descriptor').on('input', (event) => {
+                const target = retarget(event.target, 'form-control');
+                const varientNum = target.data('varient');
+                $(`#varient_${varientNum}`).attr('data-descriptor', target.val());
+            });
+
+            $('.varient-price').on('input', (event) => {
+                const target = retarget(event.target, 'form-control');
+                const varientNum = target.data('varient');
+                const price = convertPriceInput(target.val());
+                $(`#varient_${varientNum}`).attr('data-price', price);
+            });
+
+            $('.varient-price').on('change', (event) => {
+                const target = retarget(event.target, 'form-control');
+                const price = convertPriceInput(target.val());
+                target.val(price);
+            });
+
+            $('.varient-upc').on('input', (event) => {
+                const target = retarget(event.target, 'form-control');
+                const varientNum = target.data('varient');
+                $(`#varient_${varientNum}`).attr('data-upc', target.val());
+            });
+        }
+
+        const initPage = () => {
+            try {
+                const ingredients = JSON.parse($('#Ingredients').val());
+
+                for (var i = 0; i < ingredients.length; ++i) {
+                    $(`#ingredient_@(Model.CategoryId)_${ingredients[i]}`).prop('checked', true);
+
+                }
+            }
+            catch { }
+
+            try {
+                const varients = JSON.parse($('#Varients').val());
+
+                for (var i = 0; i < varients.length; ++i) {
+                    const varient = varients[i];
+                    addVarient(varient.descriptor, varient.price, varient.upc);
+                }
+            }
+            catch {
+                addVarient();
+            }
+
+            $('#image_selector').val($('#ImageUrl').val());
+            $('#image_preview').attr('src', $('#ImageUrl').val());
+        }
+
+        const addVarient = (descriptor = "", price = "", upc = "") => {
+            const soup = `
+                        <div id="varient_${varient}" class="varient-group row mb-2 g-1" data-descriptor="${descriptor}" data-price="${price}" data-upc="${upc}">
+                            <div class="col-4">
+                                <input id="varient_descriptor_${varient}" class="form-control varient-descriptor" type="text" placeholder="Descriptor" maxlength="12" data-varient="${varient}" value="${descriptor}" />
+                            </div>
+                            <div class="col">
+                                <input class="form-control varient-price" type="number" placeholder="Price" data-varient="${varient}" value="${price}" />
+                            </div>
+                            <div class="col">
+                                <input class="form-control varient-upc" type="text" placeholder="UPC" maxlength="5" data-varient="${varient}" value="${upc}" />
+                            </div>
+                            <div class="col-1">
+                                <button class="btn btn-danger del-varient-btn" data-varient="${varient}">
+                                    <i class="fa-sharp fa-trash-can"></i>
+                                </button>
+                            </div> 
+                        </div> 
+                    `;
+                $('#varients').append($.parseHTML(soup));
+                $(`#varient_descriptor_${varient}`).focus();
+                bindVariantInputs();
+                varient++;
+            }
+
+        var varient = 1;
+
+        $('#CategoryId').on('change', (event) => {
+            console.log("category changed");
+            //get new categoryId
+            const categoryId = $(event.target).val();
+            
+            //hide all ingredients
+            $(`.ingredients-check-group`).attr('hidden', true);
+
+            //unselect any previous selections
+            $(`.ingredients-check:checked`).prop('checked', false);
+
+            //show new ingredient group
+            $(`#ingredients_${categoryId}`).removeAttr('hidden');
+        });
+
+        $('#image_selector').on('change', (event) => {
+            //get new image url
+            const url = $(event.target).val();
+
+            //update image preview
+            $('#image_preview').attr('src', url);
+
+            //update form
+            $('#ImageUrl').val(url);
+        });
+
+        $('#add_varient').on('click', () => { addVarient(); });
+
+        $('#new_menu_item_form').on('submit', (event) => {
+            var varients = [];
+            var ingredients = [];
+
+            $('.varient-group').each((index, element) => {
+                const descriptor = $(element).data('descriptor');
+                const price = +$(element).data('price');
+                const upc = $(element).data('upc');
+
+                varients.push({
+                    descriptor: descriptor,
+                    price: price,
+                    upc: upc
+                });
+            });
+
+            $('.ingredients-check:checked').each((index, element) => {
+                ingredients.push(+$(element).val());
+            });
+
+            $('#Ingredients').val(JSON.stringify(ingredients));
+            $('#Varients').val(JSON.stringify(varients));
+        });
+
+        bindVariantInputs();
+
+        $('#Name').focus();
+
+        $('#save').on('click', () => {
+            $('#new_menu_item_form').submit();
+        });
+
+        initPage();
+    </script>
+}
