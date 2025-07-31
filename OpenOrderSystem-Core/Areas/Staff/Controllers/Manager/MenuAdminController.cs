@@ -18,11 +18,11 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager
     [Area("Staff")]
     [Route("Staff/Manager/Menu/{action=Index}")]
     [Authorize(Roles = "admin,manager")]
-    public class MenuController : Controller
+    public class MenuAdminController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger<MenuController> _logger;
-        public MenuController(ApplicationDbContext context, ILogger<MenuController> logger)
+        private readonly ILogger<MenuAdminController> _logger;
+        public MenuAdminController(ApplicationDbContext context, ILogger<MenuAdminController> logger)
         {
             _context = context;
             _logger = logger;

@@ -191,7 +191,7 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
             });
         }
 
-        [HttpGet]
+        [HttpPost]
         public IResult New()
         {
             var newCartId = _cartService.ProvisionCart();

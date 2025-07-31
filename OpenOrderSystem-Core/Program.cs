@@ -14,6 +14,7 @@ using OpenOrderSystem.Core.Areas.API.Controllers;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Areas.Staff.Controllers.Manager;
 using OpenOrderSystem.Core.Models;
+using System.Reflection;
 
 internal class Program
 {
@@ -152,10 +153,13 @@ internal class Program
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}");
 
-        MenuController.ImageDirectoryPath = Path.Combine(app.Environment.WebRootPath, "media", "images");
+        MenuAdminController.ImageDirectoryPath = Path.Combine(app.Environment.WebRootPath, "media", "images");
         MediaManagerService.MediaRootPath = Path.Combine(app.Environment.WebRootPath, "media");
 
-        SystemController.Version = "1.0.2";
+        SystemController.Version = Assembly
+            .GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion ?? "unknown";
         SystemController.SystemBoot = DateTime.Now;
 
         app.Run();

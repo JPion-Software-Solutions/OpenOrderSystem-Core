@@ -365,5 +365,6 @@ FodyWeavers.xsd
 /OpenOrderSystem-Core/wwwroot/media/__mediaInfo.json
 *.backup
 /OpenOrderSystem-Core/wwwroot/media/temp
+/OpenOrderSystem-Core/wwwroot/media/images/user
 /OpenOrderSystem-Core/appsettings.json
 /OpenOrderSystem-Core/appsettings.Development.json
