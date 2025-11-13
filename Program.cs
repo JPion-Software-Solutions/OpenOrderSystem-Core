@@ -26,6 +26,10 @@ internal class Program
             bob.Configuration.GetConnectionString("Development") :
             bob.Configuration.GetConnectionString("Production");
 
+        var corsHosts = (bob.Environment.IsDevelopment() ?
+            bob.Configuration.GetValue<string>("allowedOrigins:Development") :
+            bob.Configuration.GetValue<string>("allowedOrigins:Production")) ?? string.Empty;
+
         var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
         connectionString = connectionString?.Replace("<<DB_PASS>>", dbPass ?? "");
 
@@ -108,7 +112,21 @@ internal class Program
 
         bob.Services.AddControllersWithViews();
 
+        const string CORS_POLICY = "OOS_CORS_ACCESS_POLICY";
+        bob.Services.AddCors(options =>
+        {
+            options.AddPolicy(name: CORS_POLICY, policy =>
+            {
+                policy.WithOrigins(corsHosts.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) 
+                    ?? Array.Empty<string>())
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+            });
+        });
+
         var app = bob.Build();
+
+        app.UseCors(CORS_POLICY);
 
         //DBCleanup
         using (var scope = app.Services.CreateScope())

@@ -203,6 +203,7 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
         public IResult Details([FromQuery] string cartId)
         {
             var cart = _cartService.GetCart(cartId);
@@ -217,6 +218,7 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
 
             var orderLines = new List<string>();
             var lineIngredients = new List<object>();
+            var orderLinesDetailed = new List<OrderLine>();
 
             for (int i = 0; i < cart.Order.LineItems.Count; i++)
             {
@@ -234,10 +236,46 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
                     });
                 }
 
+                if (line != null)
+                {
+                    if (line.MenuItem != null)
+                    {
+                        line.MenuItem.OrderLines = null;
+                        line.MenuItem.DiscountCodesItems = null;
+                        line.MenuItem.ProductCategory = null;
+
+                        for (int j = 0; j < line.MenuItem.Ingredients?.Count; j++)
+                        {
+                            line.MenuItem.Ingredients[j].MenuItems = null;
+                            line.MenuItem.Ingredients[j].OrderLines = null;
+                            line.MenuItem.Ingredients[j].Category = null;
+                            line.MenuItem.Ingredients[j].ProductCategories = null;
+                        }
+
+                        for (int j = 0; j < line.MenuItem.RawDbVarients?.Count; j++)
+                        {
+                            line.MenuItem.RawDbVarients[j].MenuItem = null;
+                            line.MenuItem.RawDbVarients[j].DiscountCodes = null;
+                        }
+                    }
+                    line.Order = null;
+
+
+                    for (int j = 0; j < line.Ingredients?.Count; j++)
+                    {
+                        line.Ingredients[j].OrderLines = null;
+                        line.Ingredients[j].Category = null;
+                        line.Ingredients[j].ProductCategories = null;
+                        line.Ingredients[j].MenuItems = null;
+                    }
+
+                    orderLinesDetailed.Add(line);
+                }
+
                 lineIngredients.Add(new
                 {
                     index = i,
-                    friendlyName = line.ToString(),
+                    friendlyName = line?.ToString(),
                     ingredientList
                 });
             }
@@ -246,6 +284,7 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
             {
                 id = cart.Id,
                 orderLines,
+                orderLinesDetailed,
                 lineIngredients,
                 itemCount = orderLines.Count,
                 customer = cart.Order.Customer

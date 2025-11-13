@@ -75,7 +75,7 @@
 
   <ItemGroup>
     <Reference Include="PizzaPartry.tools">
-      <HintPath>C:\Users\jp811\source\repos\PizzaPartry.tools\PizzaPartry.tools\bin\Release\net8.0\PizzaPartry.tools.dll</HintPath>
+      <HintPath>D:\PizzaPartry.tools\PizzaPartry.tools\bin\Release\net8.0\PizzaPartry.tools.dll</HintPath>
     </Reference>
   </ItemGroup>
 
