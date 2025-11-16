@@ -286,6 +286,12 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
                 orderLines,
                 orderLinesDetailed,
                 lineIngredients,
+                subtotal = cart.Order.Subtotal,
+                tax = cart.Order.Tax,
+                total = cart.Order.Total,
+                discount = cart.Promo?.GetDiscount(cart.Order),
+                promoCode = cart.PromoCode,
+                promoName = cart.Promo?.Name,
                 itemCount = orderLines.Count,
                 customer = cart.Order.Customer
             };
