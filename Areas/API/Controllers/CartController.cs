@@ -131,6 +131,71 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
             });
         }
 
+        [HttpGet("/API/Cart/ItemDetail/{cartId}/{index}")]
+        public async Task<IResult> ItemDetail(string cartId, int index)
+        {
+            var cart = _cartService.GetCart(cartId);
+            if (cart == null)
+                return Results.NotFound($"Cart '{cartId}' could not be located.");
+
+            if (index >= cart.Order.LineItems.Count || index < 0)
+                return Results.NotFound($"Cart '{cartId}' has no line item at index '{index}'.");
+
+            await _context.IngredientCategories
+                .Include(ic => ic.MemberIngredients)
+                .LoadAsync();
+
+            var line = cart.Order.LineItems[index];
+            var categoryId = line.MenuItem?.ProductCategoryId ?? -1;
+            var category = await _context
+                      .ProductCategories
+                      .Include(pc => pc.Ingredients)
+                      .FirstOrDefaultAsync(pc => pc.Id == categoryId);
+
+            return Results.Ok(new
+            {
+                cartId,
+                index,
+                comments = line.LineComments,
+                variantIndex = line.MenuItemVarient,
+                variants = line.MenuItem?.MenuItemVarients.Select(miv =>
+                {
+                    return (new
+                    {
+                        index = miv.Index,
+                        name = miv.Descriptor,
+                        price = miv.Price
+                    });
+                }),
+                ingredients = new
+                {
+                    active = line.Ingredients?.Select(i =>
+                    {
+                        return i.Id;
+                    }),
+
+                    available = category?.Ingredients?.Select(i =>
+                    {
+                        var included = line.MenuItem?.Ingredients?.FirstOrDefault(mii => mii.Id == i.Id) != null;
+                        var price = included ? 0.0f : i.Price;
+
+                        return new
+                        {
+                            id = i.Id,
+                            name = i.Name,
+                            category = new
+                            {
+                                name = i.Category?.Name,
+                                type = i.Category?.Type.ToString()
+                            },
+                            price,
+                            included
+                        };
+                    })
+                }
+            });
+        }
+
         [HttpPut]
         public IResult RemoveItem([FromBody] CartUpdateItemModel model)
         {

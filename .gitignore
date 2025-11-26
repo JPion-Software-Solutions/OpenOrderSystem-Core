@@ -369,3 +369,4 @@ FodyWeavers.xsd
 /OpenOrderSystem-Core/appsettings.json
 /OpenOrderSystem-Core/appsettings.Development.json
 /appsettings.json
+/config/siteSettings.json

@@ -32,11 +32,72 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
         [Route("API/CheckOrder/{orderId}")]
         public IActionResult CheckStatus(int orderId)
         {
+            return CheckStatusTemp(orderId);
+            //var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
+            //if (order == null)
+            //{
+            //    return NotFound($"failed to locate order#:{orderId}");
+            //}
+
+            //return new JsonResult(new
+            //{
+            //    //get times
+            //    orderRecievedTime = order.OrderPlaced,
+            //    orderInProgressTime = order.OrderInprogress,
+            //    orderReadyTime = order.OrderReady,
+            //    orderCompleteTime = order.OrderComplete,
+
+            //    //check stages
+            //    orderInProgress = order.OrderInprogress != null,
+            //    orderReady = order.OrderReady != null,
+            //    orderComplete = order.OrderComplete != null
+            //});
+        }
+        private IActionResult CheckStatusTemp(int orderId)
+        {
+            // First fetch: simple existence + timestamps
             var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
+
             if (order == null)
             {
                 return NotFound($"failed to locate order#:{orderId}");
             }
+
+            // Second fetch: light detail load for the status page
+            var orderDetails = _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.LineItems)
+                    .ThenInclude(li => li.MenuItem)
+                        .ThenInclude(mi => mi!.RawDbVarients)
+                .FirstOrDefault(o => o.Id == orderId);
+
+            _context.OrderLines
+                .Include(ol => ol.Ingredients)
+                .Include(ol => ol.MenuItem)
+                    .ThenInclude(mi => mi.Ingredients)
+                .Load();
+
+            // Build a light detail object (not the massive staff version)
+            var details = new
+            {
+                subtotal = orderDetails?.Subtotal.ToString("C") ?? "",
+                tax = orderDetails?.Tax.ToString("C") ?? "",
+                total = orderDetails?.Total.ToString("C") ?? "",
+                lineItems = orderDetails?.LineItems.Select(li => new {
+                    name = li.MenuItem?.Name ?? "",
+                    variant = li.MenuItem?.MenuItemVarients?[li.MenuItemVarient]?.Descriptor ?? "",
+                    comments = li.LineComments ?? "",
+                    price = li.LinePrice.ToString("C"),
+                    ingAdded = li.AddedIngredients.Select(ai => new 
+                    {
+                        name = ai.Name
+                    }),
+                    ingRemoved = li.RemovedIngredients.Select(ri => new
+                    {
+                        name = ri.Name
+                    })
+                })
+            };
 
             return new JsonResult(new
             {
@@ -49,7 +110,10 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
                 //check stages
                 orderInProgress = order.OrderInprogress != null,
                 orderReady = order.OrderReady != null,
-                orderComplete = order.OrderComplete != null
+                orderComplete = order.OrderComplete != null,
+
+                //NEW: lightweight payload for the status page
+                details
             });
         }
 
