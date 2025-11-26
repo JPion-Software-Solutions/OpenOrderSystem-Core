@@ -28,6 +28,71 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
             _smsService = smsService;
         }
 
+        public enum LocateMethod
+        {
+            OrderId,
+            Phone
+        }
+        [HttpGet]
+        [Route("/API/Order/Locate/{method}/{key}")]
+        public async Task<IResult> Locate(string key, LocateMethod method = LocateMethod.OrderId)
+        {
+            var orders = Array.Empty<int>();
+            if (method == LocateMethod.OrderId)
+            {
+                if (int.TryParse(key, out var parsedKey))
+                {
+                    var temp = await _context.Orders
+                        .Where(o => o.Id == parsedKey)
+                        .ToListAsync();
+
+                    orders = temp
+                        .Select(o => o.Id)
+                        .ToArray();
+                }
+            }
+            else
+            {
+
+                var temp = await _context.Orders
+                    .Include(o => o.Customer)
+                    .Where(o => o.Customer != null && o.Customer.Phone == key)
+                    .ToListAsync();
+
+                orders = temp
+                    .Select(o => o.Id)
+                    .ToArray();
+            }
+
+            if (orders.Any())
+            {
+                if (orders.Length == 1)
+                {
+                    return Results.Ok(new
+                    {
+                        ordersFound = orders.Length,
+                        resultMsg = $"Found 1 order using {method}:{key}",
+                        orderId = orders[0]
+                    });
+                }
+                else
+                {
+                    return Results.Ok(new
+                    {
+                        ordersFound = orders.Length,
+                        resultMsg = $"Found {orders.Length} orders using {method}:{key}. Multiple matches — frontend must disambiguate.",
+                        orders
+                    });
+                }
+            }
+
+            return Results.NotFound(new
+            {
+                ordersFound = 0,
+                resultMsg = $"No orders were found using the provided information ({method}:{key})."
+            });
+        }
+
         [HttpGet]
         [Route("API/CheckOrder/{orderId}")]
         public IActionResult CheckStatus(int orderId)
