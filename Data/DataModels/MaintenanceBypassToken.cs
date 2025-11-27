@@ -19,6 +19,7 @@ namespace OpenOrderSystem.Core.Data.DataModels
         public DateTime ExpiresAt { get; set; }
 
         public DateTime? LastUsedAt { get; set; }
-        public string? LastUsedIp { get; set; }
+        public string? LastUsedApiCallerIp { get; set; }  // trusted
+        public string? LastUsedClientReportedIp { get; set; } // untrusted but useful
     }
 }
