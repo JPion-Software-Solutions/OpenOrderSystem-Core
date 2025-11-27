@@ -74,6 +74,8 @@ namespace OpenOrderSystem.Core.Data
 
         public DbSet<DiscountCodeItem> DiscountCodeItems { get; set; }
 
+        public DbSet<MaintenanceBypassToken> MaintenanceBypassTokens { get; set; }
+
         /**************************************
          * Discount Code Varient Mappings
          **************************************/
