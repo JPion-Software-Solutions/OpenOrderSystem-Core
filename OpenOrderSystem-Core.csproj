@@ -59,7 +59,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\API\Legacy\" />
     <Folder Include="Areas\API\V1\" />
     <Folder Include="Areas\Configuration\Data\" />
     <Folder Include="Areas\Staff\Data\" />

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
 using System.Security.Permissions;
 
-namespace OpenOrderSystem.Core.Areas.API.Controllers
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [Route("api/[controller]/[action]")]

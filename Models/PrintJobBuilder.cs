@@ -1,5 +1,5 @@
 ﻿using ESCPOS_NET.Utilities;
-using OpenOrderSystem.Core.Areas.API.DTO;
+using OpenOrderSystem.Core.Areas.API.Legacy.DTO;
 using OpenOrderSystem.Core.Data.DataModels;
 using PizzaPartry.tools;
 using System.Text.Json;

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using OpenOrderSystem.Core.Areas.API.Models;
+using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 
-namespace OpenOrderSystem.Core.Areas.API.Controllers
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [ApiController]

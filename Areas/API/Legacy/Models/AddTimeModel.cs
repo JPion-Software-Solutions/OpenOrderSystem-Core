@@ -1,4 +1,4 @@
-﻿namespace OpenOrderSystem.Core.Areas.API.Models
+﻿namespace OpenOrderSystem.Core.Areas.API.Legacy.Models
 {
     public class AddTimeModel
     {

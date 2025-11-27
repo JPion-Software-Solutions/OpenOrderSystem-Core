@@ -7,7 +7,7 @@ using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Services.Interfaces;
 using PizzaPartry.tools;
 
-namespace OpenOrderSystem.Core.Areas.API.Controllers
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     public class OrderController : Controller

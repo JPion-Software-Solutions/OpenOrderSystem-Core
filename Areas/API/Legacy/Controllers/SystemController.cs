@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Services;
 
-namespace OpenOrderSystem.Core.Areas.API.Controllers
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
 
     [Area("API")]

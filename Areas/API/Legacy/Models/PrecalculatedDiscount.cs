@@ -2,7 +2,7 @@
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
 
-namespace OpenOrderSystem.Core.Areas.API.Models
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Models
 {
     public class PrecalculatedDiscount : BaseDiscountCode
     {

@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
-using OpenOrderSystem.Core.Areas.API.DTO.Factories;
-using OpenOrderSystem.Core.Areas.API.Models;
+using OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories;
+using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Models;
@@ -11,7 +11,7 @@ using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Services.Interfaces;
 using System.Linq.Expressions;
 
-namespace OpenOrderSystem.Core.Areas.API.Controllers
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [ApiController]
@@ -160,12 +160,12 @@ namespace OpenOrderSystem.Core.Areas.API.Controllers
                 variantIndex = line.MenuItemVarient,
                 variants = line.MenuItem?.MenuItemVarients.Select(miv =>
                 {
-                    return (new
+                    return new
                     {
                         index = miv.Index,
                         name = miv.Descriptor,
                         price = miv.Price
-                    });
+                    };
                 }),
                 ingredients = new
                 {

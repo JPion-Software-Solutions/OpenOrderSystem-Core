@@ -1,7 +1,7 @@
-﻿using OpenOrderSystem.Core.Areas.API.DTO;
+﻿using OpenOrderSystem.Core.Areas.API.Legacy.DTO;
 using OpenOrderSystem.Core.Data.DataModels;
 
-namespace OpenOrderSystem.Core.Areas.API.DTO.Factories
+namespace OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories
 {
     public class OrderResponseFactory
     {

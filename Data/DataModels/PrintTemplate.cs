@@ -5,7 +5,6 @@ using ImageMagick;
 using Microsoft.Build.Construction;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.IdentityModel.Tokens;
-using OpenOrderSystem.Core.Areas.API.DTO;
 using OpenOrderSystem.Core.Areas.Staff.Models;
 using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Models;
@@ -15,6 +14,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using OpenOrderSystem.Core.Areas.API.Legacy.DTO;
 
 namespace OpenOrderSystem.Core.Data.DataModels
 {

@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using OpenOrderSystem.Core.Areas.API.DTO.Factories;
-using OpenOrderSystem.Core.Areas.API.Models;
+using OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories;
+using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Attributes;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
@@ -15,7 +15,7 @@ using OpenOrderSystem.Core.Services;
 using System.Reflection;
 using System.Text.Json;
 
-namespace OpenOrderSystem.Core.Areas.API.Controllers
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [ApiController]

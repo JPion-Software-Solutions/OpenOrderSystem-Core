@@ -1,8 +1,8 @@
 ﻿using OpenOrderSystem.Core.Data.DataModels;
-using OpenOrderSystem.Core.Areas.API.Models;
+using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
 
-namespace OpenOrderSystem.Core.Areas.API.DTO
+namespace OpenOrderSystem.Core.Areas.API.Legacy.DTO
 {
     public class OrderResponse
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace OpenOrderSystem.Core.Areas.API.Models
+namespace OpenOrderSystem.Core.Areas.API.Legacy.Models
 {
     public class CartUpdateItemModel
     {
