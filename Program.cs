@@ -171,7 +171,7 @@ internal class Program
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}");
 
-        MenuAdminController.ImageDirectoryPath = Path.Combine(app.Environment.WebRootPath, "media", "images");
+        OpenOrderSystem.Core.Areas.Staff.Controllers.Manager.MenuController.ImageDirectoryPath = Path.Combine(app.Environment.WebRootPath, "media", "images");
         MediaManagerService.MediaRootPath = Path.Combine(app.Environment.WebRootPath, "media");
 
         SystemController.Version = Assembly
