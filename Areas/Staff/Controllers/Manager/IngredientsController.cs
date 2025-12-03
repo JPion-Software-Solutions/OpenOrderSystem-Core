@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.Ingredients;
 using OpenOrderSystem.Core.Data;
-using OpenOrderSystem.Core.ViewModels.Shared;
-using OpenOrderSystem.Core.ViewModels.Shared;
+using OpenOrderSystem.Core.Areas.Staff.ViewModels.Shared;
 
 namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager
 {

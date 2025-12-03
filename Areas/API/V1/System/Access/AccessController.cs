@@ -11,13 +11,13 @@ namespace OpenOrderSystem.Core.Areas.API.V1.System.Maintenance_Bypass
     [Area("API")]
     [Route("API/V1/System/Maintenance_Bypass/{action}")]
     [ApiController]
-    public class MaintenanceBypassController : ControllerBase
+    public class AccessController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
 
-        public MaintenanceBypassController(
+        public AccessController(
             ApplicationDbContext db,
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager)

@@ -246,8 +246,11 @@
 
 @section Scripts {
     <!-- Terminal interactivity scripts -->
-    <script src="~/js/Notifications_1.1.0.js"></script>
-    <script src="~/js/SOTClient_1.0.1.js"></script>
+    <script>
+        window.OOS_CORE_URL = '@(Context.Request.Scheme)://@(Context.Request.Host)@(Context.Request.PathBase)';
+    </script>
+    <script src="~/js/Notifications_1.1.0.js" asp-append-version="true"></script>
+    <script src="~/js/SOTClient.js" asp-append-version="true"></script>
     <script>
         window.addEventListener('scroll', (event) => {
             if (window.scrollY > 133) {

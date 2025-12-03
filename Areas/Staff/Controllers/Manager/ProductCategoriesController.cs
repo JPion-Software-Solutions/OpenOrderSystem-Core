@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.Categories.Product;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
-using OpenOrderSystem.Core.ViewModels.Shared;
+using OpenOrderSystem.Core.Areas.Staff.ViewModels.Shared;
 using System.Text.Json;
 
 namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager

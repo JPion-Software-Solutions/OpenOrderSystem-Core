@@ -166,7 +166,7 @@ const infoBtnEvent = e => {
 const advanceOrderBtnEvent = e => {
 	const orderNum = e.currentTarget.dataset.orderNum;
 
-	fetch('/API/Order/UpdateStatus', {
+	fetch(`${window.OOS_CORE_URL}/API/Order/UpdateStatus`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json'
@@ -211,7 +211,7 @@ const cancelBtnEvent = e => {
 
 	document.getElementById('cancel_warning_text').innerText = `Are you sure you want to cancel order #${orderNum} for ${order.customer.name}? This action cannot be undone!`;
 	document.getElementById('confirm_cancel_btn').addEventListener('click', () => {
-		fetch('/API/Order/CancelOrder', {
+		fetch(`${window.OOS_CORE_URL}/API/Order/CancelOrder`, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json'
@@ -243,7 +243,7 @@ const cancelBtnEvent = e => {
  */
 const printBtnEvent = e => {
 	const orderNum = e.currentTarget.dataset.orderNum;
-	fetch('/API/Print/PrintOrderTicket', {
+	fetch(`${window.OOS_CORE_URL}/API/Print/PrintOrderTicket`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -584,7 +584,7 @@ const fetchWithTimeout = (url, options, timeout = 10000) => {
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-	return fetch(url, {
+	return fetch(`${window.OOS_CORE_URL}${url}`, {
 		...options,
 		signal: controller.signal
 	})
@@ -767,7 +767,7 @@ const updatePrinterStatus = () => {
 		}
 	}
 
-	fetch('/API/Staff/TerminalService/FetchPrinterStatus')
+	fetch(`${window.OOS_CORE_URL}/API/Staff/TerminalService/FetchPrinterStatus`)
 		.then(response => {
 			return response.json();
 		})

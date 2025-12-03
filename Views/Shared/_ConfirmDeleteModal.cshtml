@@ -1,0 +1,40 @@
+﻿@using Microsoft.AspNetCore.Html
+@using OpenOrderSystem.Core.Areas.Staff.ViewModels.Shared
+@model ConfirmDeleteVM
+
+<div id="confirm_delete_modal" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(new HtmlString(Model.Title))</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>@(new HtmlString(Model.Description))</p>
+            </div>
+            <div class="modal-footer">
+                <form id="confirm_delete_form" action="@Model.Action" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    @Html.AntiForgeryToken()
+                </form>
+                <button id="confirm_delete_btn" type="button" class="btn btn-danger"><i class="fa-sharp fa-regular fa-thumbs-up"></i> Yes</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-sharp fa-regular fa-thumbs-down"></i> No</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const initDeleteModal = () => {
+            $('#confirm_delete_btn').on('click', () => {
+                console.log("delete confirmed")
+                $('#confirm_delete_form').submit();
+            });
+
+            $('#confirm_delete_modal').on('hidden.bs.modal', () => {
+                $('#confirm_delete_modal').remove();
+            });
+
+            $('#confirm_delete_modal').modal('show');
+        }
+    </script>
+</div>
+

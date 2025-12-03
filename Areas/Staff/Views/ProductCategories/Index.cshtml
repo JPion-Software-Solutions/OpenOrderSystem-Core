@@ -74,7 +74,7 @@
 
             $.ajax({
                 method: 'GET',
-                url: `/Staff/Manager/Categories/Ingredient/Delete?id=${id}`,
+                url: `/Staff/Manager/Categories/Product/Delete?id=${id}`,
                 success: (data, status, xhr) => {
                     if (status == 'success') {
                         const modal = $.parseHTML(data, true);

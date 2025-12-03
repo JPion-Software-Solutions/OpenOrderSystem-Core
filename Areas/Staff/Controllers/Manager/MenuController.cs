@@ -8,7 +8,7 @@ using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Areas.Configuration.Models;
 using OpenOrderSystem.Core.Areas.Staff.Models;
-using OpenOrderSystem.Core.ViewModels.Shared;
+using OpenOrderSystem.Core.Areas.Staff.ViewModels.Shared;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web.Helpers;

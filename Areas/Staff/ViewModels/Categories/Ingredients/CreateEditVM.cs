@@ -1,5 +1,5 @@
-﻿using OpenOrderSystem.Core.Data.DataModels;
-using OpenOrderSystem.Core.ViewModels.Shared;
+﻿using OpenOrderSystem.Core.Areas.Staff.ViewModels.Shared;
+using OpenOrderSystem.Core.Data.DataModels;
 using System.Text.Json;
 
 namespace OpenOrderSystem.Core.Areas.Staff.ViewModels.Categories.Ingredients

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Identity.Client;
+using OpenOrderSystem.Core.Areas.Staff.ViewModels.Shared;
 using OpenOrderSystem.Core.Data.DataModels;
-using OpenOrderSystem.Core.ViewModels.Shared;
 using System.ComponentModel.DataAnnotations;
 
 namespace OpenOrderSystem.Core.Areas.Staff.ViewModels.Ingredients

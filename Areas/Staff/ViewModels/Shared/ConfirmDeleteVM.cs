@@ -1,4 +1,4 @@
-﻿namespace OpenOrderSystem.Core.ViewModels.Shared
+﻿namespace OpenOrderSystem.Core.Areas.Staff.ViewModels.Shared
 {
     public class ConfirmDeleteVM
     {
