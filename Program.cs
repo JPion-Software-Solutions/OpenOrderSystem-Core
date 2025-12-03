@@ -178,6 +178,10 @@ internal class Program
             .GetExecutingAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion ?? "unknown";
+
+        if (SystemController.Version.Contains('+'))
+            SystemController.Version = SystemController.Version.Remove(SystemController.Version.IndexOf('+'));
+        
         SystemController.SystemBoot = DateTime.Now;
 
         app.Run();
