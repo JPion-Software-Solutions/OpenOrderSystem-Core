@@ -23,6 +23,9 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             var menu = _context.MenuItems
                 .Include(mi => mi.RawDbVarients)
                 .Include(mi => mi.ProductCategory)
+                .Where(mi => mi.Priority >= 0 && mi.ProductCategory != null && mi.ProductCategory.Priority >= 0)
+                .OrderByDescending(mi => mi.ProductCategory!.Priority)
+                .ThenByDescending(mi => mi.Priority)
                 .ToList();
 
             foreach (var menuItem in menu)
