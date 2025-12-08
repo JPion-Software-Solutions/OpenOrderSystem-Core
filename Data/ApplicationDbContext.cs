@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+using System.Text.Json;
 
 namespace OpenOrderSystem.Core.Data
 {
@@ -19,6 +22,24 @@ namespace OpenOrderSystem.Core.Data
             bob.Entity<Order>()
                 .Property(o => o.OrderComplete)
                 .HasColumnName("OrderComplete");
+
+            var priceAdjustmentComparer =
+                new ValueComparer<List<PriceAdjustment>>(
+                    (a, b) => JsonSerializer.Serialize(a, JsonSerializerOptions.Default) ==
+                              JsonSerializer.Serialize(b, JsonSerializerOptions.Default),
+                    v => v == null ? 0 : JsonSerializer.Serialize(v, JsonSerializerOptions.Default).GetHashCode(),
+                    v => v == null ? new() : JsonSerializer.Deserialize<List<PriceAdjustment>>(
+                                JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                                JsonSerializerOptions.Default)!
+                );
+
+            bob.Entity<OrderLine>()
+                .Property(ol => ol.PriceAdjustments)
+                .HasConversion(
+                    new ValueConverter<List<PriceAdjustment>, string>(
+                        v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                        v => JsonSerializer.Deserialize<List<PriceAdjustment>>(string.IsNullOrWhiteSpace(v) ? "[]" : v, JsonSerializerOptions.Default) ?? new()))
+                .Metadata.SetValueComparer(priceAdjustmentComparer);
         }
 
         /// <summary>

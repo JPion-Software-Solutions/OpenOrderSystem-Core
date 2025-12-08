@@ -14,7 +14,7 @@ namespace OpenOrderSystem.Core.Data.DataModels
         /// <summary>
         /// Varient descriptor (ex: Large/Medium or 12pc/16pc)
         /// </summary>
-        [MaxLength(12, ErrorMessage = "Please keep item varient descriptors shorter than 12 characters.")]
+        [MaxLength(32, ErrorMessage = "Please keep item varient descriptors shorter than 32 characters.")]
         [Required]
         public string Descriptor { get; set; } = string.Empty;
 

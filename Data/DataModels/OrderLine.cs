@@ -39,6 +39,8 @@ namespace OpenOrderSystem.Core.Data.DataModels
         /// </summary>
         public int MenuItemVarient { get; set; }
 
+        public List<PriceAdjustment> PriceAdjustments { get; set; } = new List<PriceAdjustment>();
+
         /// <summary>
         /// Any comments left by the customer for this line will appear here
         /// </summary>
@@ -105,13 +107,16 @@ namespace OpenOrderSystem.Core.Data.DataModels
         }
 
         /// <summary>
-        /// Retrieves the total price of the menu line item
+        /// Retrieves the line item price before any modifications are applied.
         /// </summary>
         [NotMapped]
-        public float LinePrice
+        public float OriginalPrice
         {
             get
             {
+                if (MenuItem == null)
+                    throw new InvalidOperationException("OrderLine.MenuItem is null! Please ensure the MenuItem has been joined using Include");
+
                 MenuItem.Varient = MenuItemVarient;
                 float price = MenuItem.Price;
 
@@ -121,6 +126,23 @@ namespace OpenOrderSystem.Core.Data.DataModels
                 }
 
                 return price;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the total price of the menu line item
+        /// </summary>
+        [NotMapped]
+        public float LinePrice
+        {
+            get
+            {
+                var modifications = 0.0f;
+
+                foreach (var mod in PriceAdjustments)
+                    modifications += mod.Amount;
+
+                return OriginalPrice + modifications;
             }
         }
 
@@ -153,5 +175,35 @@ namespace OpenOrderSystem.Core.Data.DataModels
 
             return str;
         }
+    }
+
+    public class PriceAdjustment
+    {
+        private string _source = string.Empty;
+        public static HashSet<string> ValidSources { get; private set; } = new HashSet<string>
+        {
+            "OOSCore.ManualAdjust",
+            "OOSCore.Promotion",
+            "OOSCore.StaffOverride"
+        };
+        
+        public static void RegisterSource(string source) => ValidSources.Add(source);
+
+        public static bool IsValidSource(string source) => ValidSources.Contains(source, StringComparer.OrdinalIgnoreCase);
+        
+        public float Amount { get; set; }
+
+        public string Reason { get; set; } = string.Empty;
+
+        public string Source
+        {
+            get => _source;
+            set => _source = IsValidSource(value) 
+                ? value 
+                : throw new InvalidOperationException($"The source '{value}' is not a known valid PriceAdjustment source");
+        }
+
+
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }
