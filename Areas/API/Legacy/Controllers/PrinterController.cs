@@ -10,6 +10,7 @@ using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Attributes;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using OpenOrderSystem.Core.Models;
 using OpenOrderSystem.Core.Services;
 using System.Reflection;

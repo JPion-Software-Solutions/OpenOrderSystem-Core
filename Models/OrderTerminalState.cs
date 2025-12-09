@@ -1,4 +1,4 @@
-﻿using OpenOrderSystem.Core.Data.DataModels;
+﻿using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 
 namespace OpenOrderSystem.Core.Models
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
-using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using OpenOrderSystem.Core.Models;
 using System.Collections.Generic;
 

@@ -1,5 +1,6 @@
 ﻿using OpenOrderSystem.Core.Areas.API.Legacy.DTO;
 using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 
 namespace OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories
 {

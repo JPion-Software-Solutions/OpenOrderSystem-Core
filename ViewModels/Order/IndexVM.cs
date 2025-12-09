@@ -12,6 +12,6 @@ namespace OpenOrderSystem.Core.ViewModels.Order
 
         public string? Phone { get; set; }
 
-        public List<Data.DataModels.Order> MyOrders { get; set; } = new List<Data.DataModels.Order>();
+        public List<Data.DataModels.Ordering.Entities.Order> MyOrders { get; set; } = new List<Data.DataModels.Ordering.Entities.Order>();
     }
 }

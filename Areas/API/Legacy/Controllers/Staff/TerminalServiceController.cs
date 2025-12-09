@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
-using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Models;
 using System.Security.Cryptography;
@@ -13,6 +12,7 @@ using System.Text.Json;
 using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Areas.API.Legacy.DTO;
 using OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 
 namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers.Staff
 {

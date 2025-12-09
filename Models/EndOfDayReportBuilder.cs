@@ -1,7 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using OpenOrderSystem.Core.Areas.Staff.Models;
-using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using System.Text.Json;
 
 namespace OpenOrderSystem.Core.Models

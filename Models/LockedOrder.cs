@@ -1,4 +1,4 @@
-﻿using OpenOrderSystem.Core.Data.DataModels;
+﻿using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using System.Text.Json.Serialization;
 using Twilio.Rest.Trunking.V1;
 

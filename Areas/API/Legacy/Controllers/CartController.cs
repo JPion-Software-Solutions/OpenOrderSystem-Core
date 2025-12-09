@@ -6,6 +6,8 @@ using OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories;
 using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.Ordering;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using OpenOrderSystem.Core.Models;
 using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Services.Interfaces;

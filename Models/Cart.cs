@@ -1,12 +1,12 @@
-﻿using OpenOrderSystem.Core.Data.DataModels;
-using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+﻿using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace OpenOrderSystem.Core.Models
 {
     public class Cart
     {
-        private string? _promo = null;
+        private string? _promoCode = null;
         public Cart()
         {
             Id = Guid.NewGuid().ToString();
@@ -30,18 +30,11 @@ namespace OpenOrderSystem.Core.Models
         public Order Order { get; set; }
 
         [MaxLength(20)]
-        public string? PromoCode { get => _promo; set => _promo = value?.ToUpper(); }
+        public string? PromoCode { get => _promoCode; set => _promoCode = value?.ToUpper(); }
 
         public BaseDiscountCode? Promo { get; set; }
 
-        public float Discount
-        {
-            get
-            {
-                if (Promo == null) return 0;
-                else return Promo.GetDiscount(Order);
-            }
-        }
+        public float Discount => Promo == null ? 0 : Promo.GetDiscount(Order);
 
         public Customer? Customer
         {

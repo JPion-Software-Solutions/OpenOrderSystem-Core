@@ -6,13 +6,13 @@ using Microsoft.Identity.Client;
 using OpenOrderSystem.Core.Areas.Staff.Models;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal;
 using OpenOrderSystem.Core.Data;
-using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal;
 using OpenOrderSystem.Core.Models;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization.Metadata;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 
 namespace OpenOrderSystem.Core.Areas.Staff.Controllers
 {

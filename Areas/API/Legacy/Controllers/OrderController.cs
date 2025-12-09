@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
-using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Services.Interfaces;
 using PizzaPartry.tools;

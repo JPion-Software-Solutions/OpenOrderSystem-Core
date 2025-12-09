@@ -1,10 +1,11 @@
 ﻿using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.ValueObjects;
 using OpenOrderSystem.Core.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
-namespace OpenOrderSystem.Core.Data.DataModels
+namespace OpenOrderSystem.Core.Data.DataModels.Ordering.Entities
 {
     public class Order
     {

@@ -1,11 +1,12 @@
 ﻿using Microsoft.Identity.Client;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.ValueObjects;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using System.Text.Json;
 using System.Web.Helpers;
 
-namespace OpenOrderSystem.Core.Data.DataModels
+namespace OpenOrderSystem.Core.Data.DataModels.Ordering.Entities
 {
     public class OrderLine
     {
@@ -175,35 +176,5 @@ namespace OpenOrderSystem.Core.Data.DataModels
 
             return str;
         }
-    }
-
-    public class PriceAdjustment
-    {
-        private string _source = string.Empty;
-        public static HashSet<string> ValidSources { get; private set; } = new HashSet<string>
-        {
-            "OOSCore.ManualAdjust",
-            "OOSCore.Promotion",
-            "OOSCore.StaffOverride"
-        };
-        
-        public static void RegisterSource(string source) => ValidSources.Add(source);
-
-        public static bool IsValidSource(string source) => ValidSources.Contains(source, StringComparer.OrdinalIgnoreCase);
-        
-        public float Amount { get; set; }
-
-        public string Reason { get; set; } = string.Empty;
-
-        public string Source
-        {
-            get => _source;
-            set => _source = IsValidSource(value) 
-                ? value 
-                : throw new InvalidOperationException($"The source '{value}' is not a known valid PriceAdjustment source");
-        }
-
-
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }

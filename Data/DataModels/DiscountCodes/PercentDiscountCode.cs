@@ -1,4 +1,6 @@
-﻿namespace OpenOrderSystem.Core.Data.DataModels.DiscountCodes
+﻿using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
+
+namespace OpenOrderSystem.Core.Data.DataModels.DiscountCodes
 {
     public class PercentDiscountCode : BaseDiscountCode
     {

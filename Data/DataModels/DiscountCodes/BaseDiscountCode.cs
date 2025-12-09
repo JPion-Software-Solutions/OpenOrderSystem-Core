@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -104,7 +105,7 @@ namespace OpenOrderSystem.Core.Data.DataModels.DiscountCodes
                     var varient = line.MenuItem?.MenuItemVarients?[line.MenuItemVarient] ??
                         throw new NullReferenceException();
 
-                    if (WhiteListItemsVarients.FirstOrDefault(w => varient.Id == w.Id) != null)
+                    if (WhiteListItemsVarients?.FirstOrDefault(w => varient.Id == w.Id) != null)
                         validItemsInOrder.Add(varient);
                 }
             }

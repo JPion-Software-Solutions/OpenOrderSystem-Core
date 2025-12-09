@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.ValueObjects;
 using System.Text.Json;
 
 namespace OpenOrderSystem.Core.Data
@@ -33,12 +35,19 @@ namespace OpenOrderSystem.Core.Data
                                 JsonSerializerOptions.Default)!
                 );
 
-            bob.Entity<OrderLine>()
-                .Property(ol => ol.PriceAdjustments)
-                .HasConversion(
+            var priceAdjustmentConverter =
                     new ValueConverter<List<PriceAdjustment>, string>(
                         v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-                        v => JsonSerializer.Deserialize<List<PriceAdjustment>>(string.IsNullOrWhiteSpace(v) ? "[]" : v, JsonSerializerOptions.Default) ?? new()))
+                        v => JsonSerializer.Deserialize<List<PriceAdjustment>>(string.IsNullOrWhiteSpace(v) ? "[]" : v, JsonSerializerOptions.Default) ?? new());
+
+            //bob.Entity<Order>()
+            //    .Property(ol => ol.PriceAdjustments)
+            //    .HasConversion(priceAdjustmentConverter)
+            //    .Metadata.SetValueComparer(priceAdjustmentComparer);
+
+            bob.Entity<OrderLine>()
+                .Property(ol => ol.PriceAdjustments)
+                .HasConversion(priceAdjustmentConverter)
                 .Metadata.SetValueComparer(priceAdjustmentComparer);
         }
 

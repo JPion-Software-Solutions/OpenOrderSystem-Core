@@ -1,4 +1,6 @@
-﻿namespace OpenOrderSystem.Core.Data.DataModels.DiscountCodes
+﻿using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
+
+namespace OpenOrderSystem.Core.Data.DataModels.DiscountCodes
 {
     public class FixedAmountDiscountCode : BaseDiscountCode
     {
@@ -23,7 +25,7 @@
             bool isActive = !IsArchived;
 
             //validates the order total meets the minimum purchase requirement
-            bool metMinimum = MetMinimumSpend(order.LineItemTotal);
+            bool metMinimum = base.MetMinimumSpend(order.LineItemTotal);
 
             //sets the error message so customer's can recieve feedback if the coupon isn't working.
             if (!isActive) _error = "Invalid discount code.";

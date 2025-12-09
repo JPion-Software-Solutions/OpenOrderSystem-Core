@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OpenOrderSystem.Core.Data.DataModels
 {

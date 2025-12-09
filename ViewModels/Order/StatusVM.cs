@@ -1,10 +1,10 @@
-﻿using OpenOrderSystem.Core.Data.DataModels;
+﻿using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 
 namespace OpenOrderSystem.Core.ViewModels.Order
 {
     public class StatusVM
     {
-        public Data.DataModels.Order Order { get; set; }
+        public Data.DataModels.Ordering.Entities.Order Order { get; set; }
 
         public OrderStage Stage { get => Order.Stage; }
 

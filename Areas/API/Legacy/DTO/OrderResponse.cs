@@ -1,6 +1,6 @@
-﻿using OpenOrderSystem.Core.Data.DataModels;
-using OpenOrderSystem.Core.Areas.API.Legacy.Models;
+﻿using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 
 namespace OpenOrderSystem.Core.Areas.API.Legacy.DTO
 {
