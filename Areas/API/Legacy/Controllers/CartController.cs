@@ -440,6 +440,8 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 
                 ogOrder.LineItems = cart.Order.LineItems;
                 ogOrder.DiscountId = isCouponValid ? coupon?.Code : null;
+                ogOrder.PriceAdjustments = cart.Order.PriceAdjustments;
+                ogOrder.Totals = cart.Order.Totals;
                 _context.Orders.Update(ogOrder);
                 _context.SaveChanges();
             }
@@ -492,7 +494,9 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
                 {
                     CustomerId = customer.Id,
                     OrderPlaced = DateTime.UtcNow,
-                    DiscountId = isCouponValid ? cart.PromoCode : null
+                    DiscountId = isCouponValid ? cart.PromoCode : null,
+                    PriceAdjustments = cart.Order.PriceAdjustments,
+                    Totals = cart.Order.Totals
                 };
 
                 _context.Orders.Add(order);

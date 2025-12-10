@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
+using OpenOrderSystem.Core.Data.DataModels.Ordering.ValueObjects;
 using OpenOrderSystem.Core.Models;
 using System.Collections.Generic;
 
@@ -48,13 +49,13 @@ namespace OpenOrderSystem.Core.Services
 
         public void Clean()
         {
-            foreach (var id in _carts.Keys)
-            {
-                if (_carts[id].Expired)
-                {
-                    _carts.Remove(id);
-                }
-            }
+            var expired = _carts
+                .Where(kvp => kvp.Value.Expired)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in expired)
+                _carts.Remove(key);
         }
 
         /// <summary>
@@ -70,6 +71,29 @@ namespace OpenOrderSystem.Core.Services
 
             if (_carts.ContainsKey(updatedCart.Id))
             {
+                if (updatedCart.Promo != null)
+                {
+                    var promoAdjustment = updatedCart.Order.PriceAdjustments.FirstOrDefault(a => a.Reason == "Promocode");
+                    if (promoAdjustment != null)
+                    {
+                        promoAdjustment.Amount = updatedCart.Promo.GetDiscount(updatedCart.Order) * -1;
+                    }
+                    else
+                    {
+                        updatedCart.Order.PriceAdjustments.Add(new PriceAdjustment
+                        {
+                            Reason = "Promocode",
+                            Amount = updatedCart.Promo.GetDiscount(updatedCart.Order) * -1,
+                            Source = "OOSCore.Promotion"
+                        });
+                    }
+                }
+
+                updatedCart.Order.CalculateOrderTotals(new TotalCalculationContext
+                {
+                    TaxRate = 0.06f
+                });
+
                 updatedCart.CartLastActive = DateTime.UtcNow;
                 _carts[updatedCart.Id] = updatedCart;
                 status = CartStatus.Updated;

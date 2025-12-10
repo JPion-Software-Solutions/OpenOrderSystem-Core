@@ -35,6 +35,10 @@ namespace OpenOrderSystem.Core.Data.DataModels.Ordering.Entities
         /// </summary>
         public Customer? Customer { get; set; }
 
+        public List<PriceAdjustment> PriceAdjustments { get; set; } = new List<PriceAdjustment>();
+
+        public OrderTotals Totals { get; set; } = new OrderTotals();
+
         /// <summary>
         /// JSON data containing the details of a completed order using the LockedOrder model.
         /// </summary>
@@ -73,52 +77,29 @@ namespace OpenOrderSystem.Core.Data.DataModels.Ordering.Entities
         public string? DiscountId { get; set; }
         public BaseDiscountCode? Discount { get; set; }
 
-        [NotMapped]
-        public float LineItemTotal
-        {
-            get
-            {
-                float subtotal = 0;
-
-                foreach (var line in LineItems)
-                {
-                    subtotal += line.LinePrice;
-                }
-
-                return subtotal;
-            }
-        }
-
         /// <summary>
-        /// Calculates the order's subtotal
+        /// DEPRECIATED: WILL BE REMOVED IN FUTURE UPDATE. PLEASU USE NEW TOTALS STRUCTURE AND CalculateOrderTotal METHOD! Calculates the order's total before any adjustments
         /// </summary>
         [NotMapped]
-        public float Subtotal
-        {
-            get
-            {
-                float subtotal = LineItemTotal;
-
-                if (Discount != null)
-                {
-                    subtotal -= Discount.GetDiscount(this);
-                }
-
-                return subtotal;
-            }
-        }
+        public float LineItemTotal => Totals.GrossSubtotal;
 
         /// <summary>
-        /// Calculate the order tax
+        /// DEPRECIATED: WILL BE REMOVED IN FUTURE UPDATE. PLEASU USE NEW TOTALS STRUCTURE AND CalculateOrderTotal METHOD! Calculates the order's subtotal
         /// </summary>
         [NotMapped]
-        public float Tax { get => Subtotal * 0.06f; }
+        public float Subtotal => Totals.NetSubtotal;
 
         /// <summary>
-        /// Calculate the order total.
+        /// DEPRECIATED: WILL BE REMOVED IN FUTURE UPDATE. PLEASU USE NEW TOTALS STRUCTURE AND CalculateOrderTotal METHOD! Calculate the order tax
         /// </summary>
         [NotMapped]
-        public float Total { get => Subtotal + Tax; }
+        public float Tax => Totals.Tax;
+
+        /// <summary>
+        /// DEPRECIATED: WILL BE REMOVED IN FUTURE UPDATE. PLEASU USE NEW TOTALS STRUCTURE AND CalculateOrderTotal METHOD! Calculate the order total.
+        /// </summary>
+        [NotMapped]
+        public float Total => Totals.Total;
 
         [NotMapped]
         public OrderStage Stage
@@ -172,6 +153,36 @@ namespace OpenOrderSystem.Core.Data.DataModels.Ordering.Entities
 
             else
                 return TimerStatus.TimeGood;
+        }
+
+        public OrderTotals CalculateOrderTotals(TotalCalculationContext context)
+        {
+            Totals = new OrderTotals(); //reset to 0 for clean count.
+
+            //Calculate the GrossSubtotal
+            foreach (var line in LineItems) Totals.GrossSubtotal += line.LinePrice;
+
+            //Calculate discount
+            foreach (var promo in PriceAdjustments.Where(a => a.MatchesSource("OOSCore.Promotion"))) Totals.Discount += promo.Amount;
+
+            //Calculate additional price adjustments
+            var additionalAdjustmentTotal = 0f;
+            foreach (var adjustment in PriceAdjustments.Where(a => !a.MatchesSource("OOSCore.Promotion"))) 
+            {
+                additionalAdjustmentTotal += adjustment.Amount;
+                Totals.AdditionalAdjustments[adjustment.Reason] = adjustment.Amount;
+            }
+
+            //calculate net subtotal
+            Totals.NetSubtotal = Totals.GrossSubtotal + Totals.Discount + additionalAdjustmentTotal;
+
+            //calculate tax
+            Totals.Tax = MathF.Round(Totals.NetSubtotal * context.TaxRate, 2);
+
+            //calculate final total
+            Totals.Total = Totals.NetSubtotal + Totals.Tax;
+
+            return Totals;
         }
     }
 

@@ -2,10 +2,16 @@
 {
     public class OrderTotals
     {
-        public float Subtotal { get; set; }
+        public float GrossSubtotal { get; set; }
+
+        public float NetSubtotal { get; set; }
+
+        public float Discount { get; set; }
 
         public float Tax { get; set; }
 
         public float Total { get; set; }
+
+        public Dictionary<string, float> AdditionalAdjustments { get; set; } = new Dictionary<string, float>();
     }
 }

@@ -27,7 +27,8 @@
                 : throw new InvalidOperationException($"The source '{value}' is not a known valid PriceAdjustment source");
         }
 
-
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+        public bool MatchesSource(string source) => Source.ToLowerInvariant() == source.ToLowerInvariant();
     }
 }

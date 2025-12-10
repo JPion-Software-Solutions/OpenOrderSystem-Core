@@ -40,10 +40,31 @@ namespace OpenOrderSystem.Core.Data
                         v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
                         v => JsonSerializer.Deserialize<List<PriceAdjustment>>(string.IsNullOrWhiteSpace(v) ? "[]" : v, JsonSerializerOptions.Default) ?? new());
 
-            //bob.Entity<Order>()
-            //    .Property(ol => ol.PriceAdjustments)
-            //    .HasConversion(priceAdjustmentConverter)
-            //    .Metadata.SetValueComparer(priceAdjustmentComparer);
+
+            var orderTotalsComparer =
+                new ValueComparer<OrderTotals>(
+                    (a, b) => JsonSerializer.Serialize(a, JsonSerializerOptions.Default) ==
+                              JsonSerializer.Serialize(b, JsonSerializerOptions.Default),
+                    v => v == null ? 0 : JsonSerializer.Serialize(v, JsonSerializerOptions.Default).GetHashCode(),
+                    v => v == null ? new() : JsonSerializer.Deserialize<OrderTotals>(
+                                JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                                JsonSerializerOptions.Default)!
+                );
+
+            var orderTotalsConverter =
+                    new ValueConverter<OrderTotals, string>(
+                        v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                        v => JsonSerializer.Deserialize<OrderTotals>(string.IsNullOrWhiteSpace(v) ? "[]" : v, JsonSerializerOptions.Default) ?? new());
+
+            bob.Entity<Order>()
+                .Property(ol => ol.Totals)
+                .HasConversion(orderTotalsConverter)
+                .Metadata.SetValueComparer(orderTotalsComparer);
+
+            bob.Entity<Order>()
+                .Property(ol => ol.PriceAdjustments)
+                .HasConversion(priceAdjustmentConverter)
+                .Metadata.SetValueComparer(priceAdjustmentComparer);
 
             bob.Entity<OrderLine>()
                 .Property(ol => ol.PriceAdjustments)
