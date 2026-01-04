@@ -61,6 +61,8 @@
   <ItemGroup>
     <Folder Include="Areas\Configuration\Data\" />
     <Folder Include="Areas\Staff\Data\" />
+    <Folder Include="Data\DataModels\Promotions\Entities\" />
+    <Folder Include="Data\DataModels\Promotions\ValueObjects\" />
     <Folder Include="wwwroot\media\images\user\" />
     <Folder Include="wwwroot\media\temp\" />
     <Folder Include="wwwroot\NewFolder\" />
@@ -69,13 +71,11 @@
   <ItemGroup>
     <None Include="bin\Release\net8.0\OgDbData.sql" />
     <None Include="config\siteSettings.json" />
-    <None Include="wwwroot\js\ActiveTimer_0.0.6.js" />
-    <None Include="wwwroot\js\Notifications_1.1.0.js" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="PizzaPartry.tools">
-      <HintPath>D:\PizzaPartry.tools\PizzaPartry.tools\bin\Release\net8.0\PizzaPartry.tools.dll</HintPath>
+      <HintPath>S:\PizzaPartry.tools\PizzaPartry.tools\bin\Release\net8.0\PizzaPartry.tools.dll</HintPath>
     </Reference>
   </ItemGroup>
 

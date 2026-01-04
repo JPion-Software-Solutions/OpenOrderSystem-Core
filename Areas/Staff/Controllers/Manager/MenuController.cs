@@ -65,7 +65,8 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager
             var ingredientIds = JsonSerializer.Deserialize<int[]>(model.Ingredients);
             var varients = JsonSerializer.Deserialize<List<Varient>>(model.Varients, new JsonSerializerOptions
             {
-                IncludeFields = true
+                IncludeFields = true,
+                NumberHandling = JsonNumberHandling.AllowReadingFromString
             });
 
             if (ModelState.IsValid)
