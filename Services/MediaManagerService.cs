@@ -2,6 +2,7 @@
 using OpenOrderSystem.Core.Models;
 using OpenOrderSystem.Core.Models.Interfaces;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace OpenOrderSystem.Core.Services
 {
@@ -77,7 +78,13 @@ namespace OpenOrderSystem.Core.Services
                 {
                     foreach (var selection in selections)
                     {
-                        var path = Path.Combine(MediaRootPath, selection.Replace('.', '\\'));
+                        string[] pathComponents = 
+                        [
+                            MediaRootPath,
+                            ..selection.Split('.')
+                        ];
+
+                        var path = Path.Combine(pathComponents);
                         dirMap.Add(path);
                         for (int i = 0; i < dirMap.Count; ++i)
                         {
@@ -96,7 +103,7 @@ namespace OpenOrderSystem.Core.Services
             for (int i = 0; i < dirMap.Count; i++)
             {
                 //remap to relative path
-                var rel = dirMap[i].Replace(MediaRootPath, "").Replace('\\', '.').Remove(0, 1);
+                var rel = dirMap[i].Replace(MediaRootPath, "").Replace('\\', '.').Replace('/', '.').Remove(0, 1);
                 dirMap[i] = Path.Combine("media", rel);
             }
 
@@ -107,11 +114,12 @@ namespace OpenOrderSystem.Core.Services
                 _grouped = true;
                 var rootFolders = dirMap
                     .AsQueryable()
-                    .Where(d => !d.Contains('.'));
+                    .Where(d => !d.Contains('.'))
+                    .Select(s => Regex.Replace(s, "media[\\/]", ""));
 
                 foreach (var dir in rootFolders)
                 {
-                    var path = Path.Combine(MediaRootPath, dir.Replace("media\\", ""));
+                    var path = Path.Combine(MediaRootPath, dir);
                     var files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
                     var iMedia = new List<IMedia>();
 
@@ -131,7 +139,8 @@ namespace OpenOrderSystem.Core.Services
             {
                 foreach (var dir in dirMap)
                 {
-                    var path = Path.Combine(MediaRootPath, dir.Replace('.', '\\').Replace("media\\", ""));
+                    var sub = dir.Replace("media\\", "").Replace("media/", "").Split('.');
+                    var path = Path.Combine([MediaRootPath, ..sub]);
                     var files = Directory.GetFiles(path);
                     var iMedia = new List<IMedia>();
 
@@ -224,7 +233,7 @@ namespace OpenOrderSystem.Core.Services
             }
             else if (MediaFactory.MediaExtensionMap.ContainsKey(extension) && MediaFactory.MediaExtensionMap[extension] == typeof(AudioMedia))
             {
-                directory = Path.Combine(MediaRootPath, "images", "user");
+                directory = Path.Combine(MediaRootPath, "audio", "user");
             }
             else
             {

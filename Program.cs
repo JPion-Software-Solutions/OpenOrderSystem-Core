@@ -15,6 +15,8 @@ using OpenOrderSystem.Core.Areas.Staff.Controllers.Manager;
 using OpenOrderSystem.Core.Models;
 using System.Reflection;
 using OpenOrderSystem.Core.Areas.API.Legacy.Controllers;
+using OpenOrderSystem.Core.Extensions.AspNet;
+using OpenOrderSystem.Core.Extensions.Development;
 
 internal class Program
 {
@@ -33,11 +35,14 @@ internal class Program
         var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
         connectionString = connectionString?.Replace("<<DB_PASS>>", dbPass ?? "");
 
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.File("logs/OOS_.log", rollingInterval: RollingInterval.Day)
-            .CreateLogger();
+        if(!bob.Environment.IsDevelopment())
+        {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.File("logs/OOS_.log", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
 
-        bob.Services.AddSerilog();
+            bob.Services.AddSerilog();
+        }
 
         bob.Services.AddScoped<IEmailService, DevEmail>();
         bob.Services.AddScoped<ISmsService, TwilioSmsService>();
@@ -64,6 +69,8 @@ internal class Program
             });
 
         bob.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+        bob.Services.AddHttpClient();
 
         bob.Services.AddIdentity<IdentityUser, IdentityRole>
             (options =>
@@ -126,6 +133,8 @@ internal class Program
 
         var app = bob.Build();
 
+        app.EnsureCoreUserRolesCreated().Wait();
+
         app.UseCors(CORS_POLICY);
 
         //DBCleanup
@@ -145,6 +154,7 @@ internal class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
+            app.EnsureDevEnvironmentReady().Wait();
         }
         else
         {

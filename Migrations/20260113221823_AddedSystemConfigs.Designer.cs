@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenOrderSystem.Core.Data;
 
@@ -11,9 +12,11 @@ using OpenOrderSystem.Core.Data;
 namespace OpenOrderSystem.Core.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260113221823_AddedSystemConfigs")]
+    partial class AddedSystemConfigs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -278,6 +281,27 @@ namespace OpenOrderSystem.Core.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Actor", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ActorScope")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SystemActors");
                 });
 
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.ConfirmationCode", b =>
@@ -717,6 +741,10 @@ namespace OpenOrderSystem.Core.Migrations
                     b.Property<string>("Key")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ActorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("IsLocked")
                         .HasColumnType("bit");
 
@@ -728,6 +756,8 @@ namespace OpenOrderSystem.Core.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Key");
+
+                    b.HasIndex("ActorId");
 
                     b.ToTable("Confguration");
                 });
@@ -892,6 +922,15 @@ namespace OpenOrderSystem.Core.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Actor", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.ConfirmationCode", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
@@ -998,6 +1037,17 @@ namespace OpenOrderSystem.Core.Migrations
                     b.Navigation("MenuItem");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.SystemConfig", b =>
+                {
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.Actor", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
                 });
 
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.DiscountCodes.BaseDiscountCode", b =>
