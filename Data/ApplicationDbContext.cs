@@ -77,8 +77,6 @@ namespace OpenOrderSystem.Core.Data
         /// </summary>
         public DbSet<SystemConfig> Confguration { get; set; }
 
-        public DbSet<Actor> SystemActors { get; set; } 
-
         public DbSet<Printer> Printers { get; set; }
 
         public DbSet<PrintTemplate> PrintTemplates { get; set; }

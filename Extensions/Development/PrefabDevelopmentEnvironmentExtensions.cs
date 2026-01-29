@@ -1,12 +1,15 @@
 using System;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Identity.Client;
 using OpenOrderSystem.Core.Data;
+using OpenOrderSystem.Core.DevelopmentTools;
+using Quartz.Xml.JobSchedulingData20;
 
 namespace OpenOrderSystem.Core.Extensions.Development;
 
 public static class PrefabDevelopmentEnvironmentExtensions
 {
-    public static void EnsureDevEnvironmentReady(this WebApplication app)
+    public static async Task EnsureDevEnvironmentReady(this WebApplication app)
     {
         var section = app.Configuration.GetSection("OOS_Dev_Env");
 
@@ -22,14 +25,70 @@ public static class PrefabDevelopmentEnvironmentExtensions
         
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var userManger = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<WebApplication>>();
-
+        var httpClient = scope.ServiceProvider.GetRequiredService<HttpClient>();
 
         logger.LogInformation("DEVELOPMENTD DATABASE ACTIVE");
 
         if (dbContext.Users.Any())
         {
-            logger.LogError("INVALID OPERATION! ");
+            logger.LogError("INVALID OPERATION! Cannot add users to a system already containing users.");
+        }
+        else
+        {
+            var adminCred = devEnv.AdminUserCredentials.Split('/').Length == 2
+                ? new AccountCredentials(devEnv.AdminUserCredentials.Split('/')[0], devEnv.AdminUserCredentials.Split('/')[1])
+                : new AccountCredentials("admin", "password"); //fallback;
+            
+            var userCred = devEnv.StandardUserCredentials.Split('/').Length == 2
+                ? new AccountCredentials(devEnv.StandardUserCredentials.Split('/')[0], devEnv.StandardUserCredentials.Split('/')[1])
+                : new AccountCredentials("user", "password"); //fallback;
+
+            var hasher = new PasswordHasher<IdentityUser>();
+
+            var admin = new IdentityUser
+            {
+                UserName = adminCred.username,
+                NormalizedUserName = adminCred.username.ToUpper()
+            };
+            var user = new IdentityUser
+            {
+                UserName = userCred.username,
+                NormalizedUserName = userCred.username.ToUpper()
+            };
+
+            admin.PasswordHash = hasher.HashPassword(admin, adminCred.password);
+            user.PasswordHash = hasher.HashPassword(user, userCred.password);
+
+            dbContext.AddRange([admin, user]);
+            await dbContext.SaveChangesAsync();
+
+            await userManger.AddToRolesAsync(admin, ["admin","default_admin","manager","terminal_user"]);
+            await userManger.AddToRolesAsync(user, ["terminal_user"]);
+
+            logger.LogInformation("User accounts created successfully!");
+        }
+
+        var manifestClient = new DevPackManifestClient(httpClient);
+        var manifest = await manifestClient.GetManifestAsync($"{devEnv.DevPackRepoUrl}/manifest.json");
+        var pack = manifest.Packs.FirstOrDefault(p => p.PackName == devEnv.DevPackName);
+        if (pack ==  null) throw new InvalidOperationException($"Unable to locate pack '{devEnv.DevPackName}' at '{devEnv.DevPackRepoUrl}'");
+
+        var filename = pack.Versions[pack.Latest].Filename;
+        var filepath = $"{devEnv.DevPackRepoUrl}/{filename}";
+
+        Directory.CreateDirectory(Path.Combine("Store","DevPacks"));
+
+        if (!File.Exists(Path.Combine("Store","DevPacks",filename)))
+        {
+            var downloadName = await ZipDownloader.DownloadZipToDiskAsync(httpClient, filepath, "Store/DevPacks", filename, pack.Versions[pack.Latest].Sha256);
+            filepath = Path.Combine("Store","DevPacks",filename);
+
+            //unpack environment.
+            await DevPackUnloader.UnpackAssets(filepath);
+            await DevPackUnloader.ImportInfo(filepath, dbContext);
+            await DevPackUnloader.ImportMenu(filepath, dbContext);
         }
     }
 
@@ -61,6 +120,8 @@ public static class PrefabDevelopmentEnvironmentExtensions
         /// </summary>
         public string DevPackName { get; set; } = DEFAULT_DEV_PACK_NAME;
     }
+
+    public record AccountCredentials (string username, string password);
 }
 
 public enum PrefabConfiguration

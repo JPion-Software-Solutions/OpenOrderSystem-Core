@@ -70,6 +70,8 @@ internal class Program
 
         bob.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+        bob.Services.AddHttpClient();
+
         bob.Services.AddIdentity<IdentityUser, IdentityRole>
             (options =>
             {
@@ -152,7 +154,7 @@ internal class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
-            app.EnsureDevEnvironmentReady();
+            app.EnsureDevEnvironmentReady().Wait();
         }
         else
         {

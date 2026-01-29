@@ -62,6 +62,8 @@
     <Folder Include="Areas\Configuration\Data\" />
     <Folder Include="Areas\Staff\Data\" />
     <Folder Include="Data/Interfaces/" />
+    <Folder Include="DevelopmentTools/" />
+    <Folder Include="Store/DevPacks/" />
     <Folder Include="wwwroot\media\images\user\" />
     <Folder Include="wwwroot\media\temp\" />
     <Folder Include="wwwroot\NewFolder\" />
