@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenOrderSystem.Core.Data;
 
@@ -11,9 +12,11 @@ using OpenOrderSystem.Core.Data;
 namespace OpenOrderSystem.Core.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260124022613_RemovedActors")]
+    partial class RemovedActors
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -303,6 +306,40 @@ namespace OpenOrderSystem.Core.Migrations
                     b.ToTable("ConfirmationCodes");
                 });
 
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Customer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CustomerCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailUpdates")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("SMSUpdates")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Customers");
+                });
+
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.DiscountCodeItem", b =>
                 {
                     b.Property<int>("Id")
@@ -499,8 +536,8 @@ namespace OpenOrderSystem.Core.Migrations
 
                     b.Property<string>("Descriptor")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
 
                     b.Property<int>("Index")
                         .HasColumnType("int");
@@ -525,41 +562,7 @@ namespace OpenOrderSystem.Core.Migrations
                     b.ToTable("MenuItemVarients");
                 });
 
-            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.Customer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CustomerCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("EmailUpdates")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("SMSUpdates")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Customers");
-                });
-
-            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.Order", b =>
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Order", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -597,14 +600,6 @@ namespace OpenOrderSystem.Core.Migrations
                     b.Property<DateTime?>("OrderReady")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("PriceAdjustments")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Totals")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
@@ -614,7 +609,7 @@ namespace OpenOrderSystem.Core.Migrations
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.OrderLine", b =>
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.OrderLine", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -634,10 +629,6 @@ namespace OpenOrderSystem.Core.Migrations
 
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
-
-                    b.Property<string>("PriceAdjustments")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -831,7 +822,7 @@ namespace OpenOrderSystem.Core.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.OrderLine", null)
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.OrderLine", null)
                         .WithMany()
                         .HasForeignKey("OrderLinesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -978,9 +969,9 @@ namespace OpenOrderSystem.Core.Migrations
                     b.Navigation("MenuItem");
                 });
 
-            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.Order", b =>
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Order", b =>
                 {
-                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.Customer", "Customer")
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId");
 
@@ -993,7 +984,7 @@ namespace OpenOrderSystem.Core.Migrations
                     b.Navigation("Discount");
                 });
 
-            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.OrderLine", b =>
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.OrderLine", b =>
                 {
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.MenuItem", "MenuItem")
                         .WithMany("OrderLines")
@@ -1001,7 +992,7 @@ namespace OpenOrderSystem.Core.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.Order", "Order")
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.Order", "Order")
                         .WithMany("LineItems")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1031,7 +1022,7 @@ namespace OpenOrderSystem.Core.Migrations
                     b.Navigation("RawDbVarients");
                 });
 
-            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Ordering.Entities.Order", b =>
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.Order", b =>
                 {
                     b.Navigation("LineItems");
                 });

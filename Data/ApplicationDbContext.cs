@@ -7,10 +7,11 @@ using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
 using OpenOrderSystem.Core.Data.DataModels.Ordering.Entities;
 using OpenOrderSystem.Core.Data.DataModels.Ordering.ValueObjects;
 using System.Text.Json;
+using OpenOrderSystem.Core.Data.Interfaces;
 
 namespace OpenOrderSystem.Core.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext, IConfigurationStoreContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -70,7 +71,12 @@ namespace OpenOrderSystem.Core.Data
                 .Property(ol => ol.PriceAdjustments)
                 .HasConversion(priceAdjustmentConverter)
                 .Metadata.SetValueComparer(priceAdjustmentComparer);
+
+            bob.Entity<SystemConfig>()
+                .HasKey("Key");
         }
+
+        public Task<int> SaveChangesAsync() => base.SaveChangesAsync();
 
         /// <summary>
         /// Product categories used to group products by type
@@ -116,6 +122,11 @@ namespace OpenOrderSystem.Core.Data
         /// Confirmation codes used to confirm accounts
         /// </summary>
         public DbSet<ConfirmationCode> ConfirmationCodes { get; set; }
+
+        /// <summary>
+        /// Stores configuration settings for the system in key-value pairs.
+        /// </summary>
+        public DbSet<SystemConfig> Confguration { get; set; }
 
         public DbSet<Printer> Printers { get; set; }
 
