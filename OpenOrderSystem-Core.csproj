@@ -61,6 +61,7 @@
   <ItemGroup>
     <Folder Include="Areas\Configuration\Data\" />
     <Folder Include="Areas\Staff\Data\" />
+    <Folder Include="Bootstrapper/" />
     <Folder Include="Data/Interfaces/" />
     <Folder Include="DevelopmentTools/" />
     <Folder Include="Store/DevPacks/" />
