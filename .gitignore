@@ -367,6 +367,6 @@ FodyWeavers.xsd
 /wwwroot/media/images/user
 /appsettings.Development.json
 /appsettings.json
-/config/siteSettings.json
+/config/
 /wwwroot/**/user/
 /Store/

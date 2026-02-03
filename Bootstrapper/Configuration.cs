@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using OpenOrderSystem.Core.Utilities;
 
 namespace OpenOrderSystem.Core.Bootstrapper;
 
@@ -53,6 +54,25 @@ public sealed class Configuration
     public bool SetupComplete => GetRequiredBool("OOS_SETUP_COMPLETE");
 
     public string LastBootVersion => GetRequiredString("OOS_LAST_BOOT_VERSION");
+
+    public string BootMode
+    {
+        get => GetConfig("BOOT_MODE") ?? "run_oos";
+        set =>_configData["BOOT_MODE"] = JsonSerializer.SerializeToElement(value);
+    }
+
+    public string ConnectionString
+    {
+        //TODO: Add automatic encryption for ConnectionString.
+        get => GetRequiredString("DB_CONNECTION_STRING");
+        set => _configData["DB_CONNECTION_STRING"] = JsonSerializer.SerializeToElement(value);
+    }
+
+    public DbProviders DbProvider
+    {
+        get => GetConfig<DbProviders>("DB_PROVIDER");
+        set => _configData["DB_PROVIDER"] = JsonSerializer.SerializeToElement(value); 
+    }
 
     // =========================
     // Non-static - private (constructors)
