@@ -18,7 +18,11 @@ body {
 }
 
 .order-btn {
-    font-size: 1.4em!important;
+    font-size: 2em!important;
+}
+
+.order-terminal-btn-container {
+    width: 55%!important;
 }
 
 .header-bg {
