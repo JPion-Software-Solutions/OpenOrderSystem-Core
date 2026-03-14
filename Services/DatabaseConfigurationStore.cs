@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 using OpenOrderSystem.Core.Data.Interfaces;
 using OpenOrderSystem.Core.Services.Interfaces;
 
@@ -28,7 +28,7 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore where TC
 
     public async Task<T?> GetConfigurationAsync<T>(string key, T? defaultValue = default)
     {
-        var row = await _context.Confguration
+        var row = await _context.Configuration
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Key == key);
 
@@ -51,13 +51,13 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore where TC
     }
 
     public async Task<string?> GetConfigurationAsync(string key, string? defaultValue = null) =>
-        (await _context.Confguration
+        (await _context.Configuration
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Key == key))?.Value ?? defaultValue;
 
     public async Task<SystemConfig?> SetConfigurationAsync(string key, object value, IConfigurationStore.SetConfigOptions? options = null)
     {
-        var row = await _context.Confguration.FirstOrDefaultAsync(c => c.Key == key);
+        var row = await _context.Configuration.FirstOrDefaultAsync(c => c.Key == key);
 
         if (row is not null && row.IsLocked && options?.forceOverwrite != true)
         {
@@ -80,7 +80,7 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore where TC
             row.IsLocked = options?.setLocked ?? false;
         }
 
-        _context.Confguration.Update(row);
+        _context.Configuration.Update(row);
         await _context.SaveChangesAsync();
 
         return row;

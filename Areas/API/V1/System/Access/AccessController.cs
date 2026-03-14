@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 using System;
 using System.ComponentModel.DataAnnotations;
 

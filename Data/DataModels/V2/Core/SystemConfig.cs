@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace OpenOrderSystem.Core.Data.DataModels;
+namespace OpenOrderSystem.Core.Data.DataModels.V2.Core;
 
 public class SystemConfig
 {

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 
 namespace OpenOrderSystem.Core.DevelopmentTools;
 
@@ -39,37 +40,37 @@ public sealed class DevPackUnloader
         File.Delete(tempFile);
         if (info == null) throw new InvalidOperationException("Failed to read pack info.json");
 
-        dbContext.Confguration.Add(new SystemConfig
+        dbContext.Configuration.Add(new SystemConfig
         {
             Key = "RestaurantName",
             Value = info.Restaurant.DisplayName
         });
-        dbContext.Confguration.Add(new SystemConfig
+        dbContext.Configuration.Add(new SystemConfig
         {
             Key = "RestaurantTagline",
             Value = info.Restaurant.Tagline
         });
-        dbContext.Confguration.Add(new SystemConfig
+        dbContext.Configuration.Add(new SystemConfig
         {
             Key = "SystemTimezone",
             Value = info.Restaurant.Timezone
         });
-        dbContext.Confguration.Add(new SystemConfig
+        dbContext.Configuration.Add(new SystemConfig
         {
             Key = "ResturantPhone",
             Value = info.Restaurant.Contact.Phone
         });
-        dbContext.Confguration.Add(new SystemConfig
+        dbContext.Configuration.Add(new SystemConfig
         {
             Key = "RestaurantWebsite",
             Value = info.Restaurant.Contact.Website
         });
-        dbContext.Confguration.Add(new SystemConfig
+        dbContext.Configuration.Add(new SystemConfig
         {
             Key = "RestaurantAddress",
             Value = JsonSerializer.Serialize(info.Restaurant.Address)
         });
-        dbContext.Confguration.Add(new SystemConfig
+        dbContext.Configuration.Add(new SystemConfig
         {
             Key = "NormalBusinessHours",
             Value = JsonSerializer.Serialize(info.Hours.Weekly)

@@ -1,5 +1,5 @@
 using System;
-using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 
 namespace OpenOrderSystem.Core.Services.Interfaces;
 

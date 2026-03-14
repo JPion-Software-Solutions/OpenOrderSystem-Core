@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Data.DataModels.DiscountCodes;
+using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 using OpenOrderSystem.Core.Data.Interfaces;
 
 namespace OpenOrderSystem.Core.Data
@@ -75,7 +76,7 @@ namespace OpenOrderSystem.Core.Data
         /// <summary>
         /// Stores configuration settings for the system in key-value pairs.
         /// </summary>
-        public DbSet<SystemConfig> Confguration { get; set; }
+        public DbSet<SystemConfig> Configuration { get; set; }
 
         public DbSet<Printer> Printers { get; set; }
 
