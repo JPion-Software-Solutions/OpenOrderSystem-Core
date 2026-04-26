@@ -6,47 +6,47 @@ namespace OpenOrderSystem.Core.ViewModels.Order
     {
         public Data.DataModels.Order Order { get; set; }
 
-        public OrderStage Stage { get => Order.Stage; }
+        public OrderStageLegacy StageLegacy { get => Order.StageLegacy; }
 
         public DateTime OrderPlaced { get => Order.OrderPlaced; }
 
         public Customer? Customer { get => Order.Customer; }
 
-        public string GetClassesForListItem(OrderStage stage)
+        public string GetClassesForListItem(OrderStageLegacy stageLegacy)
         {
             var classes = "";
-            switch (stage)
+            switch (stageLegacy)
             {
-                case OrderStage.Recieved:
-                    if (Stage == OrderStage.Recieved)
+                case OrderStageLegacy.Recieved:
+                    if (StageLegacy == OrderStageLegacy.Recieved)
                         classes = "list-group-item-info border border-dark border-5";
                     else
                         classes = "list-group-item-success";
                     return classes;
 
-                case OrderStage.InProgress:
-                    if (Stage == OrderStage.InProgress)
+                case OrderStageLegacy.InProgress:
+                    if (StageLegacy == OrderStageLegacy.InProgress)
                         classes = "list-group-item-info border border-dark border-5";
-                    else if (Stage < OrderStage.InProgress)
+                    else if (StageLegacy < OrderStageLegacy.InProgress)
                         classes = "list-group-item-light";
                     else
                         classes = "list-group-item-success";
                     return classes;
 
-                case OrderStage.Ready:
-                    if (Stage == OrderStage.Ready)
+                case OrderStageLegacy.Ready:
+                    if (StageLegacy == OrderStageLegacy.Ready)
                         classes = "list-group-item-info border border-dark border-5";
-                    else if (Stage < OrderStage.Ready)
+                    else if (StageLegacy < OrderStageLegacy.Ready)
                         classes = "list-group-item-light";
                     else
                         classes = "list-group-item-success";
                     return classes;
 
                 default:
-                case OrderStage.Complete:
-                    if (Stage == OrderStage.Complete)
+                case OrderStageLegacy.Complete:
+                    if (StageLegacy == OrderStageLegacy.Complete)
                         classes = "list-group-item-info border border-dark border-5";
-                    else if (Stage < OrderStage.Complete)
+                    else if (StageLegacy < OrderStageLegacy.Complete)
                         classes = "list-group-item-light";
                     else
                         classes = "list-group-item-success";
@@ -54,27 +54,27 @@ namespace OpenOrderSystem.Core.ViewModels.Order
             }
         }
 
-        public string GetClassesForListImg(OrderStage stage)
+        public string GetClassesForListImg(OrderStageLegacy stageLegacy)
         {
             var classes = "";
-            switch (stage)
+            switch (stageLegacy)
             {
-                case OrderStage.Recieved:
+                case OrderStageLegacy.Recieved:
                     return classes;
 
-                case OrderStage.InProgress:
-                    if (Stage < OrderStage.InProgress)
+                case OrderStageLegacy.InProgress:
+                    if (StageLegacy < OrderStageLegacy.InProgress)
                         classes = "desaturate";
                     return classes;
 
-                case OrderStage.Ready:
-                    if (Stage < OrderStage.Ready)
+                case OrderStageLegacy.Ready:
+                    if (StageLegacy < OrderStageLegacy.Ready)
                         classes = "desaturate";
                     return classes;
 
                 default:
-                case OrderStage.Complete:
-                    if (Stage < OrderStage.Complete)
+                case OrderStageLegacy.Complete:
+                    if (StageLegacy < OrderStageLegacy.Complete)
                         classes = "desaturate";
                     return classes;
             }

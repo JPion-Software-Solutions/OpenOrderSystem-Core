@@ -18,9 +18,9 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.DTO
         public float Tax { get; set; }
         public float Total { get; set; }
         public double MinutesToReady { get; set; }
-        public OrderStage Stage { get; set; }
+        public OrderStageLegacy StageLegacy { get; set; }
         public float? DiscountAmount { get; set; }
-        public List<OrderLine> LineItems { get; set; } = new();
+        public List<OrderLineLegacy> LineItems { get; set; } = new();
 
         public Order ToOrder()
         {

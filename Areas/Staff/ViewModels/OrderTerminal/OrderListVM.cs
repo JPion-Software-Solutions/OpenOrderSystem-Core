@@ -41,7 +41,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
         /// </summary>
         public Dictionary<OrderTerminalButtons, bool> EnabledButtons { get; private set; }
 
-        public OrderStage Stage { get; set; } = OrderStage.Recieved;
+        public OrderStageLegacy StageLegacy { get; set; } = OrderStageLegacy.Recieved;
 
         public string ListItemClasses
         {
@@ -49,19 +49,19 @@ namespace OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
             {
                 var classes = string.Empty;
 
-                switch (Stage)
+                switch (StageLegacy)
                 {
                     default:
-                    case OrderStage.Recieved:
+                    case OrderStageLegacy.Recieved:
                         classes += "order-terminal-item-received";
                         break;
-                    case OrderStage.InProgress:
+                    case OrderStageLegacy.InProgress:
                         classes += "order-terminal-item-in-progress";
                         break;
-                    case OrderStage.Ready:
+                    case OrderStageLegacy.Ready:
                         classes += "order-terminal-item-ready";
                         break;
-                    case OrderStage.Complete:
+                    case OrderStageLegacy.Complete:
                         classes += "order-terminal-item-complete";
                         break;
 

@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data.DataModels.V2.Catalog;
 using OpenOrderSystem.Core.Data.DataModels.V2.Core;
-using OpenOrderSystem.Core.Data.DataModels.V2.Devices;
+using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Data.Interfaces;
+using OpenOrderSystem.Core.Services.Interfaces;
 
 namespace OpenOrderSystem.Core.Data.DataModels.V2;
 
-public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext
+public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext, ICatalogDataContext
 {
     // ----------------------------
     // Core Models
@@ -16,8 +17,6 @@ public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext
 
     public DbSet<MaintenanceBypassToken> MaintenanceBypassTokens { get; set; }
 
-    public DbSet<Device> Devices { get; set; }
-
     // -----------------------------
     // Catalog (V2)
     // -----------------------------
@@ -25,55 +24,84 @@ public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext
     /// <summary>
     /// Live product catalog entries (current state).
     /// </summary>
-    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Product> Products { get; set; }
 
     /// <summary>
     /// Hierarchical grouping for products (category tree).
     /// </summary>
-    public DbSet<ProductGroup> ProductGroups => Set<ProductGroup>();
+    public DbSet<ProductGroup> ProductGroups  { get; set; }
 
     /// <summary>
     /// Purchasable variations of products (e.g., size, package, configuration).
     /// </summary>
-    public DbSet<Variant> Variants => Set<Variant>();
+    public DbSet<Variant> Variants  { get; set; }
 
     /// <summary>
     /// Hierarchical grouping for variants (optional taxonomy).
     /// </summary>
-    public DbSet<VariantGroup> VariantGroups => Set<VariantGroup>();
+    public DbSet<VariantGroup> VariantGroups  { get; set; }
 
     /// <summary>
     /// Selectable options/add-ons that can be attached to products/variants.
     /// </summary>
-    public DbSet<Option> Options => Set<Option>();
+    public DbSet<Option> Options  { get; set; }
 
     /// <summary>
     /// Hierarchical grouping for options (e.g., "Sauces", "Toppings", "Extras").
     /// </summary>
-    public DbSet<OptionGroup> OptionGroups => Set<OptionGroup>();
+    public DbSet<OptionGroup> OptionGroups  { get; set; }
 
     /// <summary>
     /// Join table defining which options are available/included for a given product,
     /// including default state and optional overrides.
     /// </summary>
-    public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
+    public DbSet<ProductOption> ProductOptions  { get; set; }
 
     /// <summary>
     /// Media assets tracked by the catalog (images, audio, video, files).
     /// </summary>
-    public DbSet<Media> Media => Set<Media>();
+    public DbSet<Media> Media { get; set; }
 
     /// <summary>
     /// Media collections/albums (grouping) for catalog usage.
     /// </summary>
-    public DbSet<MediaGroup> MediaGroups => Set<MediaGroup>();
+    public DbSet<MediaGroup> MediaGroups  { get; set; }
 
     /// <summary>
     /// Immutable historical snapshots of a product graph (product + variants/options/media) at a point in time.
     /// Used for audit/history and order stability.
     /// </summary>
-    public DbSet<ProductSnapshot> ProductSnapshots => Set<ProductSnapshot>();
+    public DbSet<ProductSnapshot> ProductSnapshots  { get; set; }
 
+    // -----------------------------
+    // Ordering (V2)
+    // -----------------------------
+    
+    /// <summary>
+    /// The configured stages that define the order fulfillment workflow.
+    /// </summary>
+    public DbSet<OrderStage> OrderStages { get; set; }
+
+    /// <summary>
+    /// Order header records tracking customer orders through the fulfillment workflow.
+    /// </summary>
+    public DbSet<OrderHeader> Orders { get; set; }
+
+    /// <summary>
+    /// Individual line items belonging to customer orders.
+    /// </summary>
+    public DbSet<OrderLine> OrderLines { get; set; }
+
+    /// <summary>
+    /// Customer records associated with orders, subject to the configured data retention policy.
+    /// </summary>
+    public DbSet<CustomerRecord> CustomerRecords { get; set; }
+    
+    /// <summary>
+    /// Orders currently queued for future fulfillment, awaiting promotion into the active stage chain.
+    /// </summary>
+    public DbSet<OrderQueue> OrderQueue { get; set; }
+    
     public OOSDbContext(DbContextOptions<OOSDbContext> options) : base(options) { }
 
     public Task<int> SaveChangesAsync() => base.SaveChangesAsync();
@@ -87,8 +115,24 @@ public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        
+        // OrderHeader indexes
+        modelBuilder.Entity<OrderHeader>()
+            .HasIndex(o => o.StageAdvanceTime)
+            .HasDatabaseName("IX_OrderHeader_StageAdvanceTime");
+
+        modelBuilder.Entity<OrderHeader>()
+            .HasIndex(o => o.AssignedTimeSlot)
+            .HasDatabaseName("IX_OrderHeader_AssignedTimeSlot");
+
+        // OrderQueue indexes
+        modelBuilder.Entity<OrderQueue>()
+            .HasIndex(q => q.ScheduledFor)
+            .HasDatabaseName("IX_OrderQueue_ScheduledFor");
 
         modelBuilder.Entity<ProductOption>()
             .HasKey(x => new { x.ProductId, x.OptionId });
+
+        modelBuilder.Entity<OrderHeader>().OwnsMany(o => o.StageHistory);
     }
 }

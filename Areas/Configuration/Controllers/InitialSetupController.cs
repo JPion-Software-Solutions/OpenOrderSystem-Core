@@ -9,6 +9,7 @@ using OpenOrderSystem.Core.Attributes;
 using OpenOrderSystem.Core.Data.DataModels;
 using System.Security.Cryptography;
 using System.Text;
+using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 
 namespace OpenOrderSystem.Core.Areas.Configuration.Controllers
 {
@@ -103,7 +104,7 @@ namespace OpenOrderSystem.Core.Areas.Configuration.Controllers
                     var confirmCode = new ConfirmationCode { UserId = userId };
                     confirmCode.GenerateCode();
 
-                    _emailService.Send(newUser.Email, "Confirm Email", confirmCode.Code);
+                    await _emailService.SendAsync(newUser.Email, "Confirm Email", confirmCode.Code);
 
                     _context.ConfirmationCodes.Add(confirmCode);
                     await _context.SaveChangesAsync();

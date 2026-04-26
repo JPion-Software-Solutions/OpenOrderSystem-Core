@@ -75,10 +75,10 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
             switch (stage)
             {
                 case 0:
-                    model.Stage = OrderStage.Recieved;
+                    model.StageLegacy = OrderStageLegacy.Recieved;
                     model.Orders = ordersToday
                         .AsEnumerable()
-                        .Where(o => o.Stage == OrderStage.Recieved)
+                        .Where(o => o.StageLegacy == OrderStageLegacy.Recieved)
                         .ToList();
                     model.EnabledButtons[OrderTerminalButtons.Info] = true;
                     model.EnabledButtons[OrderTerminalButtons.Next] = true;
@@ -90,10 +90,10 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                     break;
 
                 case 1:
-                    model.Stage = OrderStage.InProgress;
+                    model.StageLegacy = OrderStageLegacy.InProgress;
                     model.Orders = ordersToday
                         .AsEnumerable()
-                        .Where(o => o.Stage == OrderStage.InProgress)
+                        .Where(o => o.StageLegacy == OrderStageLegacy.InProgress)
                         .ToList();
                     model.EnabledButtons[OrderTerminalButtons.Info] = true;
                     model.EnabledButtons[OrderTerminalButtons.Timer] = true;
@@ -105,10 +105,10 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                     break;
 
                 case 2:
-                    model.Stage = OrderStage.Ready;
+                    model.StageLegacy = OrderStageLegacy.Ready;
                     model.Orders = ordersToday
                         .AsEnumerable()
-                        .Where(o => o.Stage == OrderStage.Ready)
+                        .Where(o => o.StageLegacy == OrderStageLegacy.Ready)
                         .ToList();
                     model.EnabledButtons[OrderTerminalButtons.Info] = true;
                     model.EnabledButtons[OrderTerminalButtons.Print] = true;
@@ -119,10 +119,10 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
 
                 case 3:
                 default:
-                    model.Stage = OrderStage.Complete;
+                    model.StageLegacy = OrderStageLegacy.Complete;
                     model.Orders = ordersToday
                         .AsEnumerable()
-                        .Where(o => o.Stage == OrderStage.Complete)
+                        .Where(o => o.StageLegacy == OrderStageLegacy.Complete)
                         .ToList();
                     model.EnabledButtons[OrderTerminalButtons.Info] = true;
                     model.EnabledButtons[OrderTerminalButtons.Print] = true;
@@ -147,7 +147,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
                     o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
-                    currentTime.Date && o.Stage == OrderStage.Recieved)
+                    currentTime.Date && o.StageLegacy == OrderStageLegacy.Recieved)
                 .ToList()
                 .Count;
 
@@ -155,7 +155,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
                     o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
-                    currentTime.Date && o.Stage == OrderStage.InProgress)
+                    currentTime.Date && o.StageLegacy == OrderStageLegacy.InProgress)
                 .ToList()
                 .Count;
 
@@ -163,7 +163,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
                     o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
-                    currentTime.Date && o.Stage == OrderStage.Ready)
+                    currentTime.Date && o.StageLegacy == OrderStageLegacy.Ready)
                 .ToList()
                 .Count;
 
@@ -171,7 +171,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
                     o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
-                    currentTime.Date && o.Stage == OrderStage.Complete)
+                    currentTime.Date && o.StageLegacy == OrderStageLegacy.Complete)
                 .ToList()
                 .Count;
 
@@ -409,8 +409,8 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 CartId = model.CartId,
                 Name = model.CustomerName,
                 Phone = model.CustomerPhone,
-                Email = "null@void.example",
-                EmailUpdates = false,
+                Email = model.Email,
+                EmailUpdates = model.EmailNotification,
                 SmsUpdates = false
             };
 

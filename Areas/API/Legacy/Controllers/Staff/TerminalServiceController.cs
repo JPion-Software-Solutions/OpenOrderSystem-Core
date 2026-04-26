@@ -103,7 +103,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers.Staff
 
             var inProgress = orders
                 .AsEnumerable()
-                .Where(o => o.Stage == OrderStage.InProgress)
+                .Where(o => o.StageLegacy == OrderStageLegacy.InProgress)
                 .ToArray();
 
             foreach (var order in inProgress)

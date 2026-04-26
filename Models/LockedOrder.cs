@@ -16,7 +16,7 @@ namespace OpenOrderSystem.Core.Models
 
             for (int i = 0; i < order.LineItems.Count; i++)
             {
-                OrderLine? line = order.LineItems[i];
+                OrderLineLegacy? line = order.LineItems[i];
                 finalizedOrder.LineItems[$"{line.MenuItem?.MenuItemVarients[line.MenuItemVarient].Descriptor} - {line.MenuItem?.Name}"] = line.LinePrice;
             }
 

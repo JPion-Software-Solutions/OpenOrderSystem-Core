@@ -90,7 +90,7 @@ namespace OpenOrderSystem.Core.Data.DataModels
         /// <summary>
         /// OrderLines containing item.
         /// </summary>
-        public List<OrderLine>? OrderLines { get; set; }
+        public List<OrderLineLegacy>? OrderLines { get; set; }
 
         public List<DiscountCodeItem>? DiscountCodesItems { get; set; }
 

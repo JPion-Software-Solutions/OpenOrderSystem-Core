@@ -49,7 +49,7 @@ namespace OpenOrderSystem.Core.Models
             set => Order.Customer = value;
         }
 
-        public List<OrderLine> LineItems
+        public List<OrderLineLegacy> LineItems
         {
             get => Order.LineItems;
             set => Order.LineItems = value;

@@ -61,7 +61,7 @@ namespace OpenOrderSystem.Core.Data
         /// <summary>
         /// Order line items
         /// </summary>
-        public DbSet<OrderLine> OrderLines { get; set; }
+        public DbSet<OrderLineLegacy> OrderLines { get; set; }
 
         /// <summary>
         /// Menu item varients

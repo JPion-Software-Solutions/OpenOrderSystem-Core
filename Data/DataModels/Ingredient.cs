@@ -52,6 +52,6 @@ namespace OpenOrderSystem.Core.Data.DataModels
         /// </summary>
         public List<ProductCategory>? ProductCategories { get; set; }
 
-        public List<OrderLine>? OrderLines { get; set; }
+        public List<OrderLineLegacy>? OrderLines { get; set; }
     }
 }

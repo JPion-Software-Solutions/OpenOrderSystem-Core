@@ -35,5 +35,8 @@ namespace OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
         [Display(Name = "Customer Phone")]
         [DataType(DataType.PhoneNumber)]
         public string CustomerPhone { get; set; } = string.Empty;
+
+        public bool EmailNotification { get; set; } = false;
+        public string Email { get; set; }
     }
 }

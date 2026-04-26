@@ -6,6 +6,7 @@ using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.Users;
 using OpenOrderSystem.Core.Data;
+using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 using OpenOrderSystem.Core.Services.Interfaces;
 
 namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager

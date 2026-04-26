@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 using OpenOrderSystem.Core.Services.Interfaces;
 using PizzaPartry.tools;
 
@@ -311,7 +312,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 
         [HttpPut]
         [Authorize]
-        public IActionResult UpdateStatus([FromBody] UpdateStatusModel model)
+        public async Task<IActionResult> UpdateStatus([FromBody] UpdateStatusModel model)
         {
             var orderId = model.OrderId;
 
@@ -324,7 +325,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
                 return NotFound($"failed to locate order#:{orderId}");
             }
 
-            if (order.Stage == OrderStage.Ready)
+            if (order.StageLegacy == OrderStageLegacy.Ready)
             {
                 order = _context.Orders
                     .Include(o => o.Customer)
@@ -348,14 +349,15 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             }
 
             order.CompleteStage();
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             if (order.Customer != null)
-                AlertCustomer(order.Customer, order.Stage);
+                //TODO Replace direct email service usage with abstracted CustomerNotificationService
+                await AlertCustomer(order.Customer, order.StageLegacy);
 
             return new JsonResult(new
             {
-                message = $"Order#{order.Id} advanced to stage {order.Stage}."
+                message = $"Order#{order.Id} advanced to stage {order.StageLegacy}."
             });
         }
 
@@ -368,7 +370,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
                 .Include(o => o.Customer)
                 .AsEnumerable()
                 .Where(o => o.OrderPlaced.Date == DateTime.UtcNow.Date
-                    && o.Stage == OrderStage.InProgress)
+                    && o.StageLegacy == OrderStageLegacy.InProgress)
                 .ToList();
 
             foreach (var order in ordersInProgress)
@@ -380,7 +382,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
                     _context.SaveChanges();
 
                     if (order.Customer != null)
-                        AlertCustomer(order.Customer, order.Stage);
+                        AlertCustomer(order.Customer, order.StageLegacy);
                 }
                 if (order.CheckTimer() == TimerStatus.LessThanTwo)
                 {
@@ -393,14 +395,14 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
         [Authorize]
         public void TerminalClose() => _staffTMS.CloseTerminal();
 
-        private void AlertCustomer(Customer customer, OrderStage stage)
+        private async Task AlertCustomer(Customer customer, OrderStageLegacy stageLegacy)
         {
-            switch (stage)
+            switch (stageLegacy)
             {
-                case OrderStage.Ready:
+                case OrderStageLegacy.Ready:
                     if (customer.EmailUpdates)
                     {
-                        _emailService.Send(
+                        await _emailService.SendAsync(
                             customer.Email,
                             "Village Market Pizza Order",
                             "Your order is ready for pickup. Thank you for ordering from Village Market.");

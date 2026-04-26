@@ -10,6 +10,7 @@ using OpenOrderSystem.Core.Models;
 using OpenOrderSystem.Core.Services;
 using OpenOrderSystem.Core.Services.Interfaces;
 using System.Linq.Expressions;
+using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 
 namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
@@ -98,7 +99,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
                 .OrderBy(miv => miv.Id)
                 .ToList();
 
-            var orderLine = new OrderLine
+            var orderLine = new OrderLineLegacy
             {
                 MenuItem = item,
                 MenuItemId = model.ItemId,
@@ -283,11 +284,11 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 
             var orderLines = new List<string>();
             var lineIngredients = new List<object>();
-            var orderLinesDetailed = new List<OrderLine>();
+            var orderLinesDetailed = new List<OrderLineLegacy>();
 
             for (int i = 0; i < cart.Order.LineItems.Count; i++)
             {
-                OrderLine? line = cart.Order.LineItems[i];
+                OrderLineLegacy? line = cart.Order.LineItems[i];
                 orderLines.Add(line.ToString());
                 var ingredientList = new List<object>();
 
@@ -369,7 +370,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
         }
 
         [HttpPost]
-        public IResult Submit([FromQuery][FromBody] string cartId)
+        public async Task<IResult> Submit([FromQuery][FromBody] string cartId)
         {
             if (!ModelState.IsValid)
             {
@@ -505,7 +506,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
                         lineIngredients.Add(_context.Ingredients.First(i => i.Id == ingredient.Id));
                     }
 
-                    var lineItem = new OrderLine
+                    var lineItem = new OrderLineLegacy
                     {
                         Ingredients = lineIngredients,
                         LineComments = line.LineComments,
@@ -565,7 +566,8 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 
                     //replace email before launch!
                     var link = linkBuilder.Uri.AbsoluteUri;
-                    _emailService.Send(customer.Email, "Thank You For Your Order", $"REPLACE BEFORE LAUNCH: Thank you for ordering from the Village Market Deli in Rapid City! Your order total is {order.Total.ToString("C")}. " +
+                    //TODO Replace direct email service usage with abstracted CustomerNotificationService
+                    await _emailService.SendAsync(customer.Email, "Thank You For Your Order", $"REPLACE BEFORE LAUNCH: Thank you for ordering from the Village Market Deli in Rapid City! Your order total is {order.Total.ToString("C")}. " +
                             $"We will let you know when your order will be ready for pickup or you can check on it yourself at {link}");
                 }
 

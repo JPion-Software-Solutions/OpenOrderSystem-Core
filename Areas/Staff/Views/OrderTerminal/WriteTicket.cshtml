@@ -1,8 +1,6 @@
 ﻿@using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
-@using OpenOrderSystem.Core.Data.DataModels;
-    using OpenOrderSystem.Core.Data.DataModels
+@using OpenOrderSystem.Core.Data.DataModels
 @model WriteTicketVM
-
 <div class="row">
     <div class="col-5 px-3 bg-info-subtle">
         <h1>Order:</h1>
@@ -17,6 +15,14 @@
                 <label asp-for="CustomerPhone" class="form-label"></label>
                 <span asp-validation-for="CustomerPhone" class="text-danger"></span>
             </div>
+            @*TODO: only show email field when "EmailNotification" is cheked*@
+            <div class="form-floating">
+                <input asp-for="Email" class="form-control bg-dark-subtle" autocomplete="off" placeholder="Customer Phone" />
+                <label asp-for="Email" class="form-label"></label>
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            @*TODO: Seriously, this should go without saying but a completely unlabled, unstyled check box can NOT go to production!*@
+            <input asp-for="EmailNotification" />
             <div class="input-group pt-1">
                 <div class="form-floating">
                     <input asp-for="PromoCode" list="availablePromoCodes" class="form-control bg-dark-subtle" autocomplete="off" placeholder="Customer Phone" />
@@ -26,7 +32,7 @@
                 <datalist id="availablePromoCodes">
                     @foreach (var code in Model.AvailablePromoCodes)
                     {
-                        <option value="@code.Code" />
+                        <option value="@(code.Code)" />
                     }
                 </datalist>
                 <button id="promoCodeBtn" class="btn btn-primary" data-cart-id="@Model.CartId">Check</button>

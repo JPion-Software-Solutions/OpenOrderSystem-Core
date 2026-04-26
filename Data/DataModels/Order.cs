@@ -64,7 +64,7 @@ namespace OpenOrderSystem.Core.Data.DataModels
             }
         }
 
-        public List<OrderLine> LineItems { get; set; } = new List<OrderLine>();
+        public List<OrderLineLegacy> LineItems { get; set; } = new List<OrderLineLegacy>();
 
         [MaxLength(128)]
         public string? OrderComments { get; set; }
@@ -120,35 +120,35 @@ namespace OpenOrderSystem.Core.Data.DataModels
         public float Total { get => Subtotal + Tax; }
 
         [NotMapped]
-        public OrderStage Stage
+        public OrderStageLegacy StageLegacy
         {
             get
             {
                 if (OrderComplete != null)
-                    return OrderStage.Complete;
+                    return OrderStageLegacy.Complete;
 
                 if (OrderReady != null)
-                    return OrderStage.Ready;
+                    return OrderStageLegacy.Ready;
 
                 if (OrderInprogress != null)
-                    return OrderStage.InProgress;
+                    return OrderStageLegacy.InProgress;
 
-                return OrderStage.Recieved;
+                return OrderStageLegacy.Recieved;
             }
         }
 
         public void CompleteStage()
         {
-            if (Stage == OrderStage.Ready)
+            if (StageLegacy == OrderStageLegacy.Ready)
             {
                 LockedOrderDetail = LockedOrder.Create(this);
                 OrderComplete = DateTime.UtcNow;
             }
 
-            else if (Stage == OrderStage.InProgress)
+            else if (StageLegacy == OrderStageLegacy.InProgress)
                 OrderReady = DateTime.UtcNow;
 
-            else if (Stage == OrderStage.Recieved)
+            else if (StageLegacy == OrderStageLegacy.Recieved)
                 OrderInprogress = DateTime.UtcNow;
         }
 
@@ -182,7 +182,7 @@ namespace OpenOrderSystem.Core.Data.DataModels
         NotApplicable
     }
 
-    public enum OrderStage
+    public enum OrderStageLegacy
     {
         Recieved,
         InProgress,

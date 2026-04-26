@@ -14,6 +14,8 @@ using OpenOrderSystem.Core.Extensions.Development;
 using OpenOrderSystem.Core.Middleware;
 using OpenOrderSystem.Core.Quartz.AutomatedTasks;
 using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.EmailService;
+using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 using OpenOrderSystem.Core.Services.Interfaces;
 using OpenOrderSystem.Core.Utilities;
 using Quartz;
@@ -125,11 +127,12 @@ public class RunOOSBootstrap : IBootMode
         }
         
 
-        _bob.Services.AddScoped<IEmailService, DevEmail>();
+        _bob.Services.AddScoped<IEmailService, SmtpEmailService>();
         _bob.Services.AddScoped<ISmsService, DevSMS>();
         _bob.Services.AddScoped<PrinterService>();
         _bob.Services.AddScoped<PrinterBridgeAuth>();
         _bob.Services.AddTransient<MediaManagerService>();
+        _bob.Services.AddSingleton<IEmailConfigService, InsecureEmailConfigService>();
         _bob.Services.AddSingleton<ConfigurationService>();  //legacy. TODO: depreciate
         _bob.Services.AddSingleton<InitialConfigAuth>();     //legacy. TODO: depreciate
         _bob.Services.AddSingleton<StaffTerminalMonitoringService>();

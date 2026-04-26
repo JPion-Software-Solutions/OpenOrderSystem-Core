@@ -22,8 +22,8 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories
                 Tax = order.Tax,
                 Total = order.Total,
                 DiscountId = order.DiscountId,
-                Stage = order.Stage,
-                LineItems = order.LineItems?.Select(ol => new OrderLine
+                StageLegacy = order.StageLegacy,
+                LineItems = order.LineItems?.Select(ol => new OrderLineLegacy
                 {
                     Id = ol.Id,
                     OrderId = ol.OrderId,
@@ -36,7 +36,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.DTO.Factories
                     }).ToList(),
                     LineComments = ol.LineComments,
                     MenuItemId = ol.MenuItemId
-                }).ToList() ?? new List<OrderLine>()
+                }).ToList() ?? new List<OrderLineLegacy>()
             };
 
             for (int i = 0; i < response.LineItems.Count; i++)

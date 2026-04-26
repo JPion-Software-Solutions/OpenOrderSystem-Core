@@ -7,7 +7,7 @@ using System.Web.Helpers;
 
 namespace OpenOrderSystem.Core.Data.DataModels
 {
-    public class OrderLine
+    public class OrderLineLegacy
     {
         /// <summary>
         /// Primary key
