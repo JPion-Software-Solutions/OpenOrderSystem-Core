@@ -71,6 +71,7 @@
     <Folder Include="Bootstrapper/UI/" />
     <Folder Include="Data/Interfaces/" />
     <Folder Include="DevelopmentTools/" />
+    <Folder Include="Extensions\Core\" />
     <Folder Include="Store/DevPacks/" />
     <Folder Include="Utilities/" />
     <Folder Include="wwwroot\media\images\user\" />

@@ -171,10 +171,18 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
 }
 
 public static class DbContextOptionsBuilderExtensions
-{    public static void UseDynamicSQLProvider(this DbContextOptionsBuilder bob, Configuration config)
+{    public static void UseDynamicSQLProvider(this DbContextOptionsBuilder bob, Configuration config, string connectionPrefix = "")
     {
-        var provider = config.GetConfig<DbProviders>("DB_PROVIDER");
-        var connectionString = config.GetConfig<string>("DB_CONNECTION_STRING");
+        var providerKey = string.IsNullOrWhiteSpace(connectionPrefix)
+            ? "DB_PROVIDER" 
+            :  $"{connectionPrefix}:DB_PROVIDER";
+        
+        var connectionStringKey = string.IsNullOrWhiteSpace(connectionPrefix)
+            ? "DB_CONNECTION_STRING" 
+            : $"{connectionPrefix}:DB_CONNECTION_STRING";
+        
+        var provider = config.GetConfig<DbProviders>(providerKey);
+        var connectionString = config.GetConfig<string>(connectionStringKey);
 
         switch (provider)
         {

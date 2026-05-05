@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using NuGet.Packaging;
 using OpenOrderSystem.Core.Bootstrapper.Interfaces;
 using OpenOrderSystem.Core.Data;
+using OpenOrderSystem.Core.Data.DataModels.V2;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Extensions.AspNet;
 using OpenOrderSystem.Core.Extensions.Development;
@@ -25,12 +26,12 @@ using SixLabors.ImageSharp.Processing;
 namespace OpenOrderSystem.Core.Bootstrapper.BootModes;
 
 [BootModeUi(DisplayName = "Run Open Order System" ,Description ="Run Open Order System (normal operation).")]
-public class RunOOSBootstrap : IBootMode
+public class RunOosBootstrap : IBootMode
 {
     private WebApplicationBuilder? _bob;
     private WebApplication? _app;
 
-    private readonly string CORS_POLICY = "OOS_CORS_ACCESS_POLICY";
+    private readonly string _corsPolicy = "OOS_CORS_ACCESS_POLICY";
 
     private string? _fallback = null;
 
@@ -46,7 +47,7 @@ public class RunOOSBootstrap : IBootMode
             ?? throw new InvalidOperationException("Unable to build OOS Server, missing builder! Please ensure Initialize is called before attempting to build.");
 
         _app.EnsureCoreUserRolesCreated().Wait();
-        _app.UseCors(CORS_POLICY);
+        _app.UseCors(_corsPolicy);
         
 
         //DBCleanup
@@ -54,6 +55,9 @@ public class RunOOSBootstrap : IBootMode
         {
             var dataKeyContext = scope.ServiceProvider.GetRequiredService<DataProtectionKeyContext>();
             dataKeyContext.Database.Migrate();
+
+            var oosContext = scope.ServiceProvider.GetRequiredService<OosDbContext>();
+            oosContext.Database.Migrate();
 
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             context.Database.Migrate();
@@ -145,9 +149,15 @@ public class RunOOSBootstrap : IBootMode
             .PersistKeysToDbContext<DataProtectionKeyContext>()
             .SetApplicationName("OpenOrderSystem");
 
-        _bob.Services.AddDbContext<ApplicationDbContext>(options =>
+        _bob.Services.AddDbContextFactory<OosDbContext>(options =>
         {
             options.UseDynamicSQLProvider(Configuration);
+            options.EnableDetailedErrors();
+        });
+
+        _bob.Services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options.UseDynamicSQLProvider(Configuration, "LEGACY");
             options.EnableDetailedErrors();
         });
 
@@ -198,7 +208,7 @@ public class RunOOSBootstrap : IBootMode
 
         _bob.Services.AddCors(options =>
         {
-            options.AddPolicy(name: CORS_POLICY, policy =>
+            options.AddPolicy(name: _corsPolicy, policy =>
             {
                 policy.WithOrigins(corsHosts.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) 
                     ?? Array.Empty<string>())
@@ -214,14 +224,14 @@ public class RunOOSBootstrap : IBootMode
     {
         var foundErrors = new List<string>();
 
-        //database connection check.
+        // Primary (V2) database connection check.
         var dbProvider = bootConfig.GetConfig<DbProviders>("DB_PROVIDER");
         var dbConnectionString = bootConfig.GetConfig("DB_CONNECTION_STRING");
 
         if (dbConnectionString.IsNullOrEmpty())
         {
             foundErrors.Add("Connection string not found in boot config, falling back to no-db-boot");
-            
+
             if (bootConfig.SetupComplete)
                 _fallback = "initial_setup";
             else
@@ -229,13 +239,23 @@ public class RunOOSBootstrap : IBootMode
         }
         else
         {
-            var dbConnectionTools = new DatabaseConnectionTool<ApplicationDbContext>(dbProvider, dbConnectionString ?? "");
+            var dbConnectionTools = new DatabaseConnectionTool<OosDbContext>(dbProvider, dbConnectionString ?? "");
             dbConnectionTools.CanConnect(out var t);
             foundErrors.AddRange(t);
         }
 
-        errors = foundErrors.ToArray();        
-        if (foundErrors.Count == 0) return true;
-        else return false;
+        // Legacy database connection check.
+        var legacyProvider = bootConfig.GetConfig<DbProviders>("LEGACY:DB_PROVIDER");
+        var legacyConnectionString = bootConfig.GetConfig("LEGACY:DB_CONNECTION_STRING");
+
+        if (!legacyConnectionString.IsNullOrEmpty())
+        {
+            var legacyConnectionTools = new DatabaseConnectionTool<ApplicationDbContext>(legacyProvider, legacyConnectionString ?? "");
+            legacyConnectionTools.CanConnect(out var t);
+            foundErrors.AddRange(t);
+        }
+
+        errors = foundErrors.ToArray();
+        return foundErrors.Count == 0;
     }
 }

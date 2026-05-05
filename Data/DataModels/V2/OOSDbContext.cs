@@ -2,13 +2,14 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data.DataModels.V2.Catalog;
 using OpenOrderSystem.Core.Data.DataModels.V2.Core;
+using OpenOrderSystem.Core.Data.DataModels.V2.Devices;
 using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Data.Interfaces;
 using OpenOrderSystem.Core.Services.Interfaces;
 
 namespace OpenOrderSystem.Core.Data.DataModels.V2;
 
-public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext, ICatalogDataContext
+public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICatalogDataContext
 {
     // ----------------------------
     // Core Models
@@ -74,6 +75,16 @@ public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
     public DbSet<ProductSnapshot> ProductSnapshots  { get; set; }
 
     // -----------------------------
+    // Devices (V2)
+    // -----------------------------
+
+    /// <summary>
+    /// Registered devices and integration endpoints in the OOS device registry.
+    /// </summary>
+    public DbSet<DeviceHead> Devices { get; set; }
+    
+    
+    // -----------------------------
     // Ordering (V2)
     // -----------------------------
     
@@ -102,7 +113,7 @@ public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
     /// </summary>
     public DbSet<OrderQueue> OrderQueue { get; set; }
     
-    public OOSDbContext(DbContextOptions<OOSDbContext> options) : base(options) { }
+    public OosDbContext(DbContextOptions<OosDbContext> options) : base(options) { }
 
     public Task<int> SaveChangesAsync() => base.SaveChangesAsync();
 
@@ -115,6 +126,16 @@ public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        
+        // DeviceConfig composite PK
+        modelBuilder.Entity<DeviceConfig>()
+            .HasKey(x => new { x.DeviceId, x.Key });
+
+        // DeviceHead unique index on Key
+        modelBuilder.Entity<DeviceHead>()
+            .HasIndex(d => d.Key)
+            .IsUnique()
+            .HasDatabaseName("UIX_DeviceHead_Key");
         
         // OrderHeader indexes
         modelBuilder.Entity<OrderHeader>()
@@ -130,9 +151,27 @@ public class OOSDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
             .HasIndex(q => q.ScheduledFor)
             .HasDatabaseName("IX_OrderQueue_ScheduledFor");
 
+        modelBuilder.Entity<OrderHeader>()
+            .HasIndex(o => o.OrderNumber)
+            .IsUnique()
+            .HasDatabaseName("UIX_OrderHeader_OrderNumber");
+
         modelBuilder.Entity<ProductOption>()
             .HasKey(x => new { x.ProductId, x.OptionId });
 
         modelBuilder.Entity<OrderHeader>().OwnsMany(o => o.StageHistory);
+
+        // OrderStage is a doubly-linked list — two independent self-referencing one-to-one FKs.
+        modelBuilder.Entity<OrderStage>()
+            .HasOne(s => s.NextStage)
+            .WithOne()
+            .HasForeignKey<OrderStage>(s => s.NextStageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OrderStage>()
+            .HasOne(s => s.PreviousStage)
+            .WithOne()
+            .HasForeignKey<OrderStage>(s => s.PreviousStageId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

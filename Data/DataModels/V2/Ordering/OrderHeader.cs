@@ -21,7 +21,7 @@ public class OrderHeader
     /// The human-readable order number, reset daily. Use <see cref="OrderDate"/> for
     /// full uniqueness when referencing historical orders.
     /// </summary>
-    public int OrderNumber { get; set; }
+    public long OrderNumber { get; set; }
 
     /// <summary>
     /// The date and time the order was placed, including local timezone offset.

@@ -1,6 +1,4 @@
-using System;
 using Microsoft.AspNetCore.Identity;
-using Serilog;
 
 namespace OpenOrderSystem.Core.Extensions.AspNet;
 
