@@ -90,8 +90,14 @@ public class RunOosBootstrap : IBootMode
         _app.UseMiddleware<PrinterBridgeAuth>();
 
         _app.MapControllerRoute(
-            name: "areas",
-            pattern: "{area:exists}/{controller}/{action=Index}/{id?}");
+            name: "api",
+            pattern: "API/{controller}/{action=Index}/{id?}");
+        _app.MapControllerRoute(
+            name: "identity",
+            pattern: "Identity/{controller}/{action=Index}/{id?}");
+        _app.MapControllerRoute(
+            name: "staff",
+            pattern: "Staff/{controller}/{action=Index}/{id?}");
 
         _app.MapControllerRoute(
             name: "default",

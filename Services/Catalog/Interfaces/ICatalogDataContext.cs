@@ -1,19 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data.DataModels.V2.Catalog;
 
-namespace OpenOrderSystem.Core.Services.Interfaces;
-
-public interface ICatalogDataStore<TDataContext>
-where TDataContext: DbContext, ICatalogDataContext
-{
-    /// <summary>
-    /// Query a group or groups by name and return their associated product(s)
-    /// </summary>
-    /// <param name="group">Single group name or comma-separated list of groups</param>
-    /// <param name="flags">Modifies rules on group tree traversing</param>
-    /// <returns>Collection of products associated with the group(s)</returns>
-    ICollection<Product> GetProductsByGroupName(string group, ProductLocatorFlags flags = ProductLocatorFlags.None);
-}
+namespace OpenOrderSystem.Core.Services.Catalog.Interfaces;
 
 public interface ICatalogDataContext
 {
@@ -68,35 +56,9 @@ public interface ICatalogDataContext
     /// Used for audit/history and order stability.
     /// </summary>
     public DbSet<ProductSnapshot> ProductSnapshots  { get; set; }
-}
-
-[Flags]
-public enum ProductLocatorFlags
-{
-    None = 0,
 
     /// <summary>
-    /// Include associated Product.Options when retrieving products
+    /// Persists all pending changes in the catalog context.
     /// </summary>
-    IncludeOptions                  = 1 << 0,
-
-    /// <summary>
-    /// Include associated Product.Variants when retrieving products
-    /// </summary>
-    IncludeVariants                 = 1 << 1,
-
-    /// <summary>
-    /// Include associated Product.Media when retrieving products 
-    /// </summary>
-    IncludeMedia                    = 1 << 2,
-
-    /// <summary>
-    /// Include all products within the queried group(s) as well as any products in their parent group(s).
-    /// </summary>
-    CollapseParentGroupMembers      = 1 << 3,
-
-    /// <summary>
-    /// 
-    /// </summary>
-    CollapseChildrenGroupMembers    = 1 << 4,
+    Task<int> SaveChangesAsync();
 }

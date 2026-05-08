@@ -1,20 +1,29 @@
-using System;
-using System.ComponentModel;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Bootstrapper;
-using OpenOrderSystem.Core.Data;
 
 namespace OpenOrderSystem.Core.Utilities;
 
+/// <summary>
+/// Provides design-time and preflight database connectivity utilities for a specific
+/// <see cref="DbContext"/> type, independent of the application's DI container.
+/// </summary>
+/// <typeparam name="TContext">The <see cref="DbContext"/> type to test connectivity for.</typeparam>
 public class DatabaseConnectionTool<TContext> where TContext : DbContext
 {
     private readonly DbContextOptions<TContext> _options;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="DatabaseConnectionTool{TContext}"/> using
+    /// the specified provider and connection string.
+    /// </summary>
+    /// <param name="provider">The database provider to configure.</param>
+    /// <param name="connectionString">The connection string to use.</param>
+    /// <exception cref="NotSupportedException">Thrown when <paramref name="provider"/> is not a supported provider.</exception>
     public DatabaseConnectionTool(DbProviders provider, string connectionString)
     {
-        var bob = new DbContextOptionsBuilder<TContext>();        
-        
+        var bob = new DbContextOptionsBuilder<TContext>();
+
         switch (provider)
         {
             case DbProviders.Sqlite:
@@ -34,60 +43,49 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
                 break;
 
             default:
-            throw new NotSupportedException($"Unsupported DB provider: {provider}");
+                throw new NotSupportedException($"Unsupported DB provider: {provider}");
         }
 
         _options = bob.Options;
     }
 
+    /// <summary>
+    /// Represents the minimum set of properties needed to build a provider-specific connection string.
+    /// </summary>
+    /// <param name="host">The server host, IP address, or file path (for SQLite).</param>
+    /// <param name="username">Optional username for SQL authentication. Omit to use integrated/trust authentication.</param>
+    /// <param name="password">Optional password for SQL authentication.</param>
+    /// <param name="additional">
+    /// Additional key-value pairs in <c>Key=Value</c> format appended to the connection string
+    /// (e.g., <c>"Database=mydb"</c>, <c>"Port=5432"</c>). Applied after base properties,
+    /// so these can override defaults.
+    /// </param>
     public record ConnectionProps(string host, string? username = null, string? password = null, params string[] additional);
-    
-    private static void ApplyAdditional(DbConnectionStringBuilder b, string[] additional)
-    {
-        if (additional is null || additional.Length == 0)
-            return;
 
-        foreach (var item in additional)
-        {
-            if (string.IsNullOrWhiteSpace(item))
-                continue;
-
-            var idx = item.IndexOf('=');
-            if (idx <= 0 || idx == item.Length - 1)
-                throw new ArgumentException($"Invalid additional entry '{item}'. Expected 'Key=Value'.");
-
-            var key = item[..idx].Trim();
-            var value = item[(idx + 1)..].Trim();
-
-            // Setting via indexer ensures proper escaping when emitted.
-            b[key] = value;
-        }
-    }
-
+    /// <summary>
+    /// Builds a provider-appropriate connection string from the supplied <see cref="ConnectionProps"/>.
+    /// </summary>
+    /// <param name="provider">The target database provider.</param>
+    /// <param name="connection">The connection properties to encode.</param>
+    /// <returns>A fully formatted connection string for the specified provider.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="connection"/> has a null or empty host.</exception>
+    /// <exception cref="NotSupportedException">Thrown when <paramref name="provider"/> is not a supported provider.</exception>
     public static string GetConnectionString(DbProviders provider, ConnectionProps connection)
     {
         if (string.IsNullOrWhiteSpace(connection.host))
             throw new ArgumentException("Host/path is required.", nameof(connection));
 
-        // Provider-agnostic connection string builder.
-        // It stores key/value pairs and produces a properly escaped connection string.
         var b = new DbConnectionStringBuilder();
 
-        // Add the minimum required keys for each provider.
-        // Note: Key names here are the connection-string key names understood by each provider.
         switch (provider)
         {
             case DbProviders.Sqlite:
-                // SQLite typically uses "Data Source"
                 b["Data Source"] = connection.host;
                 break;
 
             case DbProviders.SQLServer:
-                // SQL Server commonly uses these keys
                 b["Data Source"] = connection.host;
 
-                // Only set SQL authentication if a username is provided;
-                // otherwise caller can use Integrated Security via "additional".
                 if (!string.IsNullOrWhiteSpace(connection.username))
                 {
                     b["User ID"] = connection.username!;
@@ -97,8 +95,6 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
                 break;
 
             case DbProviders.MySQL:
-                // MySQL (Pomelo/MySqlConnector) typically uses:
-                // Server, User ID, Password, Database, Port, SslMode, etc.
                 b["Server"] = connection.host;
 
                 if (!string.IsNullOrWhiteSpace(connection.username))
@@ -110,8 +106,6 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
                 break;
 
             case DbProviders.PostgreSQL:
-                // Npgsql typically uses:
-                // Host, Username, Password, Database, Port, etc.
                 b["Host"] = connection.host;
 
                 if (!string.IsNullOrWhiteSpace(connection.username))
@@ -126,23 +120,19 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
                 throw new NotSupportedException($"Unsupported DB provider: {provider}");
         }
 
-        // Apply additional settings last so callers can override defaults / add Database/Port/etc.
-        // Expected format: "Key=Value"
         ApplyAdditional(b, connection.additional);
 
-        // DbConnectionStringBuilder outputs a fully formatted connection string.
         return b.ConnectionString;
     }
 
-    private TContext CreateContext()
-    {
-        // Requires: TContext has a ctor that accepts DbContextOptions<TContext> (or DbContextOptions).
-        return Activator.CreateInstance(typeof(TContext), _options) as TContext
-            ?? throw new InvalidOperationException(
-                $"Unable to create DbContext instance of type {typeof(TContext).FullName}. " +
-                $"Ensure it has a constructor accepting DbContextOptions<{typeof(TContext).Name}>.");
-    }
-
+    /// <summary>
+    /// Attempts to open a connection to the database using the configured options.
+    /// </summary>
+    /// <param name="errors">
+    /// When this method returns, contains any error messages encountered during the connection attempt.
+    /// Empty when the connection succeeds.
+    /// </param>
+    /// <returns><see langword="true"/> if the connection succeeded; otherwise <see langword="false"/>.</returns>
     public bool CanConnect(out string[] errors)
     {
         var e = new List<string>();
@@ -151,9 +141,7 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
         try
         {
             if (!ctx.Database.CanConnect())
-            {
                 e.Add("Failed to connect to the database.");
-            }
         }
         catch (Exception ex)
         {
@@ -164,23 +152,78 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
         }
 
         errors = e.ToArray();
+        return !e.Any();
+    }
 
-        if (e.Any()) return false;
-        else return true;
+    /// <summary>
+    /// Applies additional <c>Key=Value</c> entries to an existing <see cref="DbConnectionStringBuilder"/>.
+    /// </summary>
+    /// <param name="b">The builder to apply entries to.</param>
+    /// <param name="additional">Entries in <c>Key=Value</c> format.</param>
+    /// <exception cref="ArgumentException">Thrown when an entry does not conform to <c>Key=Value</c> format.</exception>
+    private static void ApplyAdditional(DbConnectionStringBuilder b, string[] additional)
+    {
+        if (additional is null || additional.Length == 0)
+            return;
+
+        foreach (var item in additional)
+        {
+            if (string.IsNullOrWhiteSpace(item))
+                continue;
+
+            var idx = item.IndexOf('=');
+            if (idx <= 0 || idx == item.Length - 1)
+                throw new ArgumentException($"Invalid additional entry '{item}'. Expected 'Key=Value'.");
+
+            b[item[..idx].Trim()] = item[(idx + 1)..].Trim();
+        }
+    }
+
+    /// <summary>
+    /// Creates a <typeparamref name="TContext"/> instance using the configured options via reflection.
+    /// </summary>
+    /// <returns>A new <typeparamref name="TContext"/> instance.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <typeparamref name="TContext"/> does not have a constructor accepting
+    /// <see cref="DbContextOptions{TContext}"/>.
+    /// </exception>
+    private TContext CreateContext()
+    {
+        return Activator.CreateInstance(typeof(TContext), _options) as TContext
+            ?? throw new InvalidOperationException(
+                $"Unable to create DbContext instance of type {typeof(TContext).FullName}. " +
+                $"Ensure it has a constructor accepting DbContextOptions<{typeof(TContext).Name}>.");
     }
 }
 
+/// <summary>
+/// Extension methods for <see cref="DbContextOptionsBuilder"/> providing dynamic provider
+/// selection driven by the OOS bootstrap configuration.
+/// </summary>
 public static class DbContextOptionsBuilderExtensions
-{    public static void UseDynamicSQLProvider(this DbContextOptionsBuilder bob, Configuration config, string connectionPrefix = "")
+{
+    /// <summary>
+    /// Configures the <see cref="DbContextOptionsBuilder"/> using the provider and connection string
+    /// read from the OOS bootstrap configuration.
+    /// </summary>
+    /// <param name="bob">The options builder to configure.</param>
+    /// <param name="config">The bootstrap configuration to read from.</param>
+    /// <param name="connectionPrefix">
+    /// Optional prefix used to namespace the configuration keys. When provided, keys are read as
+    /// <c>{prefix}:DB_PROVIDER</c> and <c>{prefix}:DB_CONNECTION_STRING</c>. When omitted, the
+    /// unversioned keys <c>DB_PROVIDER</c> and <c>DB_CONNECTION_STRING</c> are used (V2 / permanent contexts).
+    /// </param>
+    /// <exception cref="NotSupportedException">Thrown when the configured provider is not supported.</exception>
+    public static void UseDynamicSQLProvider(this DbContextOptionsBuilder bob, Configuration config, string connectionPrefix = "")
     {
         var providerKey = string.IsNullOrWhiteSpace(connectionPrefix)
-            ? "DB_PROVIDER" 
-            :  $"{connectionPrefix}:DB_PROVIDER";
-        
+            ? "DB_PROVIDER"
+            : $"{connectionPrefix}:DB_PROVIDER";
+
         var connectionStringKey = string.IsNullOrWhiteSpace(connectionPrefix)
-            ? "DB_CONNECTION_STRING" 
+            ? "DB_CONNECTION_STRING"
             : $"{connectionPrefix}:DB_CONNECTION_STRING";
-        
+
         var provider = config.GetConfig<DbProviders>(providerKey);
         var connectionString = config.GetConfig<string>(connectionStringKey);
 
@@ -203,28 +246,33 @@ public static class DbContextOptionsBuilderExtensions
                 break;
 
             default:
-            throw new NotSupportedException($"Unsupported DB provider: {provider}");
+                throw new NotSupportedException($"Unsupported DB provider: {provider}");
         }
     }
 }
 
 /// <summary>
 /// Identifies which database provider EF Core should use at runtime.
-///
-/// This enum is intended for *deployment-time configuration* (setup wizard / config file),
-/// enabling the application to support multiple DB engines without changing code.
 /// </summary>
+/// <remarks>
+/// Intended for deployment-time configuration via the setup wizard or bootstrap config file,
+/// allowing the application to support multiple database engines without code changes.
+/// </remarks>
 public enum DbProviders
 {
-    [Description("SQLite (recommended for small, low-traffic installs). Stores data in one local file; simplest setup.")]
+    /// <summary>SQLite. Stores data in a single local file. Recommended for small, low-traffic installs.</summary>
+    [System.ComponentModel.Description("SQLite (recommended for small, low-traffic installs). Stores data in one local file; simplest setup.")]
     Sqlite,
 
-    [Description("SQL Server. Great choice for Windows environments and existing Microsoft infrastructure.")]
+    /// <summary>Microsoft SQL Server. Recommended for Windows environments and existing Microsoft infrastructure.</summary>
+    [System.ComponentModel.Description("SQL Server. Great choice for Windows environments and existing Microsoft infrastructure.")]
     SQLServer,
 
-    [Description("MySQL / MariaDB. Common on shared hosting and many Linux server environments.")]
+    /// <summary>MySQL or MariaDB. Common on shared hosting and many Linux server environments.</summary>
+    [System.ComponentModel.Description("MySQL / MariaDB. Common on shared hosting and many Linux server environments.")]
     MySQL,
 
-    [Description("PostgreSQL. Strong general-purpose choice with excellent reliability and features.")]
+    /// <summary>PostgreSQL. Strong general-purpose choice with excellent reliability and features.</summary>
+    [System.ComponentModel.Description("PostgreSQL. Strong general-purpose choice with excellent reliability and features.")]
     PostgreSQL
 }
