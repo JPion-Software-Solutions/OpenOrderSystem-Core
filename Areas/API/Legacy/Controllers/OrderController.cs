@@ -10,6 +10,7 @@ using PizzaPartry.tools;
 namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
+    [Route("api/legacy/Order/{action}")]
     public class OrderController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -34,7 +35,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             Phone
         }
         [HttpGet]
-        [Route("/API/Order/Locate/{method}/{key}")]
+        [Route("{method}/{key}")]
         public async Task<IResult> Locate(string key, LocateMethod method = LocateMethod.OrderId)
         {
             var orders = Array.Empty<int>();
@@ -94,7 +95,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
         }
 
         [HttpGet]
-        [Route("API/CheckOrder/{orderId}")]
+        [Route("/api/legacy/checkOrder/{orderId}")]
         public IActionResult CheckStatus(int orderId)
         {
             return CheckStatusTemp(orderId);
@@ -131,6 +132,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             // Second fetch: light detail load for the status page
             var orderDetails = _context.Orders
                 .Include(o => o.Customer)
+                .Include(o => o.Discount)
                 .Include(o => o.LineItems)
                     .ThenInclude(li => li.MenuItem)
                         .ThenInclude(mi => mi!.RawDbVarients)
@@ -145,9 +147,12 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             // Build a light detail object (not the massive staff version)
             var details = new
             {
+                linetotal = orderDetails?.LineItemTotal.ToString("C") ?? "",
                 subtotal = orderDetails?.Subtotal.ToString("C") ?? "",
                 tax = orderDetails?.Tax.ToString("C") ?? "",
                 total = orderDetails?.Total.ToString("C") ?? "",
+                promoCode = orderDetails?.DiscountId,
+                discout = (orderDetails?.Discount?.GetDiscount(orderDetails, true) ?? 0.0f).ToString("C"),
                 lineItems = orderDetails?.LineItems.Select(li => new {
                     name = li.MenuItem?.Name ?? "",
                     variant = li.MenuItem?.MenuItemVarients?[li.MenuItemVarient]?.Descriptor ?? "",
@@ -189,7 +194,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 
         [HttpGet]
         [Authorize]
-        [Route("/API/Staff/Orders/Detail/{id}")]
+        [Route("Staff/Orders/Detail/{id}")]
         public IResult Detail(int id)
         {
             var order = _context.Orders
@@ -418,7 +423,6 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 
         [HttpDelete]
         [Authorize]
-        [Route("API/Order/CancelOrder")]
         public IResult CancelOrder([FromBody] UpdateStatusModel model)
         {
             int orderNumber = model.OrderId;

@@ -7,7 +7,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [ApiController]
-    [Route("API/Customer/{action}")]
+    [Route("api/legacy/Customer/{action}")]
     public class CustomerController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

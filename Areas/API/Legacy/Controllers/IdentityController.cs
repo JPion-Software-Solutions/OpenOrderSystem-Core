@@ -7,7 +7,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [ApiController]
-    [Route("API/Identity/{action}")]
+    [Route("api/legacy/Identity/{action}")]
     public class IdentityController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;

@@ -19,7 +19,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [ApiController]
-    [Route("API/Print/{action}")]
+    [Route("api/legacy/Print/{action}")]
     [Authorize]
     public class PrinterController : Controller
     {
