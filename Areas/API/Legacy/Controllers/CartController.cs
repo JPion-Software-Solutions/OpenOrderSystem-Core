@@ -16,7 +16,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
     [ApiController]
-    [Route("API/Cart/{action}")]
+    [Route("api/legacy/Cart/{action}")]
     public class CartController : ControllerBase
     {
         private readonly CartService _cartService;
@@ -132,7 +132,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             });
         }
 
-        [HttpGet("/API/Cart/ItemDetail/{cartId}/{index}")]
+        [HttpGet("{cartId}/{index}")]
         public async Task<IResult> ItemDetail(string cartId, int index)
         {
             var cart = _cartService.GetCart(cartId);

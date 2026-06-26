@@ -425,14 +425,14 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 var host = HttpContext.Request.Host.ToString();
                 client.BaseAddress = new Uri($"https://{host}");
 
-                await client.PutAsync("/API/Cart/ApplyDiscount", JsonContent.Create(promoCodeModel));
+                await client.PutAsync("/api/legacy/Cart/ApplyDiscount", JsonContent.Create(promoCodeModel));
 
-                var response = await client.PutAsync("/API/Cart/Customer", JsonContent.Create(customerDetailModel));
+                var response = await client.PutAsync("/api/legacy/Cart/Customer", JsonContent.Create(customerDetailModel));
 
                 if (!response.IsSuccessStatusCode)
                     return StatusCode((int)response.StatusCode, response.Content);
 
-                response = await client.PostAsync($"/API/Cart/Submit?cartId={model.CartId}", JsonContent.Create(new { dumdum = "some data" }));
+                response = await client.PostAsync($"/api/legacy/Cart/Submit?cartId={model.CartId}", JsonContent.Create(new { dumdum = "some data" }));
 
                 if (!response.IsSuccessStatusCode)
                     return StatusCode((int)response.StatusCode, response.Content);
@@ -454,7 +454,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
             var client = new HttpClient();
             var host = HttpContext.Request.Host.ToString();
             client.BaseAddress = new Uri($"https://{host}");
-            var response = await client.PutAsync("/API/Cart/AddItem", JsonContent.Create(addItemModel));
+            var response = await client.PutAsync("/api/legacy/Cart/AddItem", JsonContent.Create(addItemModel));
 
             if (!response.IsSuccessStatusCode)
                 return StatusCode((int)response.StatusCode, response.Content);
@@ -476,7 +476,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 var host = HttpContext.Request.Host.ToString();
                 client.BaseAddress = new Uri($"https://{host}");
 
-                var response = await client.PutAsync("/API/Cart/RemoveItem", JsonContent.Create(removeItemModel));
+                var response = await client.PutAsync("/api/legacy/Cart/RemoveItem", JsonContent.Create(removeItemModel));
 
                 if (!response.IsSuccessStatusCode)
                     return StatusCode((int)response.StatusCode, response.Content);
@@ -502,7 +502,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
                 var host = HttpContext.Request.Host.ToString();
                 client.BaseAddress = new Uri($"https://{host}");
 
-                var response = await client.PutAsync("/API/Cart/UpdateItem", JsonContent.Create(updateItemModel));
+                var response = await client.PutAsync("/api/legacy/Cart/UpdateItem", JsonContent.Create(updateItemModel));
 
                 if (!response.IsSuccessStatusCode)
                     return StatusCode((int)response.StatusCode, response.Content);

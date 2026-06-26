@@ -18,7 +18,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers.Staff
 {
     [Area("API/Staff")]
     [ApiController]
-    [Route("API/Staff/TerminalService/{action}")]
+    [Route("api/legacy/Staff/TerminalService/{action}")]
 
     [Authorize]
     public class TerminalServiceController : ControllerBase

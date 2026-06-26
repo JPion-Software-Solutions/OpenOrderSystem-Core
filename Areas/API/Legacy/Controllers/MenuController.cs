@@ -7,7 +7,7 @@ using System.Security.Permissions;
 namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
     [Area("API")]
-    [Route("api/[controller]/[action]")]
+    [Route("api/legacy/[controller]/[action]")]
     [ApiController]
     public class MenuController : ControllerBase
     {

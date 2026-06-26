@@ -100,7 +100,7 @@ namespace OpenOrderSystem.Core.Data.DataModels
 
                 if (Discount != null)
                 {
-                    subtotal -= Discount.GetDiscount(this);
+                    subtotal -= Discount.GetDiscount(this, true);
                 }
 
                 return subtotal;

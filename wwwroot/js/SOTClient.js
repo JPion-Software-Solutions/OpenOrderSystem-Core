@@ -166,7 +166,7 @@ const infoBtnEvent = e => {
 const advanceOrderBtnEvent = e => {
 	const orderNum = e.currentTarget.dataset.orderNum;
 
-	fetch(`${window.OOS_CORE_URL}/API/Order/UpdateStatus`, {
+	fetch(`${window.OOS_CORE_URL}/api/legacy/Order/UpdateStatus`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json'
@@ -211,7 +211,7 @@ const cancelBtnEvent = e => {
 
 	document.getElementById('cancel_warning_text').innerText = `Are you sure you want to cancel order #${orderNum} for ${order.customer.name}? This action cannot be undone!`;
 	document.getElementById('confirm_cancel_btn').addEventListener('click', () => {
-		fetch(`${window.OOS_CORE_URL}/API/Order/CancelOrder`, {
+		fetch(`${window.OOS_CORE_URL}/api/legacy/Order/CancelOrder`, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json'
@@ -243,7 +243,7 @@ const cancelBtnEvent = e => {
  */
 const printBtnEvent = e => {
 	const orderNum = e.currentTarget.dataset.orderNum;
-	fetch(`${window.OOS_CORE_URL}/API/Print/PrintOrderTicket`, {
+	fetch(`${window.OOS_CORE_URL}/api/legacy/Print/PrintOrderTicket`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -599,7 +599,7 @@ const loadOrders = () => {
 	const orderCards = [];
 
 	// Call the fetch with a timeout
-	fetchWithTimeout('/API/Staff/TerminalService/FetchOrders', { method: 'GET' }, FAILED_LOAD_TIMEOUT)
+	fetchWithTimeout('/api/legacy/Staff/TerminalService/FetchOrders', { method: 'GET' }, FAILED_LOAD_TIMEOUT)
 		.then(response => response.json())
 		.then(orders => {
 			if (failedLoad > 0) {
@@ -767,7 +767,7 @@ const updatePrinterStatus = () => {
 		}
 	}
 
-	fetch(`${window.OOS_CORE_URL}/API/Staff/TerminalService/FetchPrinterStatus`)
+	fetch(`${window.OOS_CORE_URL}/api/legacy/Staff/TerminalService/FetchPrinterStatus`)
 		.then(response => {
 			return response.json();
 		})
@@ -790,7 +790,7 @@ const checkTerminalStatus = () => {
 
 	pingLockout = true;
 
-	fetchWithTimeout('/API/Staff/TerminalService/Ping', {
+	fetchWithTimeout('/api/legacy/Staff/TerminalService/Ping', {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json'
@@ -882,7 +882,7 @@ const checkTerminalStatus = () => {
 
 const checkConnection = async () => {
 	try {
-		const res = await fetchWithTimeout('/API/System/Ping', {}, 8000);
+		const res = await fetchWithTimeout('/api/legacy/System/Ping', {}, 8000);
 		return res.ok;
 	} catch {
 		return false;

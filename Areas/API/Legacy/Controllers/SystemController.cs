@@ -8,7 +8,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 
     [Area("API")]
     [ApiController]
-    [Route("API/System/{action}")]
+    [Route("api/legacy/System/{action}")]
     public class SystemController : ControllerBase
     {
         private StaffTerminalMonitoringService _staffTMS;
@@ -23,6 +23,12 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             _configService = configService;
         }
 
+        [Route("/api/system/ping")]
+        public IResult PingLegacyRoute() => Ping();
+        
+        [Route("/ping")]
+        public IResult PingNewRoute() => Ping();
+        
         public IResult Ping()
         {
             return Results.Ok(new

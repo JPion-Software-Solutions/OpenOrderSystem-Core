@@ -100,7 +100,7 @@
                                                     @foreach (var ingredient in item?.MenuItem?.ProductCategory?.Ingredients ?? new List<Ingredient>())
                                                     {
                                                         <div class="col form-check py-2">
-                                                            <input id="item_@(i)_ingredient_@ingredient.Id" name="ingredients" type="checkbox" class="form-check-input" value="@ingredient.Id" @(item?.Ingredients?.AsQueryable().FirstOrDefault(i => i.Id == ingredient.Id) != null ? "checked" : "") />
+                                                            <input id="item_@(i)_ingredient_@ingredient.Id" name="ingredients" type="checkbox" class="form-check-input" value="@ingredient.Id" @(item?.Ingredients?.AsQueryable().FirstOrDefault(ing => ing.Id == ingredient.Id) != null ? "checked" : "") />
                                                             <label for="item_@(i)_ingredient_@ingredient.Id" class="form-check-label">@ingredient.Name</label>
                                                         </div>
                                                     }
@@ -270,11 +270,11 @@
             //check-in with server
             $.ajax({
                 type: "PUT",
-                url: "/API/Order/TerminalCheckin",
+                url: "/api/legacy/Order/TerminalCheckin",
                 success: (data, status, xhr) => {
                     $.ajax({
                         type: "GET",
-                        url: "/API/Staff/TerminalService/Alerts",
+                        url: "/api/legacy/Staff/TerminalService/Alerts",
                         success: (data, status, xhr) => {
                             if (status == "success") {
                                 if (data.newOrderAlert) {
