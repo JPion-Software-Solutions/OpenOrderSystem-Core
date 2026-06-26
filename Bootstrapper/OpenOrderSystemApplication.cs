@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using Microsoft.Extensions.FileProviders;
 using OpenOrderSystem.Core.Bootstrapper.Interfaces;
 
 namespace OpenOrderSystem.Core.Bootstrapper;
@@ -8,6 +9,10 @@ public class OpenOrderSystemApplication
 {
     private readonly Dictionary<string, Type> _bootModes = new(StringComparer.OrdinalIgnoreCase);
 
+    public static StaticFileOptions UserStaticFiles { get; } = new();
+    
+    public static string DataRootPath { get; private set; } = string.Empty;
+    
     public Dictionary<string, Type> DiscoverBootModes()
     {
         _bootModes.Clear();
@@ -39,15 +44,26 @@ public class OpenOrderSystemApplication
     {
         DiscoverBootModes();
         var config = await Configuration.Load();
-        var bootmode = GetBootMode(config.BootMode);
+        var bootloader = GetBootMode(config.BootMode);
         
-        if (!bootmode.PreflightCheck(args, config, out var err))
+        if (!bootloader.PreflightCheck(args, config, out var err))
         {
             throw new InvalidOperationException($"Unable to boot OOS using bootmode '{config.BootMode}'. The following errors reported: {string.Join(',', err)}");
         }
 
-        return bootmode
-            .Initialize(args, config)
+        bootloader.Initialize(args, config);
+        if (bootloader.Bob is null)
+            throw new InvalidOperationException("Boot mode could not be initialized.");
+        
+        DataRootPath = Environment.GetEnvironmentVariable("OOS_DATAROOT") ??
+                       Path.Combine(bootloader.Bob.Environment.ContentRootPath, "data");
+        var userWwwroot = Path.Combine(DataRootPath, "public", "wwwroot");
+        
+        if (!Directory.Exists(userWwwroot)) Directory.CreateDirectory(userWwwroot);
+        
+        UserStaticFiles.FileProvider = new PhysicalFileProvider(userWwwroot);
+
+        return bootloader
             .LoadServices()
             .ConfigureMiddleware();
 

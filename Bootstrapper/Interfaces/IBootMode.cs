@@ -6,6 +6,10 @@ public interface IBootMode
 {
     public string? RequestedFallback { get; }
 
+    public WebApplicationBuilder? Bob { get; }
+    
+    public WebApplication? App { get; }
+
     public bool PreflightCheck(string[] args, Configuration bootConfig, out string[] errors);
 
     public IBootMode Initialize(string[] args, Configuration bootConfig);

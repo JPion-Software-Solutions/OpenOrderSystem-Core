@@ -37,6 +37,10 @@ public class RunOosBootstrap : IBootMode
 
     public string? RequestedFallback => _fallback;
 
+    public WebApplicationBuilder? Bob => _bob;
+    
+    public WebApplication? App => _app;
+    
     public bool IsDevelopment { get; private set; }
 
     public Configuration? Configuration { get; private set; }
@@ -80,6 +84,7 @@ public class RunOosBootstrap : IBootMode
         }
 
         _app.UseHttpsRedirection();
+        _app.UseStaticFiles(OpenOrderSystemApplication.UserStaticFiles);
         _app.UseStaticFiles();
 
         _app.UseRouting();
