@@ -37,7 +37,7 @@ public sealed class Configuration
     // Static - public
     // =========================
 
-    public static string ConfigurationDirectory { get; set; } = "config";
+    public static string ConfigurationDirectory { get; set; } = Path.Combine(OpenOrderSystemApplication.DataRootPath, "config");
 
     // =========================
     // Non-static - private (fields)

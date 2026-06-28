@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.FileProviders;
+using OpenOrderSystem.Core.Areas.API.Legacy.Controllers;
 using OpenOrderSystem.Core.Bootstrapper.Interfaces;
 
 namespace OpenOrderSystem.Core.Bootstrapper;
@@ -11,7 +12,7 @@ public class OpenOrderSystemApplication
 
     public static StaticFileOptions UserStaticFiles { get; } = new();
     
-    public static string DataRootPath { get; private set; } = string.Empty;
+    public static string DataRootPath { get; set; } = string.Empty;
     
     public Dictionary<string, Type> DiscoverBootModes()
     {
@@ -55,13 +56,16 @@ public class OpenOrderSystemApplication
         if (bootloader.Bob is null)
             throw new InvalidOperationException("Boot mode could not be initialized.");
         
-        DataRootPath = Environment.GetEnvironmentVariable("OOS_DATAROOT") ??
-                       Path.Combine(bootloader.Bob.Environment.ContentRootPath, "data");
         var userWwwroot = Path.Combine(DataRootPath, "public", "wwwroot");
+        
+        var inDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+        var isDataRootSet = Environment.GetEnvironmentVariable("OOS_DATAROOT") is not null;
         
         if (!Directory.Exists(userWwwroot)) Directory.CreateDirectory(userWwwroot);
         
         UserStaticFiles.FileProvider = new PhysicalFileProvider(userWwwroot);
+        
+        Bootscreen(config.BootMode, inDocker, isDataRootSet);
 
         return bootloader
             .LoadServices()
@@ -122,5 +126,40 @@ public class OpenOrderSystemApplication
         }
 
         return sb.ToString();
+    }
+
+    private void Bootscreen(string bootMode, bool inDocker, bool dataRootFromEnv)
+    {
+        Console.WriteLine();
+        Console.WriteLine(@"   ____  ____  _____");
+        Console.WriteLine(@"  / __ \/ __ \/ ___/");
+        Console.WriteLine(@" / / / / / / /\__ \ ");
+        Console.WriteLine(@"/ /_/ / /_/ /___/ / ");
+        Console.WriteLine(@"\____/\____//____/  ");
+        Console.WriteLine();
+        Console.WriteLine("  Open Order System");
+        Console.WriteLine("  ─────────────────────────────");
+        Console.WriteLine($"  Version:     {SystemController.Version}");
+        Console.WriteLine($"  Boot Mode:   {bootMode}");
+        Console.WriteLine($"  Environment: {(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")}");
+        Console.WriteLine($"  OS:          {Environment.OSVersion.Platform}");
+        Console.WriteLine($"  OS Version:  {Environment.OSVersion.VersionString}");
+        Console.WriteLine($"  Data Root:   {(dataRootFromEnv ? DataRootPath : "NOT SET")}");
+        Console.WriteLine("  ─────────────────────────────");
+        Console.WriteLine();
+
+        if (inDocker && !dataRootFromEnv)
+        {
+            Console.Beep();
+            Console.Beep();
+            Console.WriteLine("  ⚠  Running in Docker but OOS_DATAROOT is not set — data will not persist!");
+        }
+        
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            Console.Beep();
+            Console.Beep();
+            Console.WriteLine("  ⚠  DEVELOPMENT ENVIRONMENT ACTIVE: This is a development environment not suitable for production use!");
+        }
     }
 }

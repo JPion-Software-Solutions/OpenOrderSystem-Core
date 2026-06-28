@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OpenOrderSystem.Core.Bootstrapper;
 using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 
 namespace OpenOrderSystem.Core.Services.EmailService;
@@ -20,10 +21,10 @@ namespace OpenOrderSystem.Core.Services.EmailService;
 /// </summary>
 public class InsecureEmailConfigService : IEmailConfigService
 {
-    private static readonly string ConfigDirectory = 
-        Path.Combine("config", "DANGER_NOT_FOR_PRODUCTION");
-    
-    private static readonly string ConfigFilePath = 
+    private static readonly string ConfigDirectory =
+        Path.Combine(OpenOrderSystemApplication.DataRootPath, "config", "DANGER_NOT_FOR_PRODUCTION");
+
+    private static readonly string ConfigFilePath =
         Path.Combine(ConfigDirectory, "dangerEmailConfig.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -70,7 +71,7 @@ public class InsecureEmailConfigService : IEmailConfigService
             Directory.CreateDirectory(ConfigDirectory);
 
         if (!File.Exists(ConfigFilePath))
-            File.WriteAllText(ConfigFilePath, 
+            File.WriteAllText(ConfigFilePath,
                 JsonSerializer.Serialize(new Dictionary<string, string>(), JsonOptions));
 
         return JsonSerializer.Deserialize<Dictionary<string, string>>(

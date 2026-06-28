@@ -3,6 +3,7 @@ using NuGet.Protocol;
 using OpenOrderSystem.Core.Areas.Configuration.Models;
 using System.Text.Json;
 using System.Web.Helpers;
+using OpenOrderSystem.Core.Bootstrapper;
 
 namespace OpenOrderSystem.Core.Services
 {
@@ -48,11 +49,11 @@ namespace OpenOrderSystem.Core.Services
         /// </summary>
         public void SaveChages()
         {
-            if (!Directory.Exists("config")) ;
-            Directory.CreateDirectory("config");
+            if (!Directory.Exists(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"))) ;
+            Directory.CreateDirectory(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"));
 
             var jsonPayload = JsonSerializer.Serialize(Settings);
-            File.WriteAllText(Path.Combine("config", _configurationFilename), jsonPayload);
+            File.WriteAllText(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), _configurationFilename), jsonPayload);
         }
 
         /// <summary>
@@ -65,8 +66,8 @@ namespace OpenOrderSystem.Core.Services
         {
             if (!File.Exists(filename))
             {
-                if (!Directory.Exists(Path.Combine("config", "backup")))
-                    Directory.CreateDirectory(Path.Combine("config", "backup"));
+                if (!Directory.Exists(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), "backup")))
+                    Directory.CreateDirectory(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), "backup"));
 
                 File.WriteAllText(Path.Combine("backup", filename), Json.Encode(_siteConfig));
             }
@@ -85,10 +86,10 @@ namespace OpenOrderSystem.Core.Services
         /// was not found</exception>
         public void LoadBackup(string filename)
         {
-            if (!File.Exists(Path.Combine("config", "backup", filename)))
+            if (!File.Exists(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), "backup", filename)))
                 throw new InvalidOperationException($"Backup file '{filename}' not found!");
 
-            LoadFromFile(Path.Combine("backup", filename));
+            LoadFromFile(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), "backup", filename));
         }
 
         /// <summary>
@@ -98,9 +99,9 @@ namespace OpenOrderSystem.Core.Services
         private void LoadFromFile(string? filepath = null)
         {
             //attempt to load the configuration file or create a new default configuration.
-            if (File.Exists(Path.Combine("config", _configurationFilename)))
+            if (File.Exists(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), _configurationFilename)))
             {
-                var fileLocation = Path.Combine("config", filepath ?? _configurationFilename);
+                var fileLocation = Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), filepath ?? _configurationFilename);
                 var configFile = File.ReadAllText(fileLocation);
                 _siteConfig = JsonSerializer.Deserialize<SiteConfig>(configFile) ??
                     new SiteConfig();

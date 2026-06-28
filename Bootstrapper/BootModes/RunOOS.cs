@@ -136,7 +136,7 @@ public class RunOosBootstrap : IBootMode
         else
         {
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.File("logs/OOS_.log")
+                .WriteTo.File(Path.Combine(OpenOrderSystemApplication.DataRootPath, "logs", "OOS_.log"))
                 .CreateLogger();
             _bob.Services.AddSerilog();
         }

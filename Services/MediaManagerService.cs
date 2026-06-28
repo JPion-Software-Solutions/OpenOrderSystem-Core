@@ -85,6 +85,7 @@ namespace OpenOrderSystem.Core.Services
                         ];
 
                         var path = Path.Combine(pathComponents);
+                        Directory.CreateDirectory(path);
                         dirMap.Add(path);
                         for (int i = 0; i < dirMap.Count; ++i)
                         {
@@ -229,11 +230,11 @@ namespace OpenOrderSystem.Core.Services
 
             if (MediaFactory.MediaExtensionMap.ContainsKey(extension) && MediaFactory.MediaExtensionMap[extension] == typeof(ImageMedia))
             {
-                directory = Path.Combine(MediaRootPath, "images", "user");
+                directory = Path.Combine(MediaRootPath, "images");
             }
             else if (MediaFactory.MediaExtensionMap.ContainsKey(extension) && MediaFactory.MediaExtensionMap[extension] == typeof(AudioMedia))
             {
-                directory = Path.Combine(MediaRootPath, "audio", "user");
+                directory = Path.Combine(MediaRootPath, "audio");
             }
             else
             {

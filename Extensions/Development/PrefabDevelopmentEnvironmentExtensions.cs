@@ -1,6 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Identity.Client;
+using OpenOrderSystem.Core.Bootstrapper;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.DevelopmentTools;
 using Quartz.Xml.JobSchedulingData20;
@@ -77,13 +78,13 @@ public static class PrefabDevelopmentEnvironmentExtensions
 
         var filename = pack.Versions[pack.Latest].Filename;
         var filepath = $"{devEnv.DevPackRepoUrl}/{filename}";
+        
+        Directory.CreateDirectory(Path.Combine(OpenOrderSystemApplication.DataRootPath, "Store","DevPacks"));
 
-        Directory.CreateDirectory(Path.Combine("Store","DevPacks"));
-
-        if (!File.Exists(Path.Combine("Store","DevPacks",filename)))
+        if (!File.Exists(Path.Combine(OpenOrderSystemApplication.DataRootPath, "Store","DevPacks",filename)))
         {
-            var downloadName = await ZipDownloader.DownloadZipToDiskAsync(httpClient, filepath, "Store/DevPacks", filename, pack.Versions[pack.Latest].Sha256);
-            filepath = Path.Combine("Store","DevPacks",filename);
+            var downloadName = await ZipDownloader.DownloadZipToDiskAsync(httpClient, filepath, Path.Combine(OpenOrderSystemApplication.DataRootPath, "Store", "DevPacks"), filename, pack.Versions[pack.Latest].Sha256);
+            filepath = Path.Combine(OpenOrderSystemApplication.DataRootPath, "Store","DevPacks",filename);
 
             //unpack environment.
             await DevPackUnloader.UnpackAssets(filepath);

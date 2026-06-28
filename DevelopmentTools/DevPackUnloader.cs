@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using OpenOrderSystem.Core.Bootstrapper;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Data.DataModels.V2.Core;
@@ -22,18 +23,23 @@ public sealed class DevPackUnloader
         foreach(var asset in assets)
         {
             if (asset.FullName == "pack/assets/") continue;
-            var assetFilepath = Path.Combine("wwwroot", "media", "images", "user", asset.Name);
-            if (File.Exists(assetFilepath)) File.Delete(assetFilepath);
-            asset.ExtractToFile(assetFilepath);
+            var assetFilepath = Path.Combine(OpenOrderSystemApplication.DataRootPath,
+                "public",
+                "wwwroot", 
+                "media", 
+                "images");
+            Directory.CreateDirectory(assetFilepath);
+            if (File.Exists(Path.Combine(assetFilepath, asset.Name))) File.Delete(Path.Combine(assetFilepath, asset.Name));
+            asset.ExtractToFile(Path.Combine(assetFilepath, asset.Name));
         }
     }
 
     public static async Task ImportInfo(string filepath, ApplicationDbContext dbContext)
     {
-        var zip = ZipFile.OpenRead(filepath);
+        /*var zip = ZipFile.OpenRead(filepath);
         var infoEntity = zip.GetEntry("pack/data/info.json");
         if (infoEntity == null) return;
-        var tempFile = Path.Combine("Store", "DevPacks", "info.tmp");
+        var tempFile = Path.Combine(OpenOrderSystemApplication.DataRootPath, "Store", "DevPacks", "info.tmp");
         infoEntity.ExtractToFile(tempFile);
         var json = await File.ReadAllTextAsync(tempFile);
         var info = JsonSerializer.Deserialize<DevPackInfo>(json);
@@ -76,7 +82,7 @@ public sealed class DevPackUnloader
             Value = JsonSerializer.Serialize(info.Hours.Weekly)
         });
 
-        await ImportPrinterTemplates(filepath, dbContext, info);
+        await ImportPrinterTemplates(filepath, dbContext, info);*/
 
         await dbContext.SaveChangesAsync();
     }
@@ -86,7 +92,7 @@ public sealed class DevPackUnloader
         var zip = ZipFile.OpenRead(filepath);
         var infoEntity = zip.GetEntry("pack/data/menu.json");
         if (infoEntity == null) return;
-        var tempFile = Path.Combine("Store", "DevPacks", "menu.tmp");
+        var tempFile = Path.Combine(OpenOrderSystemApplication.DataRootPath, "Store", "DevPacks", "menu.tmp");
         infoEntity.ExtractToFile(tempFile);
         var json = await File.ReadAllTextAsync(tempFile);
         var menu = JsonSerializer.Deserialize<DevPackMenu>(json);
@@ -242,7 +248,7 @@ public sealed class DevPackUnloader
         var zip = ZipFile.OpenRead(filepath);
         var infoEntity = zip.GetEntry("pack/data/print-templates.json");
         if (infoEntity == null) return;
-        var tempFile = Path.Combine("Store", "DevPacks", "print-templates.tmp");
+        var tempFile = Path.Combine(OpenOrderSystemApplication.DataRootPath, "Store", "DevPacks", "print-templates.tmp");
         infoEntity.ExtractToFile(tempFile);
         var json = await File.ReadAllTextAsync(tempFile);
         var printTemplates = JsonSerializer.Deserialize<DevPackPrinterTemplates>(json);

@@ -9,12 +9,9 @@ internal static class Program
 {
     private static async Task Main(string[] args)
     {
-        var oosApp = new OpenOrderSystemApplication();
-        var app = await oosApp.BuildApp(args);
-
-        OpenOrderSystem.Core.Areas.Staff.Controllers.Manager.MenuController.ImageDirectoryPath = Path.Combine(app.Environment.WebRootPath, "media", "images");
-        MediaManagerService.MediaRootPath = Path.Combine(app.Environment.WebRootPath, "media");
-
+        OpenOrderSystemApplication.DataRootPath = Environment.GetEnvironmentVariable("OOS_DATAROOT") ??
+                                                  Path.Combine(AppContext.BaseDirectory, "appdata");
+        
         SystemController.Version = Assembly
             .GetExecutingAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
@@ -25,6 +22,13 @@ internal static class Program
         
         SystemController.SystemBoot = DateTime.Now;
 
+        var oosApp = new OpenOrderSystemApplication();
+        var app = await oosApp.BuildApp(args);
+
+        
+        MediaManagerService.MediaRootPath = Path.Combine(OpenOrderSystemApplication.DataRootPath, "public", "wwwroot", "media");
+        OpenOrderSystem.Core.Areas.Staff.Controllers.Manager.MenuController.ImageDirectoryPath = Path.Combine(MediaManagerService.MediaRootPath, "images");
+        
         app.Run();
     }
 }
