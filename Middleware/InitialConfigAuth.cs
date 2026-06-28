@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Http.Features;
 using OpenOrderSystem.Core.Attributes;
+using OpenOrderSystem.Core.Bootstrapper;
 
 namespace OpenOrderSystem.Core.Middleware
 {
@@ -17,7 +18,7 @@ namespace OpenOrderSystem.Core.Middleware
             }
 
             //get the initial configuration status (look for config file).
-            var configured = File.Exists(Path.Combine("config", "siteSettings.json"));
+            var configured = File.Exists(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config", "siteSettings.json"));
 
             if (intialConfig.InvertCondition)
                 configured = !configured;
