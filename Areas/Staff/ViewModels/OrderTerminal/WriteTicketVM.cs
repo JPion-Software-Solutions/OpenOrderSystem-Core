@@ -11,7 +11,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal
         private string? _promoCode;
 
         public List<MenuItem> Menu { get; set; } = new List<MenuItem>();
-        public Cart? Cart { get; set; }
+        public LegacyCart? Cart { get; set; }
         public string CartId { get; set; } = string.Empty;
 
         [Required]

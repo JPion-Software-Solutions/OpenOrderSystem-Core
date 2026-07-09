@@ -114,6 +114,14 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
     /// </summary>
     public DbSet<OrderQueue> OrderQueue { get; set; }
     
+    /// <summary>
+    /// Active draft orders managed by the cart service write-through cache.
+    /// Rows are transient — created at cart creation and removed by the cart GC job
+    /// after the short disposed TTL (following submission or cancellation) or the
+    /// long abandoned TTL (based on <see cref="Cart.LastActive"/>).
+    /// </summary>
+    public DbSet<Cart> Carts { get; set; }
+    
     public OosDbContext(DbContextOptions<OosDbContext> options) : base(options) { }
 
     public Task<int> SaveChangesAsync() => base.SaveChangesAsync();

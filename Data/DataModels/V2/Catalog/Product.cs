@@ -91,6 +91,15 @@ public class Product : IGroupMember<ProductGroup, Product>
     /// Use metadata helper methods to keep cached state coherent and to avoid persisting invalid JSON.
     /// </remarks>
     public string? MetadataJson { get; set; }
+    
+    
+    /// <summary>
+    /// Immutable historical snapshots of this product's graph, ordered by creation time.
+    /// The most recent snapshot reflects the current state of the product at the time it was last snapshotted.
+    /// Referenced by <see cref="OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderLine"/> records
+    /// to preserve the product state as it existed when an order was placed.
+    /// </summary>
+    public List<ProductSnapshot>? Snapshots { get; set; }
 
     /// <summary>
     /// Behavioral and display flags for this product.
@@ -112,7 +121,14 @@ public class Product : IGroupMember<ProductGroup, Product>
     /// Variants belonging to this product (sellable configurations).
     /// </summary>
     public List<Variant> Variants { get; set; } = new();
+    /// <summary>
+    /// Optional foreign key to the <see cref="ProductGroup"/> this product belongs to.
+    /// </summary>
     public Guid? GroupId { get; set;}
+
+    /// <summary>
+    /// Navigation property for the <see cref="ProductGroup"/> this product belongs to.
+    /// </summary>
     public ProductGroup? Group { get; set;}
 
     /// <summary>
