@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OpenOrderSystem.Core.Models
 {
-    public class Cart
+    public class LegacyCart
     {
         private string? _promo = null;
-        public Cart()
+        public LegacyCart()
         {
             Id = Guid.NewGuid().ToString();
             CartLastActive = DateTime.UtcNow;

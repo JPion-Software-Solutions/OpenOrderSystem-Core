@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data.DataModels.V2;
 using OpenOrderSystem.Core.Data.DataModels.V2.Catalog;
@@ -29,7 +32,8 @@ public class CatalogService : ICatalogManager
                 return NotFoundProduct(flags);
 
             var options = await LoadOptionsIfRequested(ctx, id, flags);
-            return OkProduct(ToProductDto(entity, options, flags), flags);
+            var snapshot = await LoadSnapshotIfRequested(ctx, entity.Id, flags);
+            return OkProduct(ToProductDto(entity, options, flags, snapshot), flags);
         }
         catch (Exception ex) { return ErrorProduct(ex, flags); }
     }
@@ -44,7 +48,8 @@ public class CatalogService : ICatalogManager
                 return NotFoundProduct(flags);
 
             var options = await LoadOptionsIfRequested(ctx, entity.Id, flags);
-            return OkProduct(ToProductDto(entity, options, flags), flags);
+            var snapshot = await LoadSnapshotIfRequested(ctx, entity.Id, flags);
+            return OkProduct(ToProductDto(entity, options, flags, snapshot), flags);
         }
         catch (Exception ex) { return ErrorProduct(ex, flags); }
     }
@@ -102,7 +107,8 @@ public class CatalogService : ICatalogManager
                 return NotFoundProduct(flags);
 
             var options = await LoadOptionsIfRequested(ctx, entity.Id, flags);
-            return OkProduct(ToProductDto(entity, options, flags), flags);
+            var snapshot = await LoadSnapshotIfRequested(ctx, entity.Id, flags);
+            return OkProduct(ToProductDto(entity, options, flags, snapshot), flags);
         }
         catch (Exception ex) { return ErrorProduct(ex, flags); }
     }
@@ -287,6 +293,7 @@ public class CatalogService : ICatalogManager
                 foreach (var (k, v) in product.Metadata) entity.SetMetadata(k, v);
 
             ctx.Products.Add(entity);
+            await StageSnapshotAsync(ctx, entity, null);
             await ctx.SaveChangesAsync();
             return OkProduct(ToProductDto(entity, null, ProductLocatorFlags.None));
         }
@@ -300,7 +307,8 @@ public class CatalogService : ICatalogManager
         try
         {
             await using var ctx = await _contextFactory.CreateDbContextAsync();
-            var entity = await ctx.Products.FirstOrDefaultAsync(p => p.Id == product.Id.Value);
+            var entity = await BuildProductQuery(ctx, ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia)
+                .FirstOrDefaultAsync(p => p.Id == product.Id.Value);
             if (entity is null)
                 return NotFoundProduct();
 
@@ -313,6 +321,8 @@ public class CatalogService : ICatalogManager
             if (product.Metadata is not null)
                 foreach (var (k, v) in product.Metadata) entity.SetMetadata(k, v);
 
+            var options = await LoadOptionsIfRequested(ctx, entity.Id, ProductLocatorFlags.IncludeOptions);
+            await StageSnapshotAsync(ctx, entity, options);
             await ctx.SaveChangesAsync();
             return OkProduct(ToProductDto(entity, null, ProductLocatorFlags.None));
         }
@@ -585,6 +595,7 @@ public class CatalogService : ICatalogManager
             await using var ctx = await _contextFactory.CreateDbContextAsync();
             var variants = await ctx.Variants.Where(v => v.GroupId == variantGroupId).ToListAsync();
             ApplyPricing(variants, price, strikePrice);
+            await SnapshotAffectedProductsAsync(ctx, variants.Select(v => v.ProductId).Distinct());
             await ctx.SaveChangesAsync();
             return Ok();
         }
@@ -608,10 +619,53 @@ public class CatalogService : ICatalogManager
                 .Where(v => v.GroupId.HasValue && groupIds.Contains(v.GroupId.Value))
                 .ToListAsync();
             ApplyPricing(variants, price, strikePrice);
+            await SnapshotAffectedProductsAsync(ctx, variants.Select(v => v.ProductId).Distinct());
             await ctx.SaveChangesAsync();
             return Ok();
         }
         catch (Exception ex) { return StorageError(ex); }
+    }
+
+    // ========================
+    // Snapshot helpers
+    // ========================
+
+    private async Task StageSnapshotAsync(OosDbContext ctx, Product entity, ICollection<CatalogOptionDto>? options)
+    {
+        var flags = ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia | ProductLocatorFlags.IncludeMetadata;
+        var dto = ToProductDto(entity, options, flags);
+        var json = JsonSerializer.Serialize(dto);
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
+
+        var current = await ctx.ProductSnapshots
+            .AsNoTracking()
+            .Where(s => s.ProductId == entity.Id)
+            .OrderByDescending(s => s.CreatedUtc)
+            .Select(s => new { s.Id, s.SnapshotHash })
+            .FirstOrDefaultAsync();
+
+        if (current?.SnapshotHash == hash)
+            return;
+
+        ctx.ProductSnapshots.Add(new ProductSnapshot
+        {
+            ProductId        = entity.Id,
+            PreviousSnapshotId = current?.Id,
+            SnapshotJson     = json,
+            SnapshotHash     = hash
+        });
+    }
+
+    private async Task SnapshotAffectedProductsAsync(OosDbContext ctx, IEnumerable<Guid> productIds)
+    {
+        foreach (var productId in productIds)
+        {
+            var product = await BuildProductQuery(ctx, ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia)
+                .FirstOrDefaultAsync(p => p.Id == productId);
+            if (product is null) continue;
+            var options = await LoadOptionsIfRequested(ctx, productId, ProductLocatorFlags.IncludeOptions);
+            await StageSnapshotAsync(ctx, product, options);
+        }
     }
 
     // ========================
@@ -625,7 +679,28 @@ public class CatalogService : ICatalogManager
             query = query.Include(p => p.Variants);
         if (flags.HasFlag(ProductLocatorFlags.IncludeMedia))
             query = query.Include(p => p.CoverMedia).Include(p => p.Album);
+        if  (flags.HasFlag(ProductLocatorFlags.IncludeSnapshot))
+            query = query.Include(p => p.Snapshots);
         return query;
+    }
+
+    private static async Task<CatalogProductSnapshotDto?> LoadSnapshotIfRequested(OosDbContext ctx, Guid productId, ProductLocatorFlags flags)
+    {
+        if (!flags.HasFlag(ProductLocatorFlags.IncludeSnapshot))
+            return null;
+
+        var snapshot = await ctx.ProductSnapshots
+            .AsNoTracking()
+            .Where(s => s.ProductId == productId)
+            .OrderByDescending(s => s.CreatedUtc)
+            .FirstOrDefaultAsync();
+
+        return snapshot is null ? null : new CatalogProductSnapshotDto(
+            snapshot.ProductId,
+            snapshot.PreviousSnapshotId,
+            snapshot.SchemaVersion,
+            snapshot.SnapshotJson,
+            snapshot.SnapshotHash);
     }
 
     private static async Task<ICollection<CatalogOptionDto>?> LoadOptionsIfRequested(OosDbContext ctx, Guid productId, ProductLocatorFlags flags)
@@ -648,7 +723,8 @@ public class CatalogService : ICatalogManager
         foreach (var entity in entities)
         {
             var options = await LoadOptionsIfRequested(ctx, entity.Id, flags);
-            dtos.Add(ToProductDto(entity, options, flags));
+            var snapshot = await LoadSnapshotIfRequested(ctx, entity.Id, flags);
+            dtos.Add(ToProductDto(entity, options, flags, snapshot));
         }
         return dtos;
     }
@@ -730,7 +806,7 @@ public class CatalogService : ICatalogManager
     // DTO mapping
     // ========================
 
-    private static CatalogProductDto ToProductDto(Product p, ICollection<CatalogOptionDto>? options, ProductLocatorFlags flags) =>
+    private static CatalogProductDto ToProductDto(Product p, ICollection<CatalogOptionDto>? options, ProductLocatorFlags flags, CatalogProductSnapshotDto? snapshot = null) =>
         new(
             p.Id,
             p.Name,
@@ -741,7 +817,8 @@ public class CatalogService : ICatalogManager
             options,
             flags.HasFlag(ProductLocatorFlags.IncludeMedia) ? (p.CoverMedia is null ? null : ToMediaDto(p.CoverMedia)) : null,
             flags.HasFlag(ProductLocatorFlags.IncludeMedia) ? (p.Album is null ? null : ToGroupDto(p.Album)) : null,
-            p.Group is null ? null : ToGroupDto(p.Group)
+            p.Group is null ? null : ToGroupDto(p.Group),
+            snapshot
         );
 
     private static CatalogVariantDto ToVariantDto(Variant v) =>

@@ -26,6 +26,11 @@ public enum ProductLocatorFlags
     IncludeMetadata              = 1 << 3,
 
     /// <summary>
+    /// Include most recent snapshot when retrieving records.
+    /// </summary>
+    IncludeSnapshot              = 1 << 4,
+
+    /// <summary>
     /// Include all products within the queried group(s) as well as any products in their parent group(s).
     /// </summary>
     CollapseParentGroupMembers   = 1 << 10,

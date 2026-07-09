@@ -6,7 +6,7 @@ namespace OpenOrderSystem.Core.ViewModels.Home
     public class CheckoutVM
     {
         private string _id;
-        public Cart? Cart { get; set; }
+        public LegacyCart? Cart { get; set; }
 
         public string CartId
         {

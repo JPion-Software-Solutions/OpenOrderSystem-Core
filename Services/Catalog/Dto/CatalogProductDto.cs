@@ -12,4 +12,5 @@ public record CatalogProductDto(
     ICollection<CatalogOptionDto>? Options,
     CatalogMediaDto? CoverMedia,
     CatalogGroupDto? MediaAlbum,
-    CatalogGroupDto? CatalogProductGroup);
+    CatalogGroupDto? CatalogProductGroup,
+    CatalogProductSnapshotDto? CurrentSnapshot = null);

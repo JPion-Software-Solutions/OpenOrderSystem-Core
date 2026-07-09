@@ -8,7 +8,7 @@ namespace OpenOrderSystem.Core.Services
 {
     public class CartService
     {
-        private Dictionary<string, Cart> _carts = new Dictionary<string, Cart>();
+        private Dictionary<string, LegacyCart> _carts = new Dictionary<string, LegacyCart>();
         private List<string> _expiredCarts = new List<string>();
 
         /// <summary>
@@ -17,14 +17,14 @@ namespace OpenOrderSystem.Core.Services
         /// <returns>Id of the newly provisioned cart</returns>
         public string ProvisionCart()
         {
-            var cart = new Cart();
+            var cart = new LegacyCart();
             _carts[cart.Id] = cart;
             return cart.Id;
         }
 
         public string ProvisionCartFromExistingOrder(Order order)
         {
-            var cart = new Cart();
+            var cart = new LegacyCart();
             cart.Order = order;
             cart.IsExistingOrder = true;
             cart.PromoCode = order.DiscountId;
@@ -38,7 +38,7 @@ namespace OpenOrderSystem.Core.Services
         /// </summary>
         /// <param name="id">Id of the cart to locate</param>
         /// <returns>Active cart or null</returns>
-        public Cart? GetCart(string id)
+        public LegacyCart? GetCart(string id)
         {
             if (_carts.ContainsKey(id))
                 return _carts[id];
@@ -60,24 +60,24 @@ namespace OpenOrderSystem.Core.Services
         /// <summary>
         /// Updates the information in a cart and resets expiration timer.
         /// </summary>
-        /// <param name="updatedCart">updated cart information</param>
+        /// <param name="updatedLegacyCart">updated cart information</param>
         /// <returns>CartStatus describing the action taken</returns>
-        public CartStatus UpdateCart(Cart updatedCart)
+        public CartStatus UpdateCart(LegacyCart updatedLegacyCart)
         {
             Clean();
 
             var status = CartStatus.NotFound;
 
-            if (_carts.ContainsKey(updatedCart.Id))
+            if (_carts.ContainsKey(updatedLegacyCart.Id))
             {
-                updatedCart.CartLastActive = DateTime.UtcNow;
-                _carts[updatedCart.Id] = updatedCart;
+                updatedLegacyCart.CartLastActive = DateTime.UtcNow;
+                _carts[updatedLegacyCart.Id] = updatedLegacyCart;
                 status = CartStatus.Updated;
             }
 
             var expired = _expiredCarts
                 .AsQueryable()
-                .FirstOrDefault(c => c == updatedCart.Id);
+                .FirstOrDefault(c => c == updatedLegacyCart.Id);
 
             return expired == null ? status : CartStatus.Expired;
         }
