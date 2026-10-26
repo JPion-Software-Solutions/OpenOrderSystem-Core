@@ -1,0 +1,255 @@
+:root{
+    --primary-base-color: #403580;
+    --secondary-base-color: #127dc8;
+
+    /* ============================================================
+     PRIMARY SCALE
+     ============================================================ */
+    --primary-50:  oklch(from var(--primary-base-color) calc(l + (1 - l) * 0.95) calc(c * 0.10) h);
+    --primary-100: oklch(from var(--primary-base-color) calc(l + (1 - l) * 0.87) calc(c * 0.20) h);
+    --primary-200: oklch(from var(--primary-base-color) calc(l + (1 - l) * 0.72) calc(c * 0.35) h);
+    --primary-300: oklch(from var(--primary-base-color) calc(l + (1 - l) * 0.54) calc(c * 0.55) h);
+    --primary-400: oklch(from var(--primary-base-color) calc(l + (1 - l) * 0.28) calc(c * 0.80) h);
+    --primary-500: oklch(from var(--primary-base-color) l c h);
+    --primary-600: oklch(from var(--primary-base-color) calc(l * 0.85) calc(c * 0.92) h);
+    --primary-700: oklch(from var(--primary-base-color) calc(l * 0.68) calc(c * 0.75) h);
+    --primary-800: oklch(from var(--primary-base-color) calc(l * 0.50) calc(c * 0.55) h);
+    --primary-900: oklch(from var(--primary-base-color) calc(l * 0.32) calc(c * 0.35) h);
+    --primary-950: oklch(from var(--primary-base-color) calc(l * 0.18) calc(c * 0.18) h);
+
+    /* ============================================================
+       SECONDARY SCALE (identical formulas, different base)
+       ============================================================ */
+    --secondary-50:  oklch(from var(--secondary-base-color) calc(l + (1 - l) * 0.95) calc(c * 0.10) h);
+    --secondary-100: oklch(from var(--secondary-base-color) calc(l + (1 - l) * 0.87) calc(c * 0.20) h);
+    --secondary-200: oklch(from var(--secondary-base-color) calc(l + (1 - l) * 0.72) calc(c * 0.35) h);
+    --secondary-300: oklch(from var(--secondary-base-color) calc(l + (1 - l) * 0.54) calc(c * 0.55) h);
+    --secondary-400: oklch(from var(--secondary-base-color) calc(l + (1 - l) * 0.28) calc(c * 0.80) h);
+    --secondary-500: oklch(from var(--secondary-base-color) l c h);
+    --secondary-600: oklch(from var(--secondary-base-color) calc(l * 0.85) calc(c * 0.92) h);
+    --secondary-700: oklch(from var(--secondary-base-color) calc(l * 0.68) calc(c * 0.75) h);
+    --secondary-800: oklch(from var(--secondary-base-color) calc(l * 0.50) calc(c * 0.55) h);
+    --secondary-900: oklch(from var(--secondary-base-color) calc(l * 0.32) calc(c * 0.35) h);
+    --secondary-950: oklch(from var(--secondary-base-color) calc(l * 0.18) calc(c * 0.18) h);
+
+    /* ============================================================
+       SEMANTIC TOKENS — light mode default
+       ============================================================ */
+    --primary-surface-1: var(--primary-50);
+    --primary-surface-2: var(--primary-100);
+    --primary-surface-3: var(--primary-200);
+    --primary-surface-4: var(--primary-300);
+    --primary-surface-5: var(--primary-400);
+    --primary-reference: var(--primary-500);
+    --primary-mark-5: var(--primary-600);
+    --primary-mark-4: var(--primary-700);
+    --primary-mark-3: var(--primary-800);
+    --primary-mark-2: var(--primary-900);
+    --primary-mark-1: var(--primary-950);
+
+    --secondary-surface-1: var(--secondary-50);
+    --secondary-surface-2: var(--secondary-100);
+    --secondary-surface-3: var(--secondary-200);
+    --secondary-surface-4: var(--secondary-300);
+    --secondary-surface-5: var(--secondary-400);
+    --secondary-reference: var(--secondary-500);
+    --secondary-mark-5: var(--secondary-600);
+    --secondary-mark-4: var(--secondary-700);
+    --secondary-mark-3: var(--secondary-800);
+    --secondary-mark-2: var(--secondary-900);
+    --secondary-mark-1: var(--secondary-950);
+
+    @media(prefers-color-scheme: dark){
+        --primary-surface-1: var(--primary-950);
+        --primary-surface-2: var(--primary-900);
+        --primary-surface-3: var(--primary-800);
+        --primary-surface-4: var(--primary-700);
+        --primary-surface-5: var(--primary-600);
+        --primary-reference: var(--primary-500);
+        --primary-mark-5: var(--primary-400);
+        --primary-mark-4: var(--primary-300);
+        --primary-mark-3: var(--primary-200);
+        --primary-mark-2: var(--primary-100);
+        --primary-mark-1: var(--primary-50);
+
+        --secondary-surface-1: var(--secondary-950);
+        --secondary-surface-2: var(--secondary-900);
+        --secondary-surface-3: var(--secondary-800);
+        --secondary-surface-4: var(--secondary-700);
+        --secondary-surface-5: var(--secondary-600);
+        --secondary-reference: var(--secondary-500);
+        --secondary-mark-5: var(--secondary-400);
+        --secondary-mark-4: var(--secondary-300);
+        --secondary-mark-3: var(--secondary-200);
+        --secondary-mark-2: var(--secondary-100);
+        --secondary-mark-1: var(--secondary-50);
+    }
+}
+
+html{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+main {
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: 135px 1fr 60px;
+}
+header {
+    background: linear-gradient(to top, var(--primary-surface-4) 0%, var(--primary-surface-2) 100%);
+    display: flex;
+    flex-direction: column;
+    
+    .terminal-header {
+        margin: auto;
+    }
+    
+    .queue{
+        height: 35px;
+        width: 100%;
+        background: var(--secondary-surface-4);
+    }
+}
+
+.complete{
+    background: linear-gradient(to bottom, var(--primary-surface-4) 0%, var(--primary-surface-2) 100%);
+}
+
+header,
+.complete {
+    color: var(--primary-mark-1);
+}
+
+header {
+    text-align: center;
+    padding-top: 5px;
+    padding-bottom: 5px;
+
+    h1, h2, small {
+        margin: 0;
+    }
+
+    h1 {
+        font-size: 1.5em;
+    }
+
+    h2 {
+        font-size: 1.1em;
+    }
+
+    small {
+        font-size: 0.7em;
+        color: var(--secondary-mark-3)
+    }
+    
+    
+    .printer-tray,
+    .terminal-clock{
+        background: linear-gradient(to top, var(--secondary-mark-4), var(--secondary-mark-4));
+        color: var(--secondary-surface-2);
+        border: 2px solid var(--secondary-reference);
+        border-radius: 0.8em;
+        corner-shape: squircle;
+        position: absolute;
+    }
+    .printer-tray{
+        height: 40px;
+        width: 100px;
+        top: 30px;
+        left: 15px;
+    }
+    .terminal-clock{
+        height: 60px;
+        width: 100px;
+        top: 20px;
+        right: 15px;
+        font-size: 0.85em;
+        font-weight: bold;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        
+        .time {
+            font-size: 1.35em;
+        }
+    }
+}
+
+.order-stage-container {
+    background-color: var(--primary-surface-2);
+}
+.orders-stage {
+    --stage-color: var(--secondary-reference);
+
+    margin: 25px 5vw;
+    width: 90vw;
+    min-height: 100px;
+    padding: 0.8em;
+    position: relative;
+    z-index: 1;
+    color: oklch(from var(--stage-color) .9 0 h);
+    
+    .card-deck {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, calc(25% - 1em)));
+        grid-auto-flow: dense;
+        align-items: stretch;
+        gap: 1em;
+        
+        .card {
+            padding:.3em;
+            background-color: oklch(from var(--stage-color) .9 .1 h);
+            border: 3px solid var(--stage-color);
+            
+            .order-number {
+                background-color: oklch(from var(--stage-color) .8 .1 h);
+                color: oklch(from var(--stage-color) .2 .1 h);
+                padding: 0.3em;
+                margin: calc(-.3em + 3px) calc(-.3em + 3px) 0.3em;
+            }
+            
+            .order-line-item::before {
+                content: "►";
+                margin-right: .1em;
+            }
+            
+            .order-line-additions,
+            .order-line-subtractions
+            {
+                padding-left: 1.3em;
+                .action {
+                    font-weight: bold;
+                    margin:0;
+                }
+            }
+        }
+    }
+    
+    &::before {
+        content: "";
+        background-color: oklch(from var(--stage-color) .3 c h);
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+    }
+    
+    &::after {
+        content: "";
+        position: absolute;
+        inset: -4px;
+        background: linear-gradient(
+                270deg,
+                oklch(from var(--stage-color) .7 c h) 0%,
+                oklch(from var(--stage-color) .9 c h) 100%);
+        z-index: -2;
+    }
+}
+
+.orders-stage,
+.orders-stage::after,
+.orders-stage::before {
+    border-radius: 1.6em;
+    corner-shape: squircle;
+}

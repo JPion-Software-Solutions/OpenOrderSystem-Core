@@ -8,6 +8,7 @@
     color: white;
     border-radius: 0.5rem;
     padding: 0.5rem 1rem; 
+    z-index: 9000000;
 }
 
 html {

@@ -56,7 +56,7 @@
                 if (current.toDateString() !== loadTo.toDateString()) {
                     $.ajax({
                         method: 'GET',
-                        url: `/Staff/OrderTerminal/FetchEndOfDayReport?filter=date:${current.toLocaleDateString().replaceAll('/', '-')}!`,
+                        url: `/Staff/OrderTerminalController/FetchEndOfDayReport?filter=date:${current.toLocaleDateString().replaceAll('/', '-')}!`,
                         success: (data, status) => {
                             const displayDate = today.toLocaleDateString() === current.toLocaleDateString() ?
                                 "Current Day" : current.toDateString();
@@ -81,7 +81,7 @@
                                 const dateToRetrieve = topElement.data('date');
                                 $.ajax({
                                     method: 'GET',
-                                    url: `/Staff/OrderTerminal/FetchEndOfDayReport?filter=date:${dateToRetrieve.replaceAll('/', '-')}!`,
+                                    url: `/Staff/OrderTerminalController/FetchEndOfDayReport?filter=date:${dateToRetrieve.replaceAll('/', '-')}!`,
                                     success: (data, status) => {
                                         //parse data into viewer...
                                         const activeReport = document.getElementById('active_report');
