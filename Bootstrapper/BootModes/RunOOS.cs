@@ -153,6 +153,8 @@ public class RunOosBootstrap : IBootMode
         _bob.Services.AddSingleton<StaffTerminalMonitoringService>();
         _bob.Services.AddSingleton<CartService>();
         _bob.Services.AddSingleton<PrintSpoolerService>();
+        _bob.Services.AddScoped<IConfigurationStore, DatabaseConfigurationStore<OosDbContext>>();
+        _bob.Services.AddScoped<ITimeNormalizationService, DatabaseConfigurationStore<OosDbContext>>();
 
         _bob.Services.AddDbContext<DataProtectionKeyContext>(options => options.UseDynamicSQLProvider(Configuration));
 
@@ -180,7 +182,7 @@ public class RunOosBootstrap : IBootMode
             options.Password.RequireLowercase = false;
             options.Password.RequiredLength = 8;
         })
-        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddEntityFrameworkStores<OosDbContext>()
         .AddDefaultTokenProviders();
 
         _bob.Services.AddQuartz(q =>
@@ -248,6 +250,13 @@ public class RunOosBootstrap : IBootMode
             else
                 _fallback = "recovery";
         }
+        else if (!dbProvider.IsAvailable())
+        {
+            var message = dbProvider.NotAvailable().Message;
+            Log.Warning("Preflight: {Message}", message);
+            foundErrors.Add(message);
+            _fallback = "recovery";
+        }
         else
         {
             var dbConnectionTools = new DatabaseConnectionTool<OosDbContext>(dbProvider, dbConnectionString ?? "");
@@ -259,7 +268,14 @@ public class RunOosBootstrap : IBootMode
         var legacyProvider = bootConfig.GetConfig<DbProviders>("LEGACY:DB_PROVIDER");
         var legacyConnectionString = bootConfig.GetConfig("LEGACY:DB_CONNECTION_STRING");
 
-        if (!legacyConnectionString.IsNullOrEmpty())
+        if (!legacyConnectionString.IsNullOrEmpty() && !legacyProvider.IsAvailable())
+        {
+            var message = $"Legacy database: {legacyProvider.NotAvailable().Message}";
+            Log.Warning("Preflight: {Message}", message);
+            foundErrors.Add(message);
+            _fallback = "recovery";
+        }
+        else if (!legacyConnectionString.IsNullOrEmpty())
         {
             var legacyConnectionTools = new DatabaseConnectionTool<ApplicationDbContext>(legacyProvider, legacyConnectionString ?? "");
             legacyConnectionTools.CanConnect(out var t);

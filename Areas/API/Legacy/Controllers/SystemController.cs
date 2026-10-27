@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Interfaces;
 
 namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {
@@ -13,14 +14,17 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
     {
         private StaffTerminalMonitoringService _staffTMS;
         private ConfigurationService _configService;
+        private ITimeNormalizationService _timeService;
 
         public static string Version { get; set; } = string.Empty;
         public static DateTime SystemBoot { get; set; }
 
-        public SystemController(StaffTerminalMonitoringService staffTMS, ConfigurationService configService) 
-        { 
+        public SystemController(StaffTerminalMonitoringService staffTMS, ConfigurationService configService,
+            ITimeNormalizationService timeService)
+        {
             _staffTMS = staffTMS;
             _configService = configService;
+            _timeService = timeService;
         }
 
         [Route("/api/system/ping")]
@@ -39,18 +43,20 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
             });
         }
 
-        public IResult AcceptingOrders()
+        public async Task<IResult> AcceptingOrders()
         {
-            var acceptingOrders = _staffTMS.TerminalActive && _configService.Settings.AcceptingOrders;
+            var currentLocalTime = await _timeService.GetLocalTime();
+            var withinBusinessHours = _configService.Settings.IsAcceptingOrders(currentLocalTime);
+            var acceptingOrders = _staffTMS.TerminalActive && withinBusinessHours;
 
             var response = new
             {
                 acceptingOrders,
                 reason = acceptingOrders ? "N/A" :
-                    !_configService.Settings.AcceptingOrders ? "The kitchen is currently closed." :
+                    !withinBusinessHours ? "The kitchen is currently closed." :
                     "Staff terminal unavailable to receive orders.",
                 terminalOnline = _staffTMS.TerminalActive,
-                withinBusinessHours = _configService.Settings.AcceptingOrders
+                withinBusinessHours
             };
 
             if (acceptingOrders) 

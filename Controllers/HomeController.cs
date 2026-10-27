@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Interfaces;
 using OpenOrderSystem.Core.ViewModels.Home;
 using OpenOrderSystem.Core.Models;
 using OpenOrderSystem.Core.ViewModels.Home;
@@ -21,15 +22,18 @@ namespace OpenOrderSystem.Core.Controllers
         private readonly CartService _cartService;
         private readonly ConfigurationService _config;
         private readonly StaffTerminalMonitoringService _staffTMS;
+        private readonly ITimeNormalizationService _timeService;
 
         public HomeController(ILogger<HomeController> logger, ApplicationDbContext context,
-            CartService cartService, ConfigurationService config, StaffTerminalMonitoringService staffTMS)
+            CartService cartService, ConfigurationService config, StaffTerminalMonitoringService staffTMS,
+            ITimeNormalizationService timeService)
         {
             _logger = logger;
             _context = context;
             _cartService = cartService;
             _config = config;
             _staffTMS = staffTMS;
+            _timeService = timeService;
         }
 
         // GET: MenuItems
@@ -178,9 +182,10 @@ namespace OpenOrderSystem.Core.Controllers
 
             return View("Index", model);
         }
-        public bool TestOnline()
+        public async Task<bool> TestOnline()
         {
-            return _config.Settings.AcceptingOrders && _staffTMS.TerminalActive;
+            var currentLocalTime = await _timeService.GetLocalTime();
+            return _config.Settings.IsAcceptingOrders(currentLocalTime) && _staffTMS.TerminalActive;
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

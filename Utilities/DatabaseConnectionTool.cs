@@ -35,8 +35,9 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
                 break;
 
             case DbProviders.MySQL:
-                bob.UseMySql(connectionString, MySqlServerVersion.AutoDetect(connectionString));
-                break;
+                // Suspended: see DbProvidersExtensions.NotAvailable for details and restore steps.
+                // Restore: bob.UseMySql(connectionString, MySqlServerVersion.AutoDetect(connectionString));
+                throw provider.NotAvailable();
 
             case DbProviders.PostgreSQL:
                 bob.UseNpgsql(connectionString);
@@ -238,8 +239,9 @@ public static class DbContextOptionsBuilderExtensions
                 break;
 
             case DbProviders.MySQL:
-                bob.UseMySql(connectionString, MySqlServerVersion.AutoDetect(connectionString));
-                break;
+                // Suspended: see DbProvidersExtensions.NotAvailable for details and restore steps.
+                // Restore: bob.UseMySql(connectionString, MySqlServerVersion.AutoDetect(connectionString));
+                throw provider.NotAvailable();
 
             case DbProviders.PostgreSQL:
                 bob.UseNpgsql(connectionString);
@@ -268,11 +270,53 @@ public enum DbProviders
     [System.ComponentModel.Description("SQL Server. Great choice for Windows environments and existing Microsoft infrastructure.")]
     SQLServer,
 
-    /// <summary>MySQL or MariaDB. Common on shared hosting and many Linux server environments.</summary>
-    [System.ComponentModel.Description("MySQL / MariaDB. Common on shared hosting and many Linux server environments.")]
+    /// <summary>
+    /// MySQL or MariaDB. Common on shared hosting and many Linux server environments.
+    /// Currently unavailable; see <see cref="DbProvidersExtensions.NotAvailable"/>.
+    /// </summary>
+    /// <remarks>
+    /// Retained so existing boot configs referencing this value still deserialize and can be
+    /// routed to recovery by the preflight check instead of failing to load.
+    /// </remarks>
+    [System.ComponentModel.Description("MySQL / MariaDB (currently unavailable). Common on shared hosting and many Linux server environments.")]
     MySQL,
 
     /// <summary>PostgreSQL. Strong general-purpose choice with excellent reliability and features.</summary>
     [System.ComponentModel.Description("PostgreSQL. Strong general-purpose choice with excellent reliability and features.")]
     PostgreSQL
+}
+
+/// <summary>
+/// Availability helpers for <see cref="DbProviders"/>.
+/// </summary>
+public static class DbProvidersExtensions
+{
+    /// <summary>
+    /// Determines whether the provider can currently be used at runtime.
+    /// </summary>
+    /// <param name="provider">The provider to check.</param>
+    /// <returns><see langword="true"/> if the provider is available; otherwise <see langword="false"/>.</returns>
+    public static bool IsAvailable(this DbProviders provider) => provider != DbProviders.MySQL;
+
+    /// <summary>
+    /// Creates the exception thrown when a suspended provider is requested.
+    /// </summary>
+    /// <remarks>
+    /// MySQL / MariaDB support was suspended for the .NET 10 migration (2026-10):
+    /// <list type="bullet">
+    /// <item>Pomelo.EntityFrameworkCore.MySql has no EF Core 10 release (latest 9.0.0 pins EF Core 9.0.x).</item>
+    /// <item>Oracle's MySql.EntityFrameworkCore does not reliably support MariaDB and is GPL licensed.</item>
+    /// <item>The existing migrations were generated for SQL Server and would not apply on MySQL regardless.</item>
+    /// </list>
+    /// To restore: add an EF Core 10 compatible MySQL/MariaDB provider package, restore the
+    /// <c>UseMySql</c> calls noted in <see cref="DatabaseConnectionTool{TContext}"/> and
+    /// <see cref="DbContextOptionsBuilderExtensions.UseDynamicSQLProvider"/>, add a MySQL-specific
+    /// migrations assembly, and remove MySQL from <see cref="IsAvailable"/>.
+    /// </remarks>
+    /// <param name="provider">The unavailable provider.</param>
+    /// <returns>A <see cref="NotSupportedException"/> describing why the provider is unavailable.</returns>
+    public static NotSupportedException NotAvailable(this DbProviders provider) =>
+        new($"The {provider} database provider is not supported in this version of Open Order System. " +
+            "No EF Core 10 compatible MySQL/MariaDB provider is currently available. " +
+            "Use SQLite, SQL Server, or PostgreSQL.");
 }

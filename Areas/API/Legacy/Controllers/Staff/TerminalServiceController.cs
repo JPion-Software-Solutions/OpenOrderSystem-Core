@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Interfaces;
 using OpenOrderSystem.Core.Models;
 using System.Security.Cryptography;
 using System.Text;
@@ -26,13 +27,15 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers.Staff
         private readonly StaffTerminalMonitoringService _staffTMS;
         private readonly ApplicationDbContext _context;
         private readonly PrinterService _printService;
+        private readonly ITimeNormalizationService _timeService;
 
         public TerminalServiceController(ApplicationDbContext context, StaffTerminalMonitoringService staffTMS,
-            PrinterService printService)
+            PrinterService printService, ITimeNormalizationService timeService)
         {
             _context = context;
             _staffTMS = staffTMS;
             _printService = printService;
+            _timeService = timeService;
         }
 
         [HttpGet]
@@ -176,9 +179,9 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers.Staff
         [HttpGet]
         public async Task<IResult> FetchOrdersAsync()
         {
-            var utcTime = DateTime.UtcNow;
-            TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
-            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local);
+            var timezoneId = await _timeService.GetLocalTimezoneId();
+            var localTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, localTimeZone);
 
             var orders = _context.Orders
                 .Include(o => o.Customer)
@@ -186,7 +189,7 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers.Staff
                     .ThenInclude(d => d.WhiteListItemsVarients)
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
-                    o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date == currentTime.Date)
+                    o.OrderPlaced, localTimeZone).Date == currentTime.Date)
                 //.OrderByDescending(o => o.OrderPlaced)
                 .ToList();
 

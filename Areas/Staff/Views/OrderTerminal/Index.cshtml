@@ -1,9 +1,9 @@
 ﻿@using OpenOrderSystem.Core.Services
+@using OpenOrderSystem.Core.Services.Interfaces
 @inject ConfigurationService _config
+@inject ITimeNormalizationService TimeService
 @{
-    var utcTime = DateTime.UtcNow;
-    TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
-    var currentTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local);
+    var currentTime = await TimeService.GetLocalTime();
 }
 <div class="printer-tray">
     <i id="printer_connection_status" class="fa-sharp fa-solid fa-print mx-1 printer-status-icon"></i>

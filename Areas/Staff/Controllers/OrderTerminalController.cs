@@ -8,6 +8,7 @@ using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Interfaces;
 using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.OrderTerminal;
 using OpenOrderSystem.Core.Models;
@@ -24,14 +25,16 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly StaffTerminalMonitoringService _staffTMS;
         private readonly CartService _cartService;
+        private readonly ITimeNormalizationService _timeService;
 
         public OrderTerminalController(ApplicationDbContext context, SignInManager<IdentityUser> signInManager,
-            StaffTerminalMonitoringService staffTMS, CartService cartService)
+            StaffTerminalMonitoringService staffTMS, CartService cartService, ITimeNormalizationService timeService)
         {
             _context = context;
             _signInManager = signInManager;
             _staffTMS = staffTMS;
             _cartService = cartService;
+            _timeService = timeService;
 
             _context.DiscountCodes
                 .Include(d => d.WhiteListItemsVarients)
@@ -46,11 +49,11 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
 
         [HttpGet]
         [Route("/Staff/OrderTerminal/FetchOrderList/{stage}")]
-        public IActionResult FetchOrderList(int stage = 0)
+        public async Task<IActionResult> FetchOrderList(int stage = 0)
         {
-            var utcTime = DateTime.UtcNow;
-            TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
-            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local);
+            var timezoneId = await _timeService.GetLocalTimezoneId();
+            var localTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, localTimeZone);
 
             var model = new OrderListVM();
             _context.OrderLines
@@ -67,7 +70,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
 
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
-                    o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date == currentTime.Date);
+                    o.OrderPlaced, localTimeZone).Date == currentTime.Date);
 
             if (ordersToday == null || !ordersToday.Any())
                 ordersToday = new List<Order>().AsQueryable();
@@ -135,18 +138,18 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
         }
 
         [HttpGet]
-        public IActionResult FetchTerminalHeader()
+        public async Task<IActionResult> FetchTerminalHeader()
         {
-            var utcTime = DateTime.UtcNow;
-            TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
-            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local);
+            var timezoneId = await _timeService.GetLocalTimezoneId();
+            var localTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, localTimeZone);
 
             var model = new OrderHeaderVM();
 
             model.Recieved = _context.Orders
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
-                    o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
+                    o.OrderPlaced, localTimeZone).Date ==
                     currentTime.Date && o.StageLegacy == OrderStageLegacy.Recieved)
                 .ToList()
                 .Count;
@@ -154,7 +157,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
             model.InProgress = _context.Orders
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
-                    o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
+                    o.OrderPlaced, localTimeZone).Date ==
                     currentTime.Date && o.StageLegacy == OrderStageLegacy.InProgress)
                 .ToList()
                 .Count;
@@ -162,7 +165,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
             model.Ready = _context.Orders
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
-                    o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
+                    o.OrderPlaced, localTimeZone).Date ==
                     currentTime.Date && o.StageLegacy == OrderStageLegacy.Ready)
                 .ToList()
                 .Count;
@@ -170,7 +173,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
             model.Complete = _context.Orders
                 .AsEnumerable()
                 .Where(o => TimeZoneInfo.ConvertTimeFromUtc(
-                    o.OrderPlaced, localTimeZone ?? TimeZoneInfo.Local).Date ==
+                    o.OrderPlaced, localTimeZone).Date ==
                     currentTime.Date && o.StageLegacy == OrderStageLegacy.Complete)
                 .ToList()
                 .Count;
@@ -230,9 +233,7 @@ namespace OpenOrderSystem.Core.Areas.Staff.Controllers
         [HttpGet]
         public async Task<IResult> FetchEndOfDayReport(string? filter)
         {
-            var utcTime = DateTime.UtcNow;
-            TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
-            var reportDate = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local);
+            var reportDate = await _timeService.GetLocalTime();
 
 
             if (filter?.ToLower().Contains("date:") ?? false)

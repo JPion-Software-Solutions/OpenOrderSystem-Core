@@ -91,24 +91,25 @@ namespace OpenOrderSystem.Core.Areas.Configuration.Models
         }
 
         /// <summary>
-        /// Marks if the system is currently taking orders. Checks for both schedule override and exceptions before 
-        /// returning the current status
+        /// Checks whether the system is currently taking orders as of <paramref name="currentLocalTime"/>.
+        /// Checks for both schedule override and exceptions before returning the current status.
         /// </summary>
-        [JsonIgnore]
-        public bool AcceptingOrders
+        /// <param name="currentLocalTime">
+        /// The current time, already converted into the site's configured local time zone
+        /// (e.g. via <see cref="Services.Interfaces.ITimeNormalizationService.GetLocalTime"/>).
+        /// Only the time-of-day portion is used; <see cref="Today"/> determines which day's
+        /// schedule to check it against. Resolving "now" is left to the caller rather than
+        /// done here, since this class is a plain data/config model with no access to DI
+        /// and no business needing to know what time zone that "now" should be in.
+        /// </param>
+        public bool IsAcceptingOrders(DateTimeOffset currentLocalTime)
         {
-            get
-            {
-                if (OverrideSchedule)
-                    return false;
+            if (OverrideSchedule)
+                return false;
 
-                var utcTime = DateTime.UtcNow;
-                TimeZoneInfo.TryFindSystemTimeZoneById("Eastern Standard Time", out var localTimeZone);
-                var currentTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, localTimeZone ?? TimeZoneInfo.Local).TimeOfDay;
+            var currentTime = currentLocalTime.TimeOfDay;
 
-
-                return currentTime >= Today.Open.ToTimeSpan() && currentTime <= Today.Close.ToTimeSpan();
-            }
+            return currentTime >= Today.Open.ToTimeSpan() && currentTime <= Today.Close.ToTimeSpan();
         }
     }
 

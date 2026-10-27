@@ -19,15 +19,18 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
         private readonly ConfigurationService _config;
         private readonly IEmailService _emailService;
         private readonly ISmsService _smsService;
+        private readonly ITimeNormalizationService _timeService;
 
         public OrderController(ApplicationDbContext context, StaffTerminalMonitoringService staffTMS,
-            ConfigurationService config, IEmailService emailService, ISmsService smsService)
+            ConfigurationService config, IEmailService emailService, ISmsService smsService,
+            ITimeNormalizationService timeService)
         {
             _context = context;
             _staffTMS = staffTMS;
             _config = config;
             _emailService = emailService;
             _smsService = smsService;
+            _timeService = timeService;
         }
 
         public enum LocateMethod
@@ -189,9 +192,13 @@ namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
         }
 
         [HttpGet]
-        public bool IsOpen() =>
-            _staffTMS.TerminalActive &&         //verifys the staff terminal hasn't lost connection
-            _config.Settings.AcceptingOrders;   //verifys time within scheduled ordering hours
+        public async Task<bool> IsOpen()
+        {
+            var currentLocalTime = await _timeService.GetLocalTime();
+
+            return _staffTMS.TerminalActive &&                                    //verifys the staff terminal hasn't lost connection
+                _config.Settings.IsAcceptingOrders(currentLocalTime);             //verifys time within scheduled ordering hours
+        }
 
         [HttpGet]
         [Authorize]
