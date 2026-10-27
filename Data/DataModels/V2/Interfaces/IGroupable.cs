@@ -1,4 +1,3 @@
-using NuGet.Packaging;
 
 namespace OpenOrderSystem.Core.Data.DataModels.V2.Interfaces.Catalog;
 

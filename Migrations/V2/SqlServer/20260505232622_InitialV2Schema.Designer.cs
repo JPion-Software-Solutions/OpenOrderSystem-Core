@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenOrderSystem.Core.Data.DataModels.V2;
 
+using OpenOrderSystem.Core.Data.Providers;
+
 #nullable disable
 
-namespace OpenOrderSystem.Core.Migrations.V2
+namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
 {
-    [DbContext(typeof(OosDbContext))]
+    [DbContext(typeof(SqlServerOosDbContext))]
     [Migration("20260505232622_InitialV2Schema")]
     partial class InitialV2Schema
     {

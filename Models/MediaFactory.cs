@@ -1,5 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using OpenOrderSystem.Core.Models.Interfaces;
+﻿using OpenOrderSystem.Core.Models.Interfaces;
 using System.Reflection;
 
 namespace OpenOrderSystem.Core.Models

@@ -22,8 +22,17 @@ namespace OpenOrderSystem.Core.Data
                 .Property(o => o.OrderComplete)
                 .HasColumnName("OrderComplete");
 
+            // Pin legacy table names so V2 renames don't drop existing legacy tables:
+            // the original table was created with the "Confguration" typo, and the
+            // join table predates the OrderLine -> OrderLineLegacy rename.
             bob.Entity<SystemConfig>()
+                .ToTable("Confguration")
                 .HasKey("Key");
+
+            bob.Entity<Ingredient>()
+                .HasMany(i => i.OrderLines)
+                .WithMany(ol => ol.Ingredients)
+                .UsingEntity("IngredientOrderLine");
         }
 
         public Task<int> SaveChangesAsync() => base.SaveChangesAsync();

@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
+using OpenOrderSystem.Core.Data.Providers;
+
 #nullable disable
 
-namespace OpenOrderSystem.Core.Migrations.DataProtectionKey
+namespace OpenOrderSystem.Core.Migrations.DataProtectionKey.SqlServer
 {
     /// <inheritdoc />
     public partial class Initial : Migration

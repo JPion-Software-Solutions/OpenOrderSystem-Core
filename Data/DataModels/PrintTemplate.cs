@@ -3,7 +3,6 @@ using ESCPOS_NET.Emitters;
 using ESCPOS_NET.Utilities;
 using ImageMagick;
 using Microsoft.Build.Construction;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.IdentityModel.Tokens;
 using OpenOrderSystem.Core.Areas.Staff.Models;
 using OpenOrderSystem.Core.Services;
@@ -447,14 +446,14 @@ namespace OpenOrderSystem.Core.Data.DataModels
                         e.PrintLine($"\tSubtotal: {step.Data}"));
                     break;
                 case PrintInstruction.PrintDiscount:
-                    if (step.Data.IsNullOrEmpty())
+                    if (string.IsNullOrEmpty(step.Data))
                         break;
                     data = ByteSplicer.Combine(
                         e.LeftAlign(),
                         e.PrintLine(step.Data));
                     break;
                 case PrintInstruction.PrintPromoCode:
-                    if (step.Data.IsNullOrEmpty())
+                    if (string.IsNullOrEmpty(step.Data))
                         break;
                     data = ByteSplicer.Combine(
                         e.LeftAlign(),
@@ -470,25 +469,25 @@ namespace OpenOrderSystem.Core.Data.DataModels
                     data = e.PrintLine($"   Phone: {step.Data}");
                     break;
                 case PrintInstruction.PrintReportDate:
-                    if (!step.Data.IsNullOrEmpty())
+                    if (!string.IsNullOrEmpty(step.Data))
                     {
                         data = e.PrintLine($"     Date: {step.Data}");
                     }
                     break;
                 case PrintInstruction.PrintReportCustomerCount:
-                    if (!step.Data.IsNullOrEmpty())
+                    if (!string.IsNullOrEmpty(step.Data))
                     {
                         data = e.PrintLine($"Customers: {step.Data}");
                     }
                     break;
                 case PrintInstruction.PrintReportGross:
-                    if (!step.Data.IsNullOrEmpty())
+                    if (!string.IsNullOrEmpty(step.Data))
                     {
                         data = e.PrintLine($"    Sales: {step.Data}");
                     }
                     break;
                 case PrintInstruction.PrintReportSales:
-                    if (!step.Data.IsNullOrEmpty())
+                    if (!string.IsNullOrEmpty(step.Data))
                     {
                         var sales = JsonSerializer.Deserialize<Dictionary<string, SalesData>>(step.Data!);
                         foreach (var product in sales?.Keys ?? new Dictionary<string, SalesData>().Keys)
@@ -509,7 +508,7 @@ namespace OpenOrderSystem.Core.Data.DataModels
                     }
                     break;
                 case PrintInstruction.PrintReportPromo:
-                    if (!step.Data.IsNullOrEmpty())
+                    if (!string.IsNullOrEmpty(step.Data))
                     {
                         var promos = JsonSerializer.Deserialize<SalesData>(step.Data!);
                         data = ByteSplicer.Combine(

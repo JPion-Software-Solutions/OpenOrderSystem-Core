@@ -10,6 +10,35 @@ namespace OpenOrderSystem.Core.Extensions.Development;
 
 public static class PrefabDevelopmentEnvironmentExtensions
 {
+    /// <summary>
+    /// Determines, before the host is built, whether the prefab development standup will run:
+    /// the environment is Development and <c>OOS_Dev_Env:Configuration</c> is not <see cref="PrefabConfiguration.None"/>.
+    /// </summary>
+    /// <remarks>
+    /// Used by boot preflight, which runs before <see cref="WebApplication"/> configuration exists, so the
+    /// same sources are read directly (appsettings, user secrets, environment variables).
+    /// </remarks>
+    public static bool IsPrefabStandupEnabled()
+    {
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+                          ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+                          ?? Environments.Production;
+
+        if (!string.Equals(environment, Environments.Development, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{environment}.json", optional: true)
+            .AddUserSecrets(typeof(PrefabDevelopmentEnvironmentExtensions).Assembly, optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        var devEnv = configuration.GetSection("OOS_Dev_Env").Get<PrefabDevelopmentSettings>();
+        return devEnv is not null && devEnv.Configuration != PrefabConfiguration.None;
+    }
+
     public static async Task EnsureDevEnvironmentReady(this WebApplication app)
     {
         var section = app.Configuration.GetSection("OOS_Dev_Env");
@@ -32,7 +61,9 @@ public static class PrefabDevelopmentEnvironmentExtensions
 
         logger.LogInformation("DEVELOPMENTD DATABASE ACTIVE");
 
-        if (dbContext.Users.Any())
+        // Identity lives in the V2 database (OosDbContext), so users are created through the
+        // UserManager rather than the legacy ApplicationDbContext.
+        if (userManger.Users.Any())
         {
             logger.LogError("INVALID OPERATION! Cannot add users to a system already containing users.");
         }
@@ -41,36 +72,49 @@ public static class PrefabDevelopmentEnvironmentExtensions
             var adminCred = devEnv.AdminUserCredentials.Split('/').Length == 2
                 ? new AccountCredentials(devEnv.AdminUserCredentials.Split('/')[0], devEnv.AdminUserCredentials.Split('/')[1])
                 : new AccountCredentials("admin", "password"); //fallback;
-            
+
             var userCred = devEnv.StandardUserCredentials.Split('/').Length == 2
                 ? new AccountCredentials(devEnv.StandardUserCredentials.Split('/')[0], devEnv.StandardUserCredentials.Split('/')[1])
                 : new AccountCredentials("user", "password"); //fallback;
 
-            var hasher = new PasswordHasher<IdentityUser>();
-
-            var admin = new IdentityUser
-            {
-                UserName = adminCred.username,
-                NormalizedUserName = adminCred.username.ToUpper()
-            };
-            var user = new IdentityUser
-            {
-                UserName = userCred.username,
-                NormalizedUserName = userCred.username.ToUpper()
-            };
-
-            admin.PasswordHash = hasher.HashPassword(admin, adminCred.password);
-            user.PasswordHash = hasher.HashPassword(user, userCred.password);
-
-            dbContext.AddRange([admin, user]);
-            await dbContext.SaveChangesAsync();
-
-            await userManger.AddToRolesAsync(admin, ["admin","default_admin","manager","terminal_user"]);
-            await userManger.AddToRolesAsync(user, ["terminal_user"]);
+            await CreateDevUser(userManger, adminCred, ["admin","default_admin","manager","terminal_user"]);
+            await CreateDevUser(userManger, userCred, ["terminal_user"]);
 
             logger.LogInformation("User accounts created successfully!");
         }
 
+        try
+        {
+            await ImportDevPack(devEnv, httpClient, dbContext);
+        }
+        catch (Exception ex)
+        {
+            // A dev pack outage (e.g. an expired certificate on the asset store) shouldn't block booting.
+            logger.LogWarning(ex, "Unable to import dev pack '{DevPackName}' from '{DevPackRepoUrl}'. Continuing without it.",
+                devEnv.DevPackName, devEnv.DevPackRepoUrl);
+        }
+    }
+
+    /// <summary>
+    /// Creates a development user with the given credentials and roles. The password is hashed directly
+    /// so the simple dev defaults bypass the production password policy.
+    /// </summary>
+    private static async Task CreateDevUser(UserManager<IdentityUser> userManager, AccountCredentials credentials, string[] roles)
+    {
+        var user = new IdentityUser { UserName = credentials.username };
+        user.PasswordHash = userManager.PasswordHasher.HashPassword(user, credentials.password);
+
+        var result = await userManager.CreateAsync(user);
+        if (result.Succeeded)
+            result = await userManager.AddToRolesAsync(user, roles);
+
+        if (!result.Succeeded)
+            throw new InvalidOperationException(
+                $"Unable to create dev user '{credentials.username}': {string.Join("; ", result.Errors.Select(e => e.Description))}");
+    }
+
+    private static async Task ImportDevPack(PrefabDevelopmentSettings devEnv, HttpClient httpClient, ApplicationDbContext dbContext)
+    {
         var manifestClient = new DevPackManifestClient(httpClient);
         var manifest = await manifestClient.GetManifestAsync($"{devEnv.DevPackRepoUrl}/manifest.json");
         var pack = manifest.Packs.FirstOrDefault(p => p.PackName == devEnv.DevPackName);
@@ -95,7 +139,7 @@ public static class PrefabDevelopmentEnvironmentExtensions
 
     public class PrefabDevelopmentSettings
     {
-        private static readonly string DEFAULT_REPO_LOCATION = "https://api.jpion.codes/OOS-Asset-Store/DevPacks";
+        private static readonly string DEFAULT_REPO_LOCATION = "https://api.openordersystem.cloud/Store/DevPack";
         private static readonly string DEFAULT_DEV_PACK_NAME = "default-pack";
 
         public PrefabConfiguration Configuration { get; set; } = PrefabConfiguration.None;

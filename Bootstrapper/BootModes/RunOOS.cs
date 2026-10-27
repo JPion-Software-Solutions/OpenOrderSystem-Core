@@ -2,14 +2,13 @@ using System;
 using System.ComponentModel;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using NuGet.Packaging;
 using OpenOrderSystem.Core.Bootstrapper.Interfaces;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels.V2;
 using OpenOrderSystem.Core.Data.DataModels;
+using OpenOrderSystem.Core.Data.Providers;
 using OpenOrderSystem.Core.Extensions.AspNet;
 using OpenOrderSystem.Core.Extensions.Development;
 using OpenOrderSystem.Core.Middleware;
@@ -50,9 +49,8 @@ public class RunOosBootstrap : IBootMode
         _app = _bob?.Build()
             ?? throw new InvalidOperationException("Unable to build OOS Server, missing builder! Please ensure Initialize is called before attempting to build.");
 
-        _app.EnsureCoreUserRolesCreated().Wait();
         _app.UseCors(_corsPolicy);
-        
+
 
         //DBCleanup
         using (var scope = _app.Services.CreateScope())
@@ -69,6 +67,9 @@ public class RunOosBootstrap : IBootMode
             //Set confirmation code count
             ConfirmationCode.CodesIssued = context.ConfirmationCodes.Count();
         }
+
+        // Roles live in the Identity tables, so they can only be seeded once migrations have run.
+        _app.EnsureCoreUserRolesCreated().Wait();
 
         // Configure the HTTP request pipeline.
         if (_app.Environment.IsDevelopment())
@@ -156,17 +157,13 @@ public class RunOosBootstrap : IBootMode
         _bob.Services.AddScoped<IConfigurationStore, DatabaseConfigurationStore<OosDbContext>>();
         _bob.Services.AddScoped<ITimeNormalizationService, DatabaseConfigurationStore<OosDbContext>>();
 
-        _bob.Services.AddDbContext<DataProtectionKeyContext>(options => options.UseDynamicSQLProvider(Configuration));
+        // OosDbContext and DataProtectionKeyContext are backed by provider-specific subclasses,
+        // each with its own migration set (see Data/Providers).
+        _bob.Services.AddOosDbContexts(Configuration);
 
         _bob.Services.AddDataProtection()
             .PersistKeysToDbContext<DataProtectionKeyContext>()
             .SetApplicationName("OpenOrderSystem");
-
-        _bob.Services.AddDbContextFactory<OosDbContext>(options =>
-        {
-            options.UseDynamicSQLProvider(Configuration);
-            options.EnableDetailedErrors();
-        });
 
         _bob.Services.AddDbContext<ApplicationDbContext>(options =>
         {
@@ -237,11 +234,15 @@ public class RunOosBootstrap : IBootMode
     {
         var foundErrors = new List<string>();
 
+        // In the prefab development environment a missing database is created by migrations at
+        // startup. Elsewhere it must already exist (initial setup will handle creation).
+        var allowMissingDatabase = PrefabDevelopmentEnvironmentExtensions.IsPrefabStandupEnabled();
+
         // Primary (V2) database connection check.
         var dbProvider = bootConfig.GetConfig<DbProviders>("DB_PROVIDER");
         var dbConnectionString = bootConfig.GetConfig("DB_CONNECTION_STRING");
 
-        if (dbConnectionString.IsNullOrEmpty())
+        if (string.IsNullOrEmpty(dbConnectionString))
         {
             foundErrors.Add("Connection string not found in boot config, falling back to no-db-boot");
 
@@ -260,29 +261,53 @@ public class RunOosBootstrap : IBootMode
         else
         {
             var dbConnectionTools = new DatabaseConnectionTool<OosDbContext>(dbProvider, dbConnectionString ?? "");
-            dbConnectionTools.CanConnect(out var t);
-            foundErrors.AddRange(t);
+            CheckDatabase("Database", dbConnectionTools, allowMissingDatabase, foundErrors);
         }
 
         // Legacy database connection check.
         var legacyProvider = bootConfig.GetConfig<DbProviders>("LEGACY:DB_PROVIDER");
         var legacyConnectionString = bootConfig.GetConfig("LEGACY:DB_CONNECTION_STRING");
 
-        if (!legacyConnectionString.IsNullOrEmpty() && !legacyProvider.IsAvailable())
+        if (!string.IsNullOrEmpty(legacyConnectionString) && !legacyProvider.IsAvailable())
         {
             var message = $"Legacy database: {legacyProvider.NotAvailable().Message}";
             Log.Warning("Preflight: {Message}", message);
             foundErrors.Add(message);
             _fallback = "recovery";
         }
-        else if (!legacyConnectionString.IsNullOrEmpty())
+        else if (!string.IsNullOrEmpty(legacyConnectionString))
         {
             var legacyConnectionTools = new DatabaseConnectionTool<ApplicationDbContext>(legacyProvider, legacyConnectionString ?? "");
-            legacyConnectionTools.CanConnect(out var t);
-            foundErrors.AddRange(t);
+            CheckDatabase("Legacy database", legacyConnectionTools, allowMissingDatabase, foundErrors);
         }
 
         errors = foundErrors.ToArray();
         return foundErrors.Count == 0;
+    }
+
+    /// <summary>
+    /// Adds preflight errors for a database that is unreachable, or missing when creation isn't allowed.
+    /// </summary>
+    private static void CheckDatabase<TContext>(string label, DatabaseConnectionTool<TContext> tool, bool allowMissing, List<string> foundErrors)
+        where TContext : DbContext
+    {
+        switch (tool.GetDatabaseStatus(out var statusErrors))
+        {
+            case DatabaseStatus.Available:
+                break;
+
+            case DatabaseStatus.Missing when allowMissing:
+                // Serilog isn't configured during preflight; report alongside the boot screen instead.
+                Console.WriteLine($"  ⚠  {label} does not exist yet; it will be created by migrations (prefab development environment).");
+                break;
+
+            case DatabaseStatus.Missing:
+                foundErrors.Add($"{label} does not exist. Create it, or run initial setup, before starting OOS.");
+                break;
+
+            default:
+                foundErrors.AddRange(statusErrors.Select(e => $"{label}: {e}"));
+                break;
+        }
     }
 }

@@ -1,5 +1,7 @@
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using OpenOrderSystem.Core.Bootstrapper;
 
 namespace OpenOrderSystem.Core.Utilities;
@@ -157,6 +159,44 @@ public class DatabaseConnectionTool<TContext> where TContext : DbContext
     }
 
     /// <summary>
+    /// Determines whether the database is available, missing on a reachable server, or unreachable.
+    /// </summary>
+    /// <remarks>
+    /// A missing database is distinguished from connection failures (bad credentials, unreachable
+    /// server) so callers can decide whether migrations should be allowed to create it.
+    /// </remarks>
+    /// <param name="errors">
+    /// When this method returns, contains the reason the database is not available. Empty when it is available.
+    /// </param>
+    /// <returns>The <see cref="DatabaseStatus"/> of the configured database.</returns>
+    public DatabaseStatus GetDatabaseStatus(out string[] errors)
+    {
+        using var ctx = CreateContext();
+
+        // Exists() is called once: on SQL Server it retries login failures for up to a minute,
+        // so a separate CanConnect() call would double the wait on bad credentials.
+        try
+        {
+            if (ctx.GetService<IRelationalDatabaseCreator>().Exists())
+            {
+                errors = [];
+                return DatabaseStatus.Available;
+            }
+
+            errors = ["The database does not exist."];
+            return DatabaseStatus.Missing;
+        }
+        catch (Exception ex)
+        {
+            errors = ex.InnerException is null
+                ? [ex.Message]
+                : [ex.Message, ex.InnerException.Message];
+
+            return DatabaseStatus.Unreachable;
+        }
+    }
+
+    /// <summary>
     /// Applies additional <c>Key=Value</c> entries to an existing <see cref="DbConnectionStringBuilder"/>.
     /// </summary>
     /// <param name="b">The builder to apply entries to.</param>
@@ -251,6 +291,21 @@ public static class DbContextOptionsBuilderExtensions
                 throw new NotSupportedException($"Unsupported DB provider: {provider}");
         }
     }
+}
+
+/// <summary>
+/// Result of <see cref="DatabaseConnectionTool{TContext}.GetDatabaseStatus"/>.
+/// </summary>
+public enum DatabaseStatus
+{
+    /// <summary>The database exists and a connection succeeded.</summary>
+    Available,
+
+    /// <summary>The server is reachable and accepted the credentials, but the database does not exist.</summary>
+    Missing,
+
+    /// <summary>The server could not be reached or rejected the connection.</summary>
+    Unreachable
 }
 
 /// <summary>

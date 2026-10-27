@@ -1,8 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using NuGet.Protocol;
-using OpenOrderSystem.Core.Areas.Configuration.Models;
+﻿using OpenOrderSystem.Core.Areas.Configuration.Models;
 using System.Text.Json;
-using System.Web.Helpers;
 using OpenOrderSystem.Core.Bootstrapper;
 
 namespace OpenOrderSystem.Core.Services
@@ -69,7 +66,7 @@ namespace OpenOrderSystem.Core.Services
                 if (!Directory.Exists(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), "backup")))
                     Directory.CreateDirectory(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), "backup"));
 
-                File.WriteAllText(Path.Combine("backup", filename), Json.Encode(_siteConfig));
+                File.WriteAllText(Path.Combine(Path.Combine(OpenOrderSystemApplication.DataRootPath, "config"), "backup", filename), JsonSerializer.Serialize(_siteConfig));
             }
             else
             {

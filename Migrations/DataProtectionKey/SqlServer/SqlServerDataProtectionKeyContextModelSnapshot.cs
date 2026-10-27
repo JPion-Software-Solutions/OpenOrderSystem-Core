@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenOrderSystem.Core.Data;
 
 
+using OpenOrderSystem.Core.Data.Providers;
+
 #nullable disable
 
-namespace OpenOrderSystem.Core.Migrations.DataProtectionKey
+namespace OpenOrderSystem.Core.Migrations.DataProtectionKey.SqlServer
 {
-    [DbContext(typeof(DataProtectionKeyContext))]
-    partial class DataProtectionKeyContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(SqlServerDataProtectionKeyContext))]
+    partial class SqlServerDataProtectionKeyContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

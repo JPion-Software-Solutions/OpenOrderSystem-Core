@@ -124,6 +124,12 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
     
     public OosDbContext(DbContextOptions<OosDbContext> options) : base(options) { }
 
+    /// <summary>
+    /// Used by the provider-specific subclasses in <see cref="OpenOrderSystem.Core.Data.Providers"/>,
+    /// which each own a separate migration set.
+    /// </summary>
+    protected OosDbContext(DbContextOptions options) : base(options) { }
+
     public Task<int> SaveChangesAsync() => base.SaveChangesAsync();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
