@@ -12,6 +12,9 @@ internal static class Program
         OpenOrderSystemApplication.DataRootPath = Environment.GetEnvironmentVariable("OOS_DATAROOT") ??
                                                   Path.Combine(AppContext.BaseDirectory, "appdata");
         
+        OpenOrderSystemApplication.ProtectedRootPath = Environment.GetEnvironmentVariable("OOS_PROTECTEDROOT")
+                                                       ?? DefaultProtectedRoot();
+        
         SystemController.Version = Assembly
             .GetExecutingAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
@@ -30,5 +33,22 @@ internal static class Program
         OpenOrderSystem.Core.Areas.Staff.Controllers.Manager.MenuController.ImageDirectoryPath = Path.Combine(MediaManagerService.MediaRootPath, "images");
         
         app.Run();
+    }
+
+    /// <summary>
+    /// Default location for the keyring (DEK + secrets), kept apart from the data root. Privileged
+    /// processes use the machine-wide location (on Linux, /var/lib/oos matches systemd
+    /// StateDirectory=oos); unprivileged ones fall back to the per-user data folder
+    /// (%LOCALAPPDATA% on Windows, $XDG_DATA_HOME or ~/.local/share on Linux).
+    /// </summary>
+    private static string DefaultProtectedRoot()
+    {
+        if (Environment.IsPrivilegedProcess)
+            return OperatingSystem.IsWindows()
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "OpenOrderSystem")
+                : "/var/lib/oos";
+
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            OperatingSystem.IsWindows() ? "OpenOrderSystem" : "oos");
     }
 }

@@ -98,7 +98,7 @@ public enum KeyringWarnings
     /// <summary>Secrets are stored unencrypted.</summary>
     PassThrough = 1,
 
-    /// <summary>The data key is protected only by filesystem permissions.</summary>
+    /// <summary>The data key is stored unencrypted in the protected root.</summary>
     DataKeyUnwrapped = 2,
 
     /// <summary>The environment key looks like a short passphrase rather than a generated key.</summary>

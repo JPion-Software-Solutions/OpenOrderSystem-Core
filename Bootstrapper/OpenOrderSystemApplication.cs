@@ -13,6 +13,7 @@ public class OpenOrderSystemApplication
     public static StaticFileOptions UserStaticFiles { get; } = new();
     
     public static string DataRootPath { get; set; } = string.Empty;
+    public static string ProtectedRootPath { get; set; } = string.Empty;
     
     public Dictionary<string, Type> DiscoverBootModes()
     {
@@ -60,12 +61,14 @@ public class OpenOrderSystemApplication
         
         var inDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
         var isDataRootSet = Environment.GetEnvironmentVariable("OOS_DATAROOT") is not null;
+        var isProtectedRootSet = Environment.GetEnvironmentVariable("OOS_PROTECTEDROOT") is not null;
+        var isMasterKeyPresent = Environment.GetEnvironmentVariable("OOS_MASTERKEY") is not null;
         
         if (!Directory.Exists(userWwwroot)) Directory.CreateDirectory(userWwwroot);
         
         UserStaticFiles.FileProvider = new PhysicalFileProvider(userWwwroot);
         
-        Bootscreen(config.BootMode, inDocker, isDataRootSet);
+        Bootscreen(config.BootMode, inDocker, isDataRootSet, isProtectedRootSet, isMasterKeyPresent);
 
         return bootloader
             .LoadServices()
@@ -128,7 +131,7 @@ public class OpenOrderSystemApplication
         return sb.ToString();
     }
 
-    private void Bootscreen(string bootMode, bool inDocker, bool dataRootFromEnv)
+    private void Bootscreen(string bootMode, bool inDocker, bool dataRootFromEnv, bool protectedRootFromEnv, bool masterKeyPresent)
     {
         Console.WriteLine();
         Console.WriteLine(@"   ____  ____  _____");
@@ -138,14 +141,17 @@ public class OpenOrderSystemApplication
         Console.WriteLine(@"\____/\____//____/  ");
         Console.WriteLine();
         Console.WriteLine("  Open Order System");
-        Console.WriteLine("  ─────────────────────────────");
-        Console.WriteLine($"  Version:     {SystemController.Version}");
-        Console.WriteLine($"  Boot Mode:   {bootMode}");
-        Console.WriteLine($"  Environment: {(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")}");
-        Console.WriteLine($"  OS:          {Environment.OSVersion.Platform}");
-        Console.WriteLine($"  OS Version:  {Environment.OSVersion.VersionString}");
-        Console.WriteLine($"  Data Root:   {(dataRootFromEnv ? DataRootPath : "NOT SET")}");
-        Console.WriteLine("  ─────────────────────────────");
+        Console.WriteLine("  ©2026 JPion Software Solutions, LLC");
+        Console.WriteLine("  ────────────────────────────────");
+        Console.WriteLine($"  Version:        {SystemController.Version}");
+        Console.WriteLine($"  Boot Mode:      {bootMode}");
+        Console.WriteLine($"  Environment:    {(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")}");
+        Console.WriteLine($"  OS:             {Environment.OSVersion.Platform}");
+        Console.WriteLine($"  OS Version:     {Environment.OSVersion.VersionString}");
+        Console.WriteLine($"  Data Root:      {(dataRootFromEnv ? DataRootPath : "NOT SET")}");
+        Console.WriteLine($"  Protected Root: {(protectedRootFromEnv ? ProtectedRootPath : "NOT SET")}");
+        Console.WriteLine($"  MKey Present:   {(masterKeyPresent ? "YES" : "NO")}");
+        Console.WriteLine("  ────────────────────────────────");
         Console.WriteLine();
 
         if (inDocker && !dataRootFromEnv)
@@ -153,6 +159,13 @@ public class OpenOrderSystemApplication
             Console.Beep();
             Console.Beep();
             Console.WriteLine("  ⚠  Running in Docker but OOS_DATAROOT is not set — data will not persist!");
+        }        
+        
+        if (inDocker && !dataRootFromEnv)
+        {
+            Console.Beep();
+            Console.Beep();
+            Console.WriteLine("  ⚠  Running in Docker but OOS_PROTECTED is not set — data will not persist!");
         }
         
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
