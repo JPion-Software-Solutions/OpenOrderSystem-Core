@@ -98,14 +98,17 @@ public class RunOosBootstrap : IBootMode
         _app.UseMiddleware<InitialConfigAuth>();
         _app.UseMiddleware<PrinterBridgeAuth>();
 
-        _app.MapControllerRoute(
+        _app.MapAreaControllerRoute(
             name: "api",
+            areaName: "API",
             pattern: "API/{controller}/{action=Index}/{id?}");
-        _app.MapControllerRoute(
+        _app.MapAreaControllerRoute(
             name: "identity",
+            areaName: "Identity",
             pattern: "Identity/{controller}/{action=Index}/{id?}");
-        _app.MapControllerRoute(
+        _app.MapAreaControllerRoute(
             name: "staff",
+            areaName: "Staff",
             pattern: "Staff/{controller}/{action=Index}/{id?}");
 
         _app.MapControllerRoute(
