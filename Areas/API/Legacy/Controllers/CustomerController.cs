@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
-using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Legacy;
 
 namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {

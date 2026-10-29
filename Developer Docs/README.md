@@ -15,6 +15,16 @@ that area and links to its topic files.
 | Ordering (carts, order placement, queue, stages) | [Services/Ordering](Services/Ordering/README.md) |
 | Email (sending, SMTP security, templates, email settings and the keyring) | [Services/EmailService](Services/EmailService/README.md) |
 
+## Services layout
+
+| Folder | Namespace | Contains |
+|---|---|---|
+| `Services/Legacy/` | `Services.Legacy` | Services from the original system (`ApplicationDbContext`, `SiteConfig`). Kept running until their V2 replacements are finished; don't build new features on them. |
+| `Services/<Domain>/` | `Services.<Domain>` | V2 services grouped by domain: `Catalog`, `Config`, `Devices`, `EmailService`, `Keyring`, `Ordering`, `Sms` |
+
+Within a domain, interfaces live in an `Interfaces/` subfolder and namespace. `Services/Sms/` predates V2 but is
+carried forward and will be improved, so it's a domain rather than legacy.
+
 ## Developer Docs vs. Design Docs
 
 - **`/Design Docs`** (repository root) records *intent*: designs, open questions, and the reasons

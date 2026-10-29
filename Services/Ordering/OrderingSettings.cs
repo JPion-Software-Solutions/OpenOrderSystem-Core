@@ -1,4 +1,4 @@
-using OpenOrderSystem.Core.Services.Interfaces;
+using OpenOrderSystem.Core.Services.Config.Interfaces;
 using OpenOrderSystem.Core.Services.Ordering.Timekeeping;
 
 namespace OpenOrderSystem.Core.Services.Ordering;

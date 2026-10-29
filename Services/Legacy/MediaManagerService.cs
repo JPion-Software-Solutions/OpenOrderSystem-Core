@@ -4,7 +4,7 @@ using OpenOrderSystem.Core.Models.Interfaces;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace OpenOrderSystem.Core.Services
+namespace OpenOrderSystem.Core.Services.Legacy
 {
     public class MediaManagerService
     {

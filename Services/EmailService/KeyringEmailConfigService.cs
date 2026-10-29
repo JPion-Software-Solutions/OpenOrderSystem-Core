@@ -1,6 +1,6 @@
 using OpenOrderSystem.Core.Services.EmailService.Exceptions;
 using OpenOrderSystem.Core.Services.EmailService.Interfaces;
-using OpenOrderSystem.Core.Services.Interfaces;
+using OpenOrderSystem.Core.Services.Config.Interfaces;
 using OpenOrderSystem.Core.Services.Keyring.Interfaces;
 
 namespace OpenOrderSystem.Core.Services.EmailService;

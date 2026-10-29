@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.Users;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Services.EmailService.Interfaces;
-using OpenOrderSystem.Core.Services.Interfaces;
+using OpenOrderSystem.Core.Services.Sms.Interfaces;
 
 namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager
 {

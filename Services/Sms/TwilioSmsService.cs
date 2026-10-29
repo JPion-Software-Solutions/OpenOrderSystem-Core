@@ -1,9 +1,9 @@
-﻿using OpenOrderSystem.Core.Services.Interfaces;
+﻿using OpenOrderSystem.Core.Services.Sms.Interfaces;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 
-namespace OpenOrderSystem.Core.Services
+namespace OpenOrderSystem.Core.Services.Sms
 {
     public class TwilioSmsService : ISmsService
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpenOrderSystem.Core.Areas.Staff.ViewModels.Media;
-using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Legacy;
 
 namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager
 {

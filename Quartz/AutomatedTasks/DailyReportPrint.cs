@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Models;
-using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Legacy;
 using Quartz;
 
 namespace OpenOrderSystem.Core.Quartz.AutomatedTasks

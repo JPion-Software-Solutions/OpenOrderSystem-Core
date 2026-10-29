@@ -1,7 +1,7 @@
 using System;
 using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 
-namespace OpenOrderSystem.Core.Services.Interfaces;
+namespace OpenOrderSystem.Core.Services.Config.Interfaces;
 
 public interface IConfigurationStore
 {

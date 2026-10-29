@@ -2,7 +2,7 @@
 using OpenOrderSystem.Core.Data;
 using System.Security.Permissions;
 
-namespace OpenOrderSystem.Core.Services
+namespace OpenOrderSystem.Core.Services.Legacy
 {
     public class DataImportService
     {

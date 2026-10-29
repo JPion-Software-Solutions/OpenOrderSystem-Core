@@ -1,7 +1,7 @@
 using System.Reflection;
 using OpenOrderSystem.Core.Areas.API.Legacy.Controllers;
 using OpenOrderSystem.Core.Bootstrapper;
-using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Legacy;
 
 namespace OpenOrderSystem.Core;
 

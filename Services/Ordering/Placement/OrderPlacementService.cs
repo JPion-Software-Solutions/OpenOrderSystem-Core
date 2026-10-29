@@ -5,7 +5,7 @@ using OpenOrderSystem.Core.Data.DataModels.V2;
 using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Services.Catalog;
 using OpenOrderSystem.Core.Services.Catalog.Interfaces;
-using OpenOrderSystem.Core.Services.Interfaces;
+using OpenOrderSystem.Core.Services.Config.Interfaces;
 using OpenOrderSystem.Core.Services.Ordering.CartServices;
 using OpenOrderSystem.Core.Services.Ordering.CartServices.Dto;
 using OpenOrderSystem.Core.Services.Ordering.CartServices.Interfaces;

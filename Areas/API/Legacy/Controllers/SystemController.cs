@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using OpenOrderSystem.Core.Data;
-using OpenOrderSystem.Core.Services;
-using OpenOrderSystem.Core.Services.Interfaces;
+using OpenOrderSystem.Core.Services.Config.Interfaces;
+using OpenOrderSystem.Core.Services.Legacy;
 
 namespace OpenOrderSystem.Core.Areas.API.Legacy.Controllers
 {

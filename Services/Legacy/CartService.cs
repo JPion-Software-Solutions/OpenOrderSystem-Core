@@ -4,7 +4,7 @@ using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Models;
 using System.Collections.Generic;
 
-namespace OpenOrderSystem.Core.Services
+namespace OpenOrderSystem.Core.Services.Legacy
 {
     public class CartService
     {

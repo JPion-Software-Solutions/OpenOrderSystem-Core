@@ -7,8 +7,8 @@ using OpenOrderSystem.Core.Areas.API.Legacy.Models;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Models;
-using OpenOrderSystem.Core.Services;
-using OpenOrderSystem.Core.Services.Interfaces;
+using OpenOrderSystem.Core.Services.Legacy;
+using OpenOrderSystem.Core.Services.Sms.Interfaces;
 using System.Linq.Expressions;
 using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 

@@ -11,7 +11,7 @@ using OpenOrderSystem.Core.Attributes;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Models;
-using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Legacy;
 using System.Reflection;
 using System.Text.Json;
 

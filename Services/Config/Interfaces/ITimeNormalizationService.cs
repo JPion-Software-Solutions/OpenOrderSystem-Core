@@ -1,4 +1,4 @@
-namespace OpenOrderSystem.Core.Services.Interfaces;
+namespace OpenOrderSystem.Core.Services.Config.Interfaces;
 
 /// <summary>
 /// Converts between UTC and the system's configured local time zone, and manages that

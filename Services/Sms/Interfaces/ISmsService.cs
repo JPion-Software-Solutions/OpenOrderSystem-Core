@@ -1,4 +1,4 @@
-﻿namespace OpenOrderSystem.Core.Services.Interfaces
+﻿namespace OpenOrderSystem.Core.Services.Sms.Interfaces
 {
     public interface ISmsService
     {

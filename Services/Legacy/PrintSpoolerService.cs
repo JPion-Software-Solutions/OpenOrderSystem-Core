@@ -2,7 +2,7 @@
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Models;
 
-namespace OpenOrderSystem.Core.Services
+namespace OpenOrderSystem.Core.Services.Legacy
 {
     public class PrintSpoolerService
     {

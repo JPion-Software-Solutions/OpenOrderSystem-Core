@@ -2,7 +2,7 @@
 using System.Text.Json;
 using OpenOrderSystem.Core.Bootstrapper;
 
-namespace OpenOrderSystem.Core.Services
+namespace OpenOrderSystem.Core.Services.Legacy
 {
     /// <summary>
     /// Service used to access and/or modify the site configuration.

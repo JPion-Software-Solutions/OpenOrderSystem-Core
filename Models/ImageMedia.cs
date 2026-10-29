@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Html;
 using OpenOrderSystem.Core.Models.Interfaces;
-using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Legacy;
 
 namespace OpenOrderSystem.Core.Models
 {

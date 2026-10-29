@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Routing.Template;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels;
 using OpenOrderSystem.Core.Models;
-using OpenOrderSystem.Core.Services;
+using OpenOrderSystem.Core.Services.Legacy;
 
 namespace OpenOrderSystem.Core.Areas.Staff.Controllers.Manager
 {

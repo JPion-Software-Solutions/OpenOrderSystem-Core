@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 using OpenOrderSystem.Core.Data.Interfaces;
-using OpenOrderSystem.Core.Services.Interfaces;
+using OpenOrderSystem.Core.Services.Config.Interfaces;
 
-namespace OpenOrderSystem.Core.Services;
+namespace OpenOrderSystem.Core.Services.Config;
 
 /// <summary>
 /// Intended to be the eventual replacement for the original configuration service.
@@ -49,7 +49,7 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore, ITimeNo
     // reads and writes from multiple simultaneous requests.
     private static readonly ConcurrentDictionary<string, CachedKey> _cachedKeys = new();
 
-    public DatabaseConfigurationStore(TContext context, ILogger<Services.DatabaseConfigurationStore<TContext>> logger)
+    public DatabaseConfigurationStore(TContext context, ILogger<DatabaseConfigurationStore<TContext>> logger)
     {
         _context = context;
         _logger = logger;

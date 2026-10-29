@@ -1,6 +1,6 @@
-﻿using OpenOrderSystem.Core.Services.Interfaces;
+﻿using OpenOrderSystem.Core.Services.Sms.Interfaces;
 
-namespace OpenOrderSystem.Core.Services
+namespace OpenOrderSystem.Core.Services.Sms
 {
     public class DevSMS : ISmsService
     {

@@ -1,4 +1,4 @@
-﻿namespace OpenOrderSystem.Core.Services
+﻿namespace OpenOrderSystem.Core.Services.Legacy
 {
     public class StaffTerminalMonitoringService
     {

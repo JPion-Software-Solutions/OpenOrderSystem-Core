@@ -6,7 +6,6 @@ using OpenOrderSystem.Core.Data.DataModels.V2.Devices;
 using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Data.Interfaces;
 using OpenOrderSystem.Core.Services.Catalog.Interfaces;
-using OpenOrderSystem.Core.Services.Interfaces;
 
 namespace OpenOrderSystem.Core.Data.DataModels.V2;
 

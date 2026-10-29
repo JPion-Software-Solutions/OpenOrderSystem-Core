@@ -57,7 +57,7 @@ from a short-lived scope created with `IServiceScopeFactory`:
 
 **Not registered yet, deliberately.** V2 services will be registered together through a single extension
 method once the end-to-end ordering flow is complete. (`RunOOS.cs` currently registers the *legacy*
-`Services/CartService.cs`.) The registrations the cart needs:
+`Services/Legacy/CartService.cs`.) The registrations the cart needs:
 
 ```csharp
 services.AddSingleton<ICartCacheService, CartCacheService>();
