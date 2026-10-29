@@ -13,6 +13,7 @@ that area and links to its topic files.
 |---|---|
 | Catalog (products, variants, options, media, groups, snapshots) | [Services/Catalog](Services/Catalog/README.md) |
 | Ordering (carts, order placement, queue, stages) | [Services/Ordering](Services/Ordering/README.md) |
+| Email (sending, SMTP security, templates, email settings and the keyring) | [Services/EmailService](Services/EmailService/README.md) |
 
 ## Developer Docs vs. Design Docs
 

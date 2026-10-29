@@ -6,6 +6,6 @@
 
         public Task<EmailSendResult> SendAsync(IEmailForm emailForm);
         
-        public bool CheckConnection();
+        public Task<bool> CheckConnectionAsync();
     }
 }

@@ -14,8 +14,8 @@ public interface IEmailConfigService
     /// </summary>
     /// <typeparam name="T">The type of the calling service. Used to scope the key lookup.</typeparam>
     /// <param name="key">The configuration key to retrieve.</param>
-    /// <returns>The configuration value, or <c>null</c> if the key is not found.</returns>
-    string? GetKey<T>(string key);
+    /// <returns>The configuration value, or <c>null</c> if the key is not set.</returns>
+    Task<string?> GetKeyAsync<T>(string key);
 
     /// <summary>
     /// Stores a configuration value scoped to the specified caller type.
@@ -23,5 +23,8 @@ public interface IEmailConfigService
     /// <typeparam name="T">The type of the calling service. Used to scope the key.</typeparam>
     /// <param name="key">The configuration key to set.</param>
     /// <param name="value">The value to store.</param>
-    void SetKey<T>(string key, string value);
+    /// <exception cref="Exceptions.SecretConfigKeyException">
+    /// The key's value lives in the keyring and must be set there (implementations backed by a keyring only).
+    /// </exception>
+    Task SetKeyAsync<T>(string key, string value);
 }

@@ -39,6 +39,6 @@ namespace OpenOrderSystem.Core.Services.EmailService
             };
         }
 
-        public bool CheckConnection() => true;
+        public Task<bool> CheckConnectionAsync() => Task.FromResult(true);
     }
 }

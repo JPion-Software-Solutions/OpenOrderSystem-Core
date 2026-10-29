@@ -1,3 +1,6 @@
+using System.Net.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -10,9 +13,9 @@ namespace OpenOrderSystem.Core.Services.EmailService;
 public class SmtpEmailService : IEmailService, IEmailFormService
 {
     private readonly IEmailConfigService _config;
-    private readonly ILogger<SmtpEmailService> _logger;
+    private readonly ILogger<SmtpEmailService> _logger; 
 
-    private static class ConfigKeys
+    public static class ConfigKeys
     {
         public const string Host = "smtp:host";
         public const string Port = "smtp:port";
@@ -35,18 +38,18 @@ public class SmtpEmailService : IEmailService, IEmailFormService
 
     public async Task<EmailSendResult> SendAsync(string recipient, string subject, string body, bool isHtml = false)
     {
+        var sender = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.DefaultSender) ?? string.Empty;
+        var senderName = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.DefaultSenderName) ?? string.Empty;
+
         var form = isHtml
             ? (IEmailForm)CreateHtmlEmailForm(body, new Dictionary<string, string>())
-            : CreatePlaintextEmailForm(
-                _config.GetKey<SmtpEmailService>(ConfigKeys.DefaultSender) ?? string.Empty,
-                _config.GetKey<SmtpEmailService>(ConfigKeys.DefaultSenderName) ?? string.Empty,
-                recipient, subject, body);
+            : CreatePlaintextEmailForm(sender, senderName, recipient, subject, body);
 
         // For the raw string overload, manually set addressing if using HtmlEmailForm
         if (form is HtmlEmailForm htmlForm)
         {
-            htmlForm.Sender = _config.GetKey<SmtpEmailService>(ConfigKeys.DefaultSender) ?? string.Empty;
-            htmlForm.SenderName = _config.GetKey<SmtpEmailService>(ConfigKeys.DefaultSenderName) ?? string.Empty;
+            htmlForm.Sender = sender;
+            htmlForm.SenderName = senderName;
             htmlForm.Recipient = recipient;
             htmlForm.Subject = subject;
         }
@@ -61,18 +64,7 @@ public class SmtpEmailService : IEmailService, IEmailFormService
             var message = BuildMimeMessage(emailForm);
 
             using var client = new SmtpClient();
-            
-            var host = _config.GetKey<SmtpEmailService>(ConfigKeys.Host);
-            var port = _config.GetKey<SmtpEmailService>(ConfigKeys.Port) ?? "587";
-            var username =  _config.GetKey<SmtpEmailService>(ConfigKeys.Username);
-            var password = _config.GetKey<SmtpEmailService>(ConfigKeys.Password);
-
-            await client.ConnectAsync(
-                host,
-                int.Parse(port),
-                SecureSocketOptions.SslOnConnect);
-
-            await client.AuthenticateAsync(username, password);
+            await ConnectAndAuthenticateAsync(client);
 
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
@@ -81,6 +73,27 @@ public class SmtpEmailService : IEmailService, IEmailFormService
                 emailForm.Recipient, emailForm.Subject);
 
             return new EmailSendResult { Success = true };
+        }
+        catch (SmtpNotConfiguredException ex)
+        {
+            _logger.LogError("Email to {Recipient} not sent: {Message}", emailForm.Recipient, ex.Message);
+            return new EmailSendResult
+            {
+                Success = false,
+                ErrorCode = "NOT_CONFIGURED",
+                ErrorMessage = ex.Message
+            };
+        }
+        catch (SslHandshakeException ex)
+        {
+            _logger.LogError(ex, "TLS handshake with the SMTP server failed sending to {Recipient}.", emailForm.Recipient);
+            return new EmailSendResult
+            {
+                Success = false,
+                ErrorCode = "TLS_ERROR",
+                ErrorMessage = "The secure connection to the mail server failed. Check the security mode and port, " +
+                               "and whether the server's certificate is trusted."
+            };
         }
         catch (SmtpCommandException ex)
         {
@@ -115,19 +128,13 @@ public class SmtpEmailService : IEmailService, IEmailFormService
         }
     }
 
-    public bool CheckConnection()
+    public async Task<bool> CheckConnectionAsync()
     {
         try
         {
             using var client = new SmtpClient();
-            client.Connect(
-                _config.GetKey<SmtpEmailService>(ConfigKeys.Host),
-                int.Parse(_config.GetKey<SmtpEmailService>(ConfigKeys.Port) ?? "587"),
-                SecureSocketOptions.StartTls);
-            client.Authenticate(
-                _config.GetKey<SmtpEmailService>(ConfigKeys.Username),
-                _config.GetKey<SmtpEmailService>(ConfigKeys.Password));
-            client.Disconnect(true);
+            await ConnectAndAuthenticateAsync(client);
+            await client.DisconnectAsync(true);
             return true;
         }
         catch (Exception ex)
@@ -137,10 +144,94 @@ public class SmtpEmailService : IEmailService, IEmailFormService
         }
     }
 
+    /// <summary>
+    /// Connects using the configured host, port, security mode and certificate trust, then authenticates if a
+    /// username is configured. Shared by sending and the connection check so both behave identically.
+    /// </summary>
+    /// <exception cref="SmtpNotConfiguredException">The host is missing, or the port or security mode is invalid.</exception>
+    private async Task ConnectAndAuthenticateAsync(SmtpClient client)
+    {
+        var host = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.Host);
+        if (string.IsNullOrWhiteSpace(host))
+            throw new SmtpNotConfiguredException("The SMTP host isn't configured.");
+
+        var portValue = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.Port) ?? "587";
+        if (!int.TryParse(portValue, out var port) || port is < 1 or > 65535)
+            throw new SmtpNotConfiguredException($"The SMTP port '{portValue}' isn't a valid port number.");
+
+        var socketOptions = await GetSecureSocketOptionsAsync(port);
+        client.ServerCertificateValidationCallback = await BuildCertificateValidatorAsync();
+
+        await client.ConnectAsync(host, port, socketOptions);
+
+        var username = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.Username);
+        if (!string.IsNullOrWhiteSpace(username))
+            await client.AuthenticateAsync(username, await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.Password) ?? string.Empty);
+    }
+
+    /// <summary>
+    /// The configured <see cref="SecureSocketOptions"/> (any member name, case-insensitive). When unset: implicit TLS
+    /// on port 465, required STARTTLS on every other port. <c>Auto</c> isn't the default because on most ports it
+    /// silently falls back to plain text when the server doesn't offer STARTTLS.
+    /// </summary>
+    private async Task<SecureSocketOptions> GetSecureSocketOptionsAsync(int port)
+    {
+        var configured = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.SecureSocketOption);
+        if (string.IsNullOrWhiteSpace(configured))
+            return port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+
+        if (!Enum.TryParse<SecureSocketOptions>(configured, ignoreCase: true, out var options) || !Enum.IsDefined(options))
+            throw new SmtpNotConfiguredException(
+                $"The SMTP security mode '{configured}' isn't recognized. Use one of: {string.Join(", ", Enum.GetNames<SecureSocketOptions>())}.");
+
+        if (options == SecureSocketOptions.None)
+            _logger.LogWarning("SMTP is configured without TLS; credentials and mail are sent in plain text.");
+        return options;
+    }
+
+    /// <summary>
+    /// Accepts a certificate the system already trusts. Otherwise accepts it only when <c>smtp:acceptallcerts</c> is
+    /// <c>true</c>, or its SHA-1 or SHA-256 thumbprint matches <c>smtp:acceptcertthumbprint</c> (separators and case ignored),
+    /// for servers with self-signed or privately issued certificates.
+    /// </summary>
+    private async Task<RemoteCertificateValidationCallback> BuildCertificateValidatorAsync()
+    {
+        var acceptAll = bool.TryParse(await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.AcceptAllCerts), out var all) && all;
+        var pinned = NormalizeThumbprint(await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.AcceptCertThumbprint));
+        var logger = _logger;
+
+        return (_, certificate, _, errors) =>
+        {
+            if (errors == SslPolicyErrors.None)
+                return true;
+
+            if (acceptAll)
+            {
+                logger.LogWarning("Accepting an untrusted SMTP server certificate ({Errors}) because smtp:acceptallcerts is enabled.", errors);
+                return true;
+            }
+
+            if (pinned is not null && certificate is not null)
+            {
+                var cert = certificate as X509Certificate2 ?? new X509Certificate2(certificate);
+                if (pinned == cert.GetCertHashString(HashAlgorithmName.SHA1) || pinned == cert.GetCertHashString(HashAlgorithmName.SHA256))
+                    return true;
+            }
+
+            logger.LogError("Rejected the SMTP server certificate ({Errors}). Trust it with smtp:acceptcertthumbprint if it is expected.", errors);
+            return false;
+        };
+    }
+
+    private static string? NormalizeThumbprint(string? value)
+        => string.IsNullOrWhiteSpace(value)
+            ? null
+            : new string(value.Where(Uri.IsHexDigit).ToArray()).ToUpperInvariant();
+
     public async Task<string> GetTemplateAsync(string templateName)
     {
-        var overrideDir = _config.GetKey<SmtpEmailService>(ConfigKeys.OverrideDirectory);
-        var builtInDir = _config.GetKey<SmtpEmailService>(ConfigKeys.BuiltInDirectory);
+        var overrideDir = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.OverrideDirectory);
+        var builtInDir = await _config.GetKeyAsync<SmtpEmailService>(ConfigKeys.BuiltInDirectory);
         var fileName = $"{templateName}.html";
 
         if (overrideDir is not null)

@@ -40,10 +40,10 @@ public class InsecureEmailConfigService : IEmailConfigService
     /// <typeparam name="T">The calling service type. Unused in this implementation.</typeparam>
     /// <param name="key">The configuration key to retrieve.</param>
     /// <returns>The stored value, or <c>null</c> if the key does not exist.</returns>
-    public string? GetKey<T>(string key)
+    public async Task<string?> GetKeyAsync<T>(string key)
     {
-        var config = LoadConfig();
-        return config.ContainsKey(key) ? config[key] : null;
+        var config = await LoadConfigAsync();
+        return config.GetValueOrDefault(key);
     }
 
     /// <summary>
@@ -54,35 +54,35 @@ public class InsecureEmailConfigService : IEmailConfigService
     /// <typeparam name="T">The calling service type. Unused in this implementation.</typeparam>
     /// <param name="key">The configuration key to set.</param>
     /// <param name="value">The value to store. Written to disk in plaintext.</param>
-    public void SetKey<T>(string key, string value)
+    public async Task SetKeyAsync<T>(string key, string value)
     {
-        var config = LoadConfig();
+        var config = await LoadConfigAsync();
         config[key] = value;
-        SaveConfig(config);
+        await SaveConfigAsync(config);
     }
 
     /// <summary>
     /// Loads the config dictionary from disk, creating the config file with an empty
     /// dictionary if it does not yet exist.
     /// </summary>
-    private Dictionary<string, string> LoadConfig()
+    private async Task<Dictionary<string, string>> LoadConfigAsync()
     {
         if (!Directory.Exists(ConfigDirectory))
             Directory.CreateDirectory(ConfigDirectory);
 
         if (!File.Exists(ConfigFilePath))
-            File.WriteAllText(ConfigFilePath,
+            await File.WriteAllTextAsync(ConfigFilePath,
                 JsonSerializer.Serialize(new Dictionary<string, string>(), JsonOptions));
 
         return JsonSerializer.Deserialize<Dictionary<string, string>>(
-            File.ReadAllText(ConfigFilePath))!;
+            await File.ReadAllTextAsync(ConfigFilePath))!;
     }
 
     /// <summary>
     /// Persists the config dictionary to disk, overwriting the existing file.
     /// </summary>
-    private void SaveConfig(Dictionary<string, string> config)
+    private async Task SaveConfigAsync(Dictionary<string, string> config)
     {
-        File.WriteAllText(ConfigFilePath, JsonSerializer.Serialize(config, JsonOptions));
+        await File.WriteAllTextAsync(ConfigFilePath, JsonSerializer.Serialize(config, JsonOptions));
     }
 }
