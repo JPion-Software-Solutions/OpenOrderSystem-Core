@@ -88,8 +88,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("LockoutEnd")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -215,8 +215,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CreatedUtc")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("CreatedUtc")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
@@ -256,8 +256,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                     b.Property<long>("SizeBytes")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("UpdatedUtc")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("UpdatedUtc")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -451,8 +451,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CreatedUtc")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("CreatedUtc")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid?>("PreviousSnapshotId")
                         .HasColumnType("TEXT");
@@ -666,8 +666,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("DraftOrder")
                         .IsRequired()
@@ -676,8 +676,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                     b.Property<bool>("IsDisposed")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("LastActive")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("LastActive")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int?>("OrderConfirmation")
                         .HasColumnType("INTEGER");
@@ -693,8 +693,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CustomerCreated")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("CustomerCreated")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -725,8 +725,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("AssignedTimeSlot")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("AssignedTimeSlot")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid?>("CurrentStageId")
                         .HasColumnType("TEXT");
@@ -743,18 +743,18 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                     b.Property<string>("OrderComments")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("OrderDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("OrderDate")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<long>("OrderNumber")
+                    b.Property<int>("OrderNumber")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("OrderOrigin")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset?>("StageAdvanceTime")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("StageAdvanceTime")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -828,16 +828,21 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CreatedUtc")
+                    b.Property<long>("CreatedUtc")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("EntryStageId")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("OrderHeaderId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("ScheduledFor")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("ScheduledFor")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntryStageId");
 
                     b.HasIndex("OrderHeaderId");
 
@@ -1120,11 +1125,11 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
                                 .ValueGeneratedOnAdd()
                                 .HasColumnType("TEXT");
 
-                            b1.Property<DateTimeOffset>("EnteredAt")
-                                .HasColumnType("TEXT");
+                            b1.Property<long>("EnteredAt")
+                                .HasColumnType("INTEGER");
 
-                            b1.Property<DateTimeOffset?>("ExitedAt")
-                                .HasColumnType("TEXT");
+                            b1.Property<long?>("ExitedAt")
+                                .HasColumnType("INTEGER");
 
                             b1.Property<Guid>("StageId")
                                 .HasColumnType("TEXT");
@@ -1171,11 +1176,19 @@ namespace OpenOrderSystem.Core.Migrations.V2.Sqlite
 
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderQueue", b =>
                 {
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", "EntryStage")
+                        .WithMany()
+                        .HasForeignKey("EntryStageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderHeader", "OrderHeader")
                         .WithMany()
                         .HasForeignKey("OrderHeaderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("EntryStage");
 
                     b.Navigation("OrderHeader");
                 });

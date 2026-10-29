@@ -55,9 +55,9 @@ public class Cart
     /// if the cart has not yet been submitted.
     /// </summary>
     /// <remarks>
-    /// Confirmation numbers are 8-digit integers encoding a day counter and a daily-resetting
-    /// order sequence in the format <c>xxxxxyyy</c>, mapped to a non-sequential value via a
-    /// reversible transformation. This is the primary customer-facing order lookup key.
+    /// The customer-facing confirmation number: the order's <c>xxxxxyyy</c> order number passed through a
+    /// keyed, reversible scramble so it can't be guessed from a neighbouring order. It decodes back to
+    /// <see cref="OrderHeader.OrderNumber"/> for lookups.
     /// On a duplicate submission request, a non-null value here indicates the order was already
     /// created and the stored confirmation number can be returned directly.
     /// </remarks>

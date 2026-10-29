@@ -18,10 +18,14 @@ public class OrderHeader
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
-    /// The human-readable order number, reset daily. Use <see cref="OrderDate"/> for
-    /// full uniqueness when referencing historical orders.
+    /// The plain order number in the form <c>xxxxxyyy</c>: <c>xxxxx</c> is the business-day counter and
+    /// <c>yyy</c> the order sequence within that day (1–999). Unique across all orders.
     /// </summary>
-    public long OrderNumber { get; set; }
+    /// <remarks>
+    /// An <see cref="int"/> so it fits the legacy API compatibility shim. Customers are never shown this
+    /// value directly; they receive the scrambled confirmation number derived from it.
+    /// </remarks>
+    public int OrderNumber { get; set; }
 
     /// <summary>
     /// The date and time the order was placed, including local timezone offset.

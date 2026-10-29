@@ -755,8 +755,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.Property<DateTimeOffset>("OrderDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("OrderNumber")
-                        .HasColumnType("bigint");
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("integer");
 
                     b.Property<string>("OrderOrigin")
                         .IsRequired()
@@ -840,6 +840,9 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.Property<DateTimeOffset>("CreatedUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("EntryStageId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("OrderHeaderId")
                         .HasColumnType("uuid");
 
@@ -847,6 +850,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntryStageId");
 
                     b.HasIndex("OrderHeaderId");
 
@@ -1180,11 +1185,19 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
 
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderQueue", b =>
                 {
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", "EntryStage")
+                        .WithMany()
+                        .HasForeignKey("EntryStageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderHeader", "OrderHeader")
                         .WithMany()
                         .HasForeignKey("OrderHeaderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("EntryStage");
 
                     b.Navigation("OrderHeader");
                 });

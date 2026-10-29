@@ -758,8 +758,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.Property<DateTimeOffset>("OrderDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<long>("OrderNumber")
-                        .HasColumnType("bigint");
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("int");
 
                     b.Property<string>("OrderOrigin")
                         .IsRequired()
@@ -843,6 +843,9 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.Property<DateTimeOffset>("CreatedUtc")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<Guid>("EntryStageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("OrderHeaderId")
                         .HasColumnType("uniqueidentifier");
 
@@ -850,6 +853,8 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntryStageId");
 
                     b.HasIndex("OrderHeaderId");
 
@@ -1185,11 +1190,19 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
 
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderQueue", b =>
                 {
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", "EntryStage")
+                        .WithMany()
+                        .HasForeignKey("EntryStageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderHeader", "OrderHeader")
                         .WithMany()
                         .HasForeignKey("OrderHeaderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("EntryStage");
 
                     b.Navigation("OrderHeader");
                 });

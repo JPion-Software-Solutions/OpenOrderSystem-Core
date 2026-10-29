@@ -41,10 +41,22 @@ public class OrderQueue
     public OrderHeader? OrderHeader { get; set; }
 
     /// <summary>
-    /// The date and time this order should be promoted into the active fulfillment workflow.
-    /// Derived from <see cref="Ordering.OrderHeader.AssignedTimeSlot"/> minus the configured queue lead time.
+    /// The order's pickup slot, copied from <see cref="Ordering.OrderHeader.AssignedTimeSlot"/>. The order is
+    /// promoted once <c>ScheduledFor - leadTime &lt;= now</c>; the lead time is read from configuration at
+    /// runtime rather than stored.
     /// </summary>
     public DateTimeOffset ScheduledFor { get; set; }
+
+    /// <summary>
+    /// The stage the order enters when promoted. Chosen by the caller at placement because an instance
+    /// may run several flows, each with its own initial stage.
+    /// </summary>
+    public Guid EntryStageId { get; set; }
+
+    /// <summary>
+    /// Navigation property for <see cref="EntryStageId"/>.
+    /// </summary>
+    public OrderStage? EntryStage { get; set; }
 
     /// <summary>
     /// The date and time this queue entry was created (UTC).

@@ -157,8 +157,10 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore, ITimeNo
     }
 
     /// <inheritdoc />
+    // Typed overload: SetLocalTimezone stores the ID JSON-serialized (quoted), so the raw string
+    // overload would hand FindSystemTimeZoneById a value with the quotes still on.
     public async Task<string> GetLocalTimezoneId() =>
-        await GetConfigurationAsync(TIMEZONE_KEY, TimeZoneInfo.Utc.Id);
+        await GetConfigurationAsync<string>(TIMEZONE_KEY, TimeZoneInfo.Utc.Id) ?? TimeZoneInfo.Utc.Id;
 
     /// <inheritdoc />
     public async Task<DateTimeOffset> ConvertToLocalTime(DateTimeOffset date)

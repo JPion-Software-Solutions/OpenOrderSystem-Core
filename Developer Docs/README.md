@@ -12,6 +12,7 @@ that area and links to its topic files.
 | Area | Start here |
 |---|---|
 | Catalog (products, variants, options, media, groups, snapshots) | [Services/Catalog](Services/Catalog/README.md) |
+| Ordering (carts, order placement, queue, stages) | [Services/Ordering](Services/Ordering/README.md) |
 
 ## Developer Docs vs. Design Docs
 

@@ -201,6 +201,13 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
 
         modelBuilder.Entity<OrderHeader>().OwnsMany(o => o.StageHistory);
 
+        // A stage with queued orders waiting to enter it can't be deleted
+        modelBuilder.Entity<OrderQueue>()
+            .HasOne(q => q.EntryStage)
+            .WithMany()
+            .HasForeignKey(q => q.EntryStageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // OrderStage is a doubly-linked list — two independent self-referencing one-to-one FKs.
         modelBuilder.Entity<OrderStage>()
             .HasOne(s => s.NextStage)
