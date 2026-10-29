@@ -1,3 +1,4 @@
+using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Services.Ordering.CartServices.Dto;
 
 namespace OpenOrderSystem.Core.Services.Ordering.CartServices.Interfaces;
@@ -71,9 +72,14 @@ public interface ICartService
     /// <param name="lineComments">Optional customer comments for this line.</param>
     /// <returns>
     /// A <see cref="CartLookupResult"/> with status <see cref="CartLookupStatus.Found"/> on success,
-    /// <see cref="CartLookupStatus.NotFound"/> if the cart does not exist, or
+    /// <see cref="CartLookupStatus.NotFound"/> if the cart, product (including archived products) or variant does not exist,
+    /// <see cref="CartLookupStatus.Rejected"/> if the product is out of stock or hidden or <paramref name="quantity"/> is below 1, or
     /// <see cref="CartLookupStatus.Disposed"/> if the cart is no longer active.
     /// </returns>
+    /// <remarks>
+    /// Every option the product includes by default is placed on the new line as
+    /// <see cref="OptionSelectionState.Included"/>, so the line always describes the full build.
+    /// </remarks>
     Task<CartLookupResult> AddItemAsync(Guid cartId, Guid productId, Guid variantId, int quantity, string? lineComments = null);
 
     /// <summary>
@@ -98,22 +104,34 @@ public interface ICartService
     /// <param name="lineComments">New line comments, or <see langword="null"/> to leave unchanged.</param>
     /// <returns>
     /// A <see cref="CartLookupResult"/> with status <see cref="CartLookupStatus.Found"/> on success,
-    /// <see cref="CartLookupStatus.NotFound"/> if the cart or line does not exist, or
+    /// <see cref="CartLookupStatus.NotFound"/> if the cart or line does not exist,
+    /// <see cref="CartLookupStatus.Rejected"/> if <paramref name="quantity"/> is below 1, or
     /// <see cref="CartLookupStatus.Disposed"/> if the cart is no longer active.
     /// </returns>
     Task<CartLookupResult> UpdateItemAsync(Guid cartId, Guid lineId, int? quantity, string? lineComments);
 
     /// <summary>
-    /// Replaces the option selections on an existing cart line. The service resolves
-    /// option display names and pricing from the catalog. Passing an empty collection
-    /// clears all options from the line.
+    /// Applies the customer's option choices to an existing cart line. Selection state and pricing are
+    /// resolved from the product's option links in the catalog; the request only expresses intent.
     /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item><description>Options the product includes by default are always on the line. A request with
+    /// <see cref="OptionSelectionState.Removed"/> or a quantity of 0 marks one removed; otherwise its quantity
+    /// (light/extra) is applied. Defaults absent from the request are kept at quantity 1.</description></item>
+    /// <item><description>Any other requested option is added at the product's price for it (the per-product
+    /// override, or the option's global price).</description></item>
+    /// <item><description>Passing an empty collection resets the line to the product defaults.</description></item>
+    /// </list>
+    /// </remarks>
     /// <param name="cartId">The unique identifier of the cart.</param>
     /// <param name="lineId">The <see cref="Dto.CartDraftLine.LineId"/> of the line to update.</param>
     /// <param name="options">The new option selections to apply.</param>
     /// <returns>
     /// A <see cref="CartLookupResult"/> with status <see cref="CartLookupStatus.Found"/> on success,
-    /// <see cref="CartLookupStatus.NotFound"/> if the cart or line does not exist, or
+    /// <see cref="CartLookupStatus.NotFound"/> if the cart or line does not exist,
+    /// <see cref="CartLookupStatus.Rejected"/> if an option is not offered on the product, is out of stock, disabled or hidden,
+    /// is listed twice, has a negative quantity, is a non-default option marked removed, or the product is no longer available, or
     /// <see cref="CartLookupStatus.Disposed"/> if the cart is no longer active.
     /// </returns>
     Task<CartLookupResult> SetLineOptionsAsync(Guid cartId, Guid lineId, IEnumerable<CartLineOptionRequest> options);

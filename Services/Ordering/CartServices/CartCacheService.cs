@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenOrderSystem.Core.Data.DataModels.V2;
 using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
@@ -16,18 +17,22 @@ public class CartCacheService : ICartCacheService
     private readonly ConcurrentDictionary<Guid, Data.DataModels.V2.Ordering.Cart> _cache = new();
     private readonly IDbContextFactory<OosDbContext> _contextFactory;
     private readonly ILogger<CartCacheService> _logger;
-    private readonly IConfigurationStore _configStore;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     /// <summary>
     /// Initializes a new instance of <see cref="CartCacheService"/>.
     /// </summary>
+    /// <remarks>
+    /// <see cref="IConfigurationStore"/> is scoped, so this singleton resolves it from a short-lived
+    /// scope where it is needed rather than capturing one.
+    /// </remarks>
     public CartCacheService(
         IDbContextFactory<OosDbContext> contextFactory,
-        ILogger<CartCacheService> logger, IConfigurationStore configStore)
+        ILogger<CartCacheService> logger, IServiceScopeFactory scopeFactory)
     {
         _contextFactory = contextFactory;
         _logger = logger;
-        _configStore = configStore;
+        _scopeFactory = scopeFactory;
     }
 
     /// <inheritdoc/>
@@ -68,8 +73,13 @@ public class CartCacheService : ICartCacheService
     /// <inheritdoc/>
     public async Task SweepAsync()
     {
-        var disposedTtlMinutes = await _configStore.GetConfigurationAsync<int>("cart.disposedTtlMinutes", 5);
-        var abandonedTtlMinutes = await _configStore.GetConfigurationAsync<int>("cart.disposedTtlMinutes", 120);
+        int disposedTtlMinutes, abandonedTtlMinutes;
+        await using (var scope = _scopeFactory.CreateAsyncScope())
+        {
+            var configStore = scope.ServiceProvider.GetRequiredService<IConfigurationStore>();
+            disposedTtlMinutes = await configStore.GetConfigurationAsync<int>("cart.disposedTtlMinutes", 5);
+            abandonedTtlMinutes = await configStore.GetConfigurationAsync<int>("cart.abandonedTtlMinutes", 120);
+        }
         
         var disposedTtl = TimeSpan.FromMinutes(disposedTtlMinutes);
         var abandonedTtl = TimeSpan.FromMinutes(abandonedTtlMinutes);

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OpenOrderSystem.Core.Data.DataModels.V2;
+using OpenOrderSystem.Core.Data.DataModels.V2.Catalog;
 using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Services.Catalog;
 using OpenOrderSystem.Core.Services.Catalog.Dto;
@@ -120,7 +121,10 @@ public class CartService : ICartService
         if (lookup.Status != CartLookupStatus.Found)
             return lookup;
 
-        var productResult = await _catalog.FindProduct(productId, ProductLocatorFlags.IncludeVariants);
+        if (quantity < 1)
+            return CartLookupResult.Rejected(lookup.Cart!, "Quantity must be at least 1.");
+
+        var productResult = await _catalog.FindProduct(productId, ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeOptions);
         var product = productResult.Results.SingleOrDefault();
         var variant = product?.Variants?.FirstOrDefault(v => v.Id == variantId);
 
@@ -131,8 +135,13 @@ public class CartService : ICartService
             return CartLookupResult.NotFound();
         }
 
+        if (UnavailableReason(product) is { } reason)
+            return CartLookupResult.Rejected(lookup.Cart!, reason);
+
         var draft = DeserializeDraft(lookup.Cart!);
 
+        // Every option the product includes by default starts on the line, so the line always
+        // describes the full build and customers can only remove or adjust defaults, not drop them silently.
         draft.Lines.Add(new CartDraftLine
         {
             ProductId = productId,
@@ -141,7 +150,11 @@ public class CartService : ICartService
             VariantName = variant.Name ?? string.Empty,
             BasePrice = variant.Price ?? 0m,
             Quantity = quantity,
-            LineComments = lineComments
+            LineComments = lineComments,
+            SelectedOptions = (product.Options ?? [])
+                .Where(l => l.DefaultState == ProductOptionDefaultState.Included)
+                .Select(l => ToDraftOption(l, OptionSelectionState.Included, 1.0m))
+                .ToList()
         });
 
         _logger.LogDebug("Cart '{CartId}' — added line for variant '{VariantId}'.", cartId, variantId);
@@ -188,6 +201,9 @@ public class CartService : ICartService
             return CartLookupResult.NotFound();
         }
 
+        if (quantity < 1)
+            return CartLookupResult.Rejected(lookup.Cart!, "Quantity must be at least 1.");
+
         if (quantity.HasValue)
             line.Quantity = quantity.Value;
 
@@ -218,46 +234,56 @@ public class CartService : ICartService
 
         var requests = options.ToList();
 
-        // Resolve all options from the catalog service before mutating the cart.
-        var optionResultTasks = requests.Select(r => _catalog.FindOption(r.OptionId));
-        var optionResults = await Task.WhenAll(optionResultTasks);
+        if (requests.Select(r => r.OptionId).Distinct().Count() != requests.Count)
+            return CartLookupResult.Rejected(lookup.Cart!, "Each option may only appear once.");
+        if (requests.Any(r => r.Quantity < 0m))
+            return CartLookupResult.Rejected(lookup.Cart!, "Option quantity cannot be negative.");
 
-        var catalogOptions = new Dictionary<Guid, CatalogOptionDto>();
-        for (var i = 0; i < requests.Count; i++)
+        // Selection state and pricing come from the product's option links, never from the request.
+        var productResult = await _catalog.FindProduct(line.ProductId, ProductLocatorFlags.IncludeOptions);
+        var product = productResult.Results.SingleOrDefault();
+        if (!productResult.IsSuccess || product is null)
+            return CartLookupResult.Rejected(lookup.Cart!, $"{line.ProductName} is no longer available.");
+
+        var links = (product.Options ?? []).Where(l => l.OptionId.HasValue).ToDictionary(l => l.OptionId!.Value);
+        var requested = requests.ToDictionary(r => r.OptionId);
+
+        var unlinked = requests.FirstOrDefault(r => !links.ContainsKey(r.OptionId));
+        if (unlinked is not null)
         {
-            var result = optionResults[i];
-            var option = result.Results.SingleOrDefault();
-            if (!result.IsSuccess || option?.Id is null)
-            {
-                _logger.LogWarning("Cart '{CartId}' — SetLineOptionsAsync: option '{OptionId}' not found in catalog.",
-                    cartId, requests[i].OptionId);
-                return CartLookupResult.NotFound();
-            }
-            catalogOptions[option.Id.Value] = option;
+            _logger.LogWarning("Cart '{CartId}' — SetLineOptionsAsync: option '{OptionId}' is not offered on product '{ProductId}'.",
+                cartId, unlinked.OptionId, line.ProductId);
+            return CartLookupResult.Rejected(lookup.Cart!, $"That option is not available on {line.ProductName}.");
         }
 
-        line.SelectedOptions = requests.Select(r =>
+        var selected = new List<CartDraftOption>();
+        foreach (var link in links.Values)
         {
-            var opt = catalogOptions[r.OptionId];
-            var delta = opt.PriceDelta ?? 0m;
-            // EffectiveDelta is 0 for Included options (already baked into BasePrice).
-            // For Added/Removed, the effective delta may differ from the global option delta
-            // when the product carries a per-product price override — resolution belongs in the
-            // catalog service. Add IReadOnlyCatalog.ResolveEffectiveDelta(productId, optionId)
-            // (or equivalent) when that use case needs to be frozen here.
-            var effectiveDelta = r.SelectionState == OptionSelectionState.Included ? 0m : delta;
-            return new CartDraftOption
-            {
-                OptionId = r.OptionId,
-                OptionName = opt.Name ?? string.Empty,
-                Delta = delta,
-                EffectiveDelta = effectiveDelta,
-                Quantity = r.Quantity,
-                SelectionState = r.SelectionState
-            };
-        }).ToList();
+            requested.TryGetValue(link.OptionId!.Value, out var request);
+            var removing = request is not null && (request.SelectionState == OptionSelectionState.Removed || request.Quantity == 0m);
 
-        _logger.LogDebug("Cart '{CartId}' — set {Count} option(s) on line '{LineId}'.", cartId, requests.Count, lineId);
+            if (link.DefaultState == ProductOptionDefaultState.Included)
+            {
+                // Defaults are always on the line: kept (optionally light/extra) or explicitly removed.
+                selected.Add(removing
+                    ? ToDraftOption(link, OptionSelectionState.Removed, 0m)
+                    : ToDraftOption(link, OptionSelectionState.Included, request?.Quantity ?? 1.0m));
+                continue;
+            }
+
+            if (request is null)
+                continue;
+            if (removing)
+                return CartLookupResult.Rejected(lookup.Cart!, $"{link.Option?.Name} is not included on {line.ProductName}, so it cannot be removed.");
+            if (UnavailableReason(link.Option) is { } reason)
+                return CartLookupResult.Rejected(lookup.Cart!, reason);
+
+            selected.Add(ToDraftOption(link, OptionSelectionState.Added, request.Quantity));
+        }
+
+        line.SelectedOptions = selected;
+
+        _logger.LogDebug("Cart '{CartId}' — set {Count} option(s) on line '{LineId}'.", cartId, selected.Count, lineId);
 
         return await SaveDraftAsync(lookup.Cart!, draft);
     }
@@ -285,6 +311,39 @@ public class CartService : ICartService
 
         return await SaveDraftAsync(lookup.Cart!, draft);
     }
+
+    /// <summary>
+    /// Freezes a catalog option link onto a draft line. <see cref="CartDraftOption.Delta"/> is the option's price
+    /// on this product; only <see cref="OptionSelectionState.Added"/> options contribute it to the line total.
+    /// </summary>
+    private static CartDraftOption ToDraftOption(CatalogProductOptionDto link, OptionSelectionState state, decimal quantity)
+    {
+        var delta = link.PriceDeltaOverride ?? link.Option?.PriceDelta ?? 0m;
+        return new CartDraftOption
+        {
+            OptionId = link.OptionId!.Value,
+            OptionName = link.Option?.Name ?? string.Empty,
+            Delta = delta,
+            EffectiveDelta = state == OptionSelectionState.Added ? delta : 0m,
+            Quantity = quantity,
+            SelectionState = state
+        };
+    }
+
+    private static string? UnavailableReason(CatalogProductDto product) => product.Flags switch
+    {
+        { } f when f.HasFlag(ProductFlags.OutOfStock) => $"{product.Name} is out of stock.",
+        { } f when f.HasFlag(ProductFlags.Hidden)     => $"{product.Name} is not available.",
+        _ => null
+    };
+
+    private static string? UnavailableReason(CatalogOptionDto? option) => option?.Flags switch
+    {
+        null => "That option is not available.",
+        { } f when f.HasFlag(OptionFlags.OutOfStock) => $"{option.Name} is out of stock.",
+        { } f when (f & (OptionFlags.Disabled | OptionFlags.Hidden)) != 0 => $"{option.Name} is not available.",
+        _ => null
+    };
 
     private static CartDraft DeserializeDraft(Cart cart)
     {

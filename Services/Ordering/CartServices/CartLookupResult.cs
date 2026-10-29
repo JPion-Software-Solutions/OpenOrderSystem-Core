@@ -12,6 +12,8 @@ namespace OpenOrderSystem.Core.Services.Ordering.CartServices;
 /// <item><description><see cref="CartLookupStatus.NotFound"/> — no cart exists for the requested ID; <see cref="Cart"/> is <see langword="null"/>.</description></item>
 /// <item><description><see cref="CartLookupStatus.Disposed"/> — the cart was submitted or cancelled; inspect <see cref="Cart.OrderConfirmation"/>
 /// to determine whether an order was created and return the confirmation number for idempotency.</description></item>
+/// <item><description><see cref="CartLookupStatus.Rejected"/> — the cart is active but the requested mutation was refused;
+/// <see cref="Message"/> explains why and <see cref="Cart"/> holds the unchanged cart.</description></item>
 /// </list>
 /// </remarks>
 public class CartLookupResult
@@ -25,6 +27,11 @@ public class CartLookupResult
     /// The located cart, or <see langword="null"/> when <see cref="Status"/> is <see cref="CartLookupStatus.NotFound"/>.
     /// </summary>
     public Data.DataModels.V2.Ordering.Cart? Cart { get; init; }
+
+    /// <summary>
+    /// Customer-presentable reason when <see cref="Status"/> is <see cref="CartLookupStatus.Rejected"/>.
+    /// </summary>
+    public string? Message { get; init; }
 
     /// <summary>
     /// Creates a result indicating the cart was found and is active.
@@ -51,6 +58,16 @@ public class CartLookupResult
     {
         Status = CartLookupStatus.Disposed,
         Cart = cart
+    };
+
+    /// <summary>
+    /// Creates a result indicating the requested change was refused and the cart was left unchanged.
+    /// </summary>
+    public static CartLookupResult Rejected(Data.DataModels.V2.Ordering.Cart cart, string message) => new()
+    {
+        Status = CartLookupStatus.Rejected,
+        Cart = cart,
+        Message = message
     };
 }
 
@@ -102,5 +119,11 @@ public enum CartLookupStatus
     /// Inspect <see cref="Data.DataModels.V2.Ordering.Cart.OrderConfirmation"/> to determine
     /// whether an order was created.
     /// </summary>
-    Disposed
+    Disposed,
+
+    /// <summary>
+    /// The cart is active but the requested change was refused (e.g. product unavailable, option not
+    /// offered on the product, invalid quantity). The cart is unchanged; see <see cref="CartLookupResult.Message"/>.
+    /// </summary>
+    Rejected
 }
