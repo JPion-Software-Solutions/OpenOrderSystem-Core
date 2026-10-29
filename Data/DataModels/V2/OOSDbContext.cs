@@ -174,6 +174,31 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
         modelBuilder.Entity<ProductOption>()
             .HasKey(x => new { x.ProductId, x.OptionId });
 
+        // Every catalog read filters on IsArchived
+        modelBuilder.Entity<Product>()
+            .HasIndex(p => p.IsArchived)
+            .HasDatabaseName("IX_Product_IsArchived");
+
+        // Products are archived, never deleted. Restrict these deletes so a stray hard delete
+        // fails instead of cascading through snapshots into order history.
+        modelBuilder.Entity<ProductSnapshot>()
+            .HasOne(s => s.Product)
+            .WithMany(p => p.Snapshots)
+            .HasForeignKey(s => s.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OrderLine>()
+            .HasOne(l => l.ProductSnapshot)
+            .WithMany()
+            .HasForeignKey(l => l.ProductSnapshotId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Variant SKUs are unique when present (NULLs are excluded on every provider)
+        modelBuilder.Entity<Variant>()
+            .HasIndex(v => v.Sku)
+            .IsUnique()
+            .HasDatabaseName("UIX_Variant_Sku");
+
         modelBuilder.Entity<OrderHeader>().OwnsMany(o => o.StageHistory);
 
         // OrderStage is a doubly-linked list — two independent self-referencing one-to-one FKs.

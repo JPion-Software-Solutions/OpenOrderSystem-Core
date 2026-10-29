@@ -58,6 +58,17 @@ public interface IReadOnlyCatalog
     Task<CatalogProductQueryResult> EnrichProduct(CatalogProductDto product, ProductLocatorFlags flags = ProductLocatorFlags.None);
 
     // -------------------------
+    // Variants
+    // -------------------------
+
+    /// <summary>
+    /// Retrieves a single variant by its unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the variant to retrieve.</param>
+    /// <returns>A <see cref="CatalogVariantQueryResult"/> containing the matched variant, or an empty result if not found.</returns>
+    Task<CatalogVariantQueryResult> FindVariant(Guid id);
+
+    // -------------------------
     // Options
     // -------------------------
 

@@ -31,6 +31,11 @@ public enum ProductLocatorFlags
     IncludeSnapshot              = 1 << 4,
 
     /// <summary>
+    /// Include archived products. Without this flag, archived products are treated as not found.
+    /// </summary>
+    IncludeArchived              = 1 << 5,
+
+    /// <summary>
     /// Include all products within the queried group(s) as well as any products in their parent group(s).
     /// </summary>
     CollapseParentGroupMembers   = 1 << 10,

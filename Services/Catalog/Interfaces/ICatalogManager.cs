@@ -1,3 +1,4 @@
+using OpenOrderSystem.Core.Data.DataModels.V2.Catalog;
 using OpenOrderSystem.Core.Services.Catalog.Dto;
 
 namespace OpenOrderSystem.Core.Services.Catalog.Interfaces;
@@ -15,34 +16,91 @@ public interface ICatalogManager : IReadOnlyCatalog
     // -------------------------
 
     /// <summary>
-    /// Creates a new product in the catalog from the supplied DTO.
+    /// Creates a new product in the catalog from the supplied DTO, along with any supplied
+    /// variants and option links. Variants and option links follow the same rules as
+    /// <see cref="UpdateProduct"/>; on create, a variant entry must not carry an <see cref="CatalogVariantDto.Id"/>.
     /// </summary>
     /// <param name="product">The product data to persist. <see cref="CatalogProductDto.Id"/> is ignored if set;
     /// a new identifier is assigned by the store.</param>
-    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the newly created product, or a failure result.</returns>
+    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the newly created product with its
+    /// variants and option links, or a failure result.</returns>
     Task<CatalogProductQueryResult> AddProduct(CatalogProductDto product);
 
     /// <summary>
-    /// Updates an existing product using the supplied DTO. Null fields are left unchanged.
+    /// Updates an existing product using the supplied DTO. Null product fields are left unchanged.
     /// </summary>
+    /// <remarks>
+    /// <para><see cref="CatalogProductDto.Variants"/> and <see cref="CatalogProductDto.Options"/> are
+    /// left untouched when <see langword="null"/>. When supplied (even empty), each collection is treated
+    /// as the complete set for the product:</para>
+    /// <list type="bullet">
+    /// <item><description>Variants with an <see cref="CatalogVariantDto.Id"/> belonging to this product are updated;
+    /// variants without an Id are created; existing variants absent from the set are deleted. An Id that does
+    /// not belong to this product fails the whole update.</description></item>
+    /// <item><description>Each variant entry is its <b>full state</b>: a <see langword="null"/>
+    /// <see cref="CatalogVariantDto.StrikePrice"/>, <see cref="CatalogVariantDto.Cost"/>,
+    /// <see cref="CatalogVariantDto.Sku"/>, <see cref="CatalogVariantDto.Barcode"/>,
+    /// <see cref="CatalogVariantDto.GroupId"/>, or <see cref="CatalogVariantDto.Metadata"/> clears that value.
+    /// Send back the complete variant, not a partial patch.</description></item>
+    /// <item><description>Option links are matched by <see cref="CatalogProductOptionDto.OptionId"/>; links absent
+    /// from the set are removed. The options themselves are never modified. Each link entry is its full state
+    /// (<see langword="null"/> <see cref="CatalogProductOptionDto.DefaultState"/> means
+    /// <c>Optional</c>, <see langword="null"/> <see cref="CatalogProductOptionDto.PriceDeltaOverride"/> clears it).</description></item>
+    /// </list>
+    /// <para>All changes are validated before anything is written and are saved together with a single snapshot.</para>
+    /// </remarks>
     /// <param name="product">The product data to apply. <see cref="CatalogProductDto.Id"/> must be set
     /// to identify the target record.</param>
-    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the updated product, or a failure result.</returns>
+    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the updated product with its variants and
+    /// option links, or a failure result.</returns>
     Task<CatalogProductQueryResult> UpdateProduct(CatalogProductDto product);
 
     /// <summary>
-    /// Deletes the product identified by <see cref="CatalogProductDto.Id"/> in the supplied DTO.
+    /// Archives the product identified by <see cref="CatalogProductDto.Id"/> in the supplied DTO.
     /// </summary>
-    /// <param name="product">DTO whose <see cref="CatalogProductDto.Id"/> identifies the product to delete.</param>
-    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the deleted product as it existed before removal, or a failure result.</returns>
-    Task<CatalogProductQueryResult> DeleteProduct(CatalogProductDto product);
+    /// <param name="product">DTO whose <see cref="CatalogProductDto.Id"/> identifies the product to archive.</param>
+    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the archived product, or a failure result.</returns>
+    Task<CatalogProductQueryResult> ArchiveProduct(CatalogProductDto product);
 
     /// <summary>
-    /// Deletes the product with the specified identifier.
+    /// Archives the product with the specified identifier. Products are never deleted: an archived
+    /// product, with its variants, option links and snapshots, stays in the database so order history
+    /// remains intact. It is excluded from every read unless <see cref="ProductLocatorFlags.IncludeArchived"/>
+    /// is set. Archiving an already-archived product succeeds without change. No snapshot is written.
     /// </summary>
-    /// <param name="productId">The unique identifier of the product to delete.</param>
-    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the deleted product as it existed before removal, or a failure result.</returns>
-    Task<CatalogProductQueryResult> DeleteProduct(Guid productId);
+    /// <param name="productId">The unique identifier of the product to archive.</param>
+    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the archived product, or a failure result.</returns>
+    Task<CatalogProductQueryResult> ArchiveProduct(Guid productId);
+
+    /// <summary>
+    /// Restores the archived product identified by <see cref="CatalogProductDto.Id"/> in the supplied DTO.
+    /// </summary>
+    /// <param name="product">DTO whose <see cref="CatalogProductDto.Id"/> identifies the product to restore.</param>
+    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the restored product, or a failure result.</returns>
+    Task<CatalogProductQueryResult> RestoreProduct(CatalogProductDto product);
+
+    /// <summary>
+    /// Restores an archived product so it appears in normal reads again. Restoring a product that
+    /// is not archived succeeds without change.
+    /// </summary>
+    /// <param name="productId">The unique identifier of the product to restore.</param>
+    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the restored product, or a failure result.</returns>
+    Task<CatalogProductQueryResult> RestoreProduct(Guid productId);
+
+    /// <summary>
+    /// Sets and/or clears <see cref="ProductFlags"/> bits on a product. Bits named in neither mask are left
+    /// as they are, so independent callers (operators toggling availability, the promotion service setting
+    /// <see cref="ProductFlags.IsPromoted"/>) don't overwrite each other's flags.
+    /// </summary>
+    /// <remarks>
+    /// Flags are operational state rather than product content, so no snapshot is written. Works on
+    /// archived products. Product edits made through <see cref="UpdateProduct"/> never change flags.
+    /// </remarks>
+    /// <param name="productId">The unique identifier of the product.</param>
+    /// <param name="set">Bits to turn on.</param>
+    /// <param name="clear">Bits to turn off. Must not overlap <paramref name="set"/>.</param>
+    /// <returns>A <see cref="CatalogProductQueryResult"/> containing the product with its resulting flags, or a failure result.</returns>
+    Task<CatalogProductQueryResult> UpdateProductFlags(Guid productId, ProductFlags set = ProductFlags.None, ProductFlags clear = ProductFlags.None);
 
     // -------------------------
     // Options

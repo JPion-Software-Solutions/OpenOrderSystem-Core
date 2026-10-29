@@ -106,6 +106,16 @@ public class Product : IGroupMember<ProductGroup, Product>
     /// </summary>
     /// <seealso cref="ProductFlags"/>
     public ProductFlags Flags { get; set; } = ProductFlags.None;
+
+    /// <summary>
+    /// Archived products are retired rather than deleted, so their snapshots and the order
+    /// history that references them remain intact. Catalog reads exclude them unless explicitly requested.
+    /// </summary>
+    /// <remarks>
+    /// Kept as its own indexed column rather than a <see cref="ProductFlags"/> bit, because a bitwise
+    /// filter cannot use an index and this filter is applied to every catalog read.
+    /// </remarks>
+    public bool IsArchived { get; set; } = false;
     
     /// <summary>
     /// Arbitrary extension metadata for this product.

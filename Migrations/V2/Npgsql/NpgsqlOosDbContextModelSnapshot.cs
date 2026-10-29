@@ -378,6 +378,9 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.Property<Guid?>("GroupId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Keywords")
                         .HasColumnType("text");
 
@@ -395,6 +398,9 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.HasIndex("CoverMediaId");
 
                     b.HasIndex("GroupId");
+
+                    b.HasIndex("IsArchived")
+                        .HasDatabaseName("IX_Product_IsArchived");
 
                     b.ToTable("Products");
                 });
@@ -524,6 +530,10 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.HasIndex("GroupId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("Sku")
+                        .IsUnique()
+                        .HasDatabaseName("UIX_Variant_Sku");
 
                     b.ToTable("Variants");
                 });
@@ -1035,7 +1045,7 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Catalog.Product", "Product")
                         .WithMany("Snapshots")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PreviousSnapshot");
@@ -1158,7 +1168,7 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Catalog.ProductSnapshot", "ProductSnapshot")
                         .WithMany()
                         .HasForeignKey("ProductSnapshotId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("OrderHeader");

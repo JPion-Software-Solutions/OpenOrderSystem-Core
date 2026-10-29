@@ -380,6 +380,9 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.Property<Guid?>("GroupId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Keywords")
                         .HasColumnType("nvarchar(max)");
 
@@ -397,6 +400,9 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.HasIndex("CoverMediaId");
 
                     b.HasIndex("GroupId");
+
+                    b.HasIndex("IsArchived")
+                        .HasDatabaseName("IX_Product_IsArchived");
 
                     b.ToTable("Products");
                 });
@@ -515,7 +521,7 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Sku")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal?>("StrikePrice")
                         .HasPrecision(18, 2)
@@ -526,6 +532,11 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.HasIndex("GroupId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("Sku")
+                        .IsUnique()
+                        .HasDatabaseName("UIX_Variant_Sku")
+                        .HasFilter("[Sku] IS NOT NULL");
 
                     b.ToTable("Variants");
                 });
@@ -1039,7 +1050,7 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Catalog.Product", "Product")
                         .WithMany("Snapshots")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PreviousSnapshot");
@@ -1162,7 +1173,7 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Catalog.ProductSnapshot", "ProductSnapshot")
                         .WithMany()
                         .HasForeignKey("ProductSnapshotId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("OrderHeader");

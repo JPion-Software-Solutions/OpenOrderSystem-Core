@@ -114,6 +114,23 @@ public class CatalogService : ICatalogManager
     }
 
     // ===========================
+    // IReadOnlyCatalog — Variants
+    // ===========================
+
+    public async Task<CatalogVariantQueryResult> FindVariant(Guid id)
+    {
+        try
+        {
+            await using var ctx = await _contextFactory.CreateDbContextAsync();
+            var entity = await ctx.Variants.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id && !v.Product!.IsArchived);
+            return entity is null
+                ? new CatalogVariantQueryResult { Status = CatalogResultStatus.NotFound }
+                : new CatalogVariantQueryResult { Results = [ToVariantDto(entity)] };
+        }
+        catch (Exception ex) { return new CatalogVariantQueryResult { Status = CatalogResultStatus.StorageError, Message = ex.Message }; }
+    }
+
+    // ===========================
     // IReadOnlyCatalog — Options
     // ===========================
 
@@ -292,10 +309,19 @@ public class CatalogService : ICatalogManager
             if (product.Metadata is not null)
                 foreach (var (k, v) in product.Metadata) entity.SetMetadata(k, v);
 
+            var (error, options) = await ValidateChildrenAsync(ctx, entity.Id, new HashSet<Guid>(), product);
+            if (error is not null)
+                return new CatalogProductQueryResult { Status = error.Status, Message = error.Message };
+
             ctx.Products.Add(entity);
-            await StageSnapshotAsync(ctx, entity, null);
+            if (product.Variants is not null)
+                ApplyVariants(ctx, entity, product.Variants);
+            var links = product.Options is null ? [] : ApplyOptionLinks(ctx, entity.Id, [], product.Options, options);
+
+            var linkDtos = links.Select(ToProductOptionDto).ToList();
+            await StageSnapshotAsync(ctx, entity, linkDtos);
             await ctx.SaveChangesAsync();
-            return OkProduct(ToProductDto(entity, null, ProductLocatorFlags.None));
+            return OkProduct(ToProductDto(entity, linkDtos, ProductLocatorFlags.IncludeVariants), ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeOptions);
         }
         catch (Exception ex) { return ErrorProduct(ex); }
     }
@@ -307,10 +333,15 @@ public class CatalogService : ICatalogManager
         try
         {
             await using var ctx = await _contextFactory.CreateDbContextAsync();
-            var entity = await BuildProductQuery(ctx, ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia)
+            // Archived products remain editable so they can be corrected before being restored.
+            var entity = await BuildProductQuery(ctx, ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia | ProductLocatorFlags.IncludeArchived)
                 .FirstOrDefaultAsync(p => p.Id == product.Id.Value);
             if (entity is null)
                 return NotFoundProduct();
+
+            var (error, options) = await ValidateChildrenAsync(ctx, entity.Id, entity.Variants.Select(v => v.Id).ToHashSet(), product);
+            if (error is not null)
+                return new CatalogProductQueryResult { Status = error.Status, Message = error.Message };
 
             if (product.Name        is not null) entity.Name        = product.Name;
             if (product.Description is not null) entity.Description = product.Description;
@@ -321,22 +352,66 @@ public class CatalogService : ICatalogManager
             if (product.Metadata is not null)
                 foreach (var (k, v) in product.Metadata) entity.SetMetadata(k, v);
 
-            var options = await LoadOptionsIfRequested(ctx, entity.Id, ProductLocatorFlags.IncludeOptions);
-            await StageSnapshotAsync(ctx, entity, options);
+            if (product.Variants is not null)
+                ApplyVariants(ctx, entity, product.Variants);
+
+            var existingLinks = await ctx.ProductOptions
+                .Include(po => po.Option)
+                .Where(po => po.ProductId == entity.Id)
+                .ToListAsync();
+            var links = product.Options is null
+                ? existingLinks
+                : ApplyOptionLinks(ctx, entity.Id, existingLinks, product.Options, options);
+
+            var linkDtos = links.Select(ToProductOptionDto).ToList();
+            await StageSnapshotAsync(ctx, entity, linkDtos);
             await ctx.SaveChangesAsync();
-            return OkProduct(ToProductDto(entity, null, ProductLocatorFlags.None));
+            return OkProduct(ToProductDto(entity, linkDtos, ProductLocatorFlags.IncludeVariants), ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeOptions);
         }
         catch (Exception ex) { return ErrorProduct(ex); }
     }
 
-    public async Task<CatalogProductQueryResult> DeleteProduct(CatalogProductDto product)
+    public async Task<CatalogProductQueryResult> ArchiveProduct(CatalogProductDto product)
     {
         if (product.Id is null)
-            return new CatalogProductQueryResult { Status = CatalogResultStatus.ValidationError, Message = "Product.Id is required for delete." };
-        return await DeleteProduct(product.Id.Value);
+            return new CatalogProductQueryResult { Status = CatalogResultStatus.ValidationError, Message = "Product.Id is required for archive." };
+        return await ArchiveProduct(product.Id.Value);
     }
 
-    public async Task<CatalogProductQueryResult> DeleteProduct(Guid productId)
+    public Task<CatalogProductQueryResult> ArchiveProduct(Guid productId) => SetArchived(productId, true);
+
+    public async Task<CatalogProductQueryResult> RestoreProduct(CatalogProductDto product)
+    {
+        if (product.Id is null)
+            return new CatalogProductQueryResult { Status = CatalogResultStatus.ValidationError, Message = "Product.Id is required for restore." };
+        return await RestoreProduct(product.Id.Value);
+    }
+
+    public Task<CatalogProductQueryResult> RestoreProduct(Guid productId) => SetArchived(productId, false);
+
+    public async Task<CatalogProductQueryResult> UpdateProductFlags(Guid productId, ProductFlags set = ProductFlags.None, ProductFlags clear = ProductFlags.None)
+    {
+        if ((set & clear) != ProductFlags.None)
+            return new CatalogProductQueryResult { Status = CatalogResultStatus.ValidationError, Message = $"Flags cannot be both set and cleared: {set & clear}." };
+        try
+        {
+            await using var ctx = await _contextFactory.CreateDbContextAsync();
+            var entity = await ctx.Products.FirstOrDefaultAsync(p => p.Id == productId);
+            if (entity is null)
+                return NotFoundProduct();
+
+            var flags = (entity.Flags | set) & ~clear;
+            if (flags != entity.Flags)
+            {
+                entity.Flags = flags;
+                await ctx.SaveChangesAsync();
+            }
+            return OkProduct(ToProductDto(entity, null, ProductLocatorFlags.None), ProductLocatorFlags.IncludeArchived);
+        }
+        catch (Exception ex) { return ErrorProduct(ex); }
+    }
+
+    private async Task<CatalogProductQueryResult> SetArchived(Guid productId, bool archived)
     {
         try
         {
@@ -345,10 +420,12 @@ public class CatalogService : ICatalogManager
             if (entity is null)
                 return NotFoundProduct();
 
-            var snapshot = ToProductDto(entity, null, ProductLocatorFlags.None);
-            ctx.Products.Remove(entity);
-            await ctx.SaveChangesAsync();
-            return OkProduct(snapshot);
+            if (entity.IsArchived != archived)
+            {
+                entity.IsArchived = archived;
+                await ctx.SaveChangesAsync();
+            }
+            return OkProduct(ToProductDto(entity, null, ProductLocatorFlags.None), ProductLocatorFlags.IncludeArchived);
         }
         catch (Exception ex) { return ErrorProduct(ex); }
     }
@@ -627,13 +704,150 @@ public class CatalogService : ICatalogManager
     }
 
     // ========================
+    // Product child helpers
+    // ========================
+
+    /// <summary>
+    /// Validates the variant and option-link sets on <paramref name="dto"/> before anything is mutated.
+    /// Returns the referenced options (tracked) so new links can be wired without a second lookup.
+    /// </summary>
+    private static async Task<(CatalogResult? Error, Dictionary<Guid, Option> Options)> ValidateChildrenAsync(
+        OosDbContext ctx, Guid productId, IReadOnlySet<Guid> existingVariantIds, CatalogProductDto dto)
+    {
+        var options = new Dictionary<Guid, Option>();
+
+        if (dto.Variants is not null)
+        {
+            foreach (var v in dto.Variants)
+            {
+                if (string.IsNullOrWhiteSpace(v.Name))
+                    return (Fail(CatalogResultStatus.ValidationError, "Variant name is required."), options);
+                if (v.Price is null or < 0m)
+                    return (Fail(CatalogResultStatus.ValidationError, $"Variant '{v.Name}' requires a price of 0 or more."), options);
+                if (v.ProductId.HasValue && v.ProductId != productId)
+                    return (Fail(CatalogResultStatus.ValidationError, $"Variant '{v.Name}' cannot be moved to another product."), options);
+                if (v.Id.HasValue && !existingVariantIds.Contains(v.Id.Value))
+                    return (Fail(CatalogResultStatus.ValidationError, $"Variant '{v.Id}' does not belong to this product."), options);
+            }
+
+            var ids = dto.Variants.Where(v => v.Id.HasValue).Select(v => v.Id!.Value).ToList();
+            if (ids.Count != ids.Distinct().Count())
+                return (Fail(CatalogResultStatus.ValidationError, "Duplicate variant Id in request."), options);
+
+            var groupIds = dto.Variants.Where(v => v.GroupId.HasValue).Select(v => v.GroupId!.Value).Distinct().ToList();
+            if (groupIds.Count > 0 && await ctx.VariantGroups.CountAsync(g => groupIds.Contains(g.Id)) != groupIds.Count)
+                return (Fail(CatalogResultStatus.ValidationError, "One or more variant groups do not exist."), options);
+
+            var skus = dto.Variants.Where(v => v.Sku is not null).Select(v => v.Sku!).ToList();
+            if (skus.Count != skus.Distinct().Count())
+                return (Fail(CatalogResultStatus.Conflict, "Duplicate SKU in request."), options);
+            if (skus.Count > 0)
+            {
+                var taken = await ctx.Variants
+                    .Where(x => x.ProductId != productId && x.Sku != null && skus.Contains(x.Sku))
+                    .Select(x => x.Sku)
+                    .FirstOrDefaultAsync();
+                if (taken is not null)
+                    return (Fail(CatalogResultStatus.Conflict, $"SKU '{taken}' is already used by another product."), options);
+            }
+        }
+
+        if (dto.Options is not null)
+        {
+            if (dto.Options.Any(o => o.OptionId is null))
+                return (Fail(CatalogResultStatus.ValidationError, "Option link requires an OptionId."), options);
+            if (dto.Options.Any(o => o.ProductId.HasValue && o.ProductId != productId))
+                return (Fail(CatalogResultStatus.ValidationError, "Option link ProductId does not match the product."), options);
+
+            var optionIds = dto.Options.Select(o => o.OptionId!.Value).ToList();
+            if (optionIds.Count != optionIds.Distinct().Count())
+                return (Fail(CatalogResultStatus.ValidationError, "Duplicate OptionId in request."), options);
+
+            options = await ctx.Options.Where(o => optionIds.Contains(o.Id)).ToDictionaryAsync(o => o.Id);
+            if (options.Count != optionIds.Count)
+                return (Fail(CatalogResultStatus.ValidationError, "One or more options do not exist."), options);
+        }
+
+        return (null, options);
+    }
+
+    /// <summary>
+    /// Syncs <paramref name="entity"/>'s variants to <paramref name="dtos"/> (full set, full state per entry).
+    /// Must be called after validation.
+    /// </summary>
+    private static void ApplyVariants(OosDbContext ctx, Product entity, ICollection<CatalogVariantDto> dtos)
+    {
+        var keep = dtos.Where(d => d.Id.HasValue).Select(d => d.Id!.Value).ToHashSet();
+        foreach (var removed in entity.Variants.Where(v => !keep.Contains(v.Id)).ToList())
+        {
+            entity.Variants.Remove(removed);
+            ctx.Variants.Remove(removed);
+        }
+
+        var byId = entity.Variants.ToDictionary(v => v.Id);
+        foreach (var dto in dtos)
+        {
+            Variant target;
+            if (dto.Id.HasValue)
+            {
+                target = byId[dto.Id.Value];
+            }
+            else
+            {
+                // Explicit Add: a client-generated Guid key would otherwise be discovered as Unchanged.
+                target = new Variant { ProductId = entity.Id };
+                ctx.Variants.Add(target);
+                entity.Variants.Add(target);
+            }
+
+            target.Name         = dto.Name!;
+            target.Price        = dto.Price!.Value;
+            target.StrikePrice  = dto.StrikePrice;
+            target.Cost         = dto.Cost;
+            target.Sku          = dto.Sku;
+            target.Barcode      = dto.Barcode;
+            target.GroupId      = dto.GroupId;
+            target.MetadataJson = dto.Metadata is { Count: > 0 } ? JsonSerializer.Serialize(dto.Metadata) : null;
+        }
+    }
+
+    /// <summary>
+    /// Syncs the product's option links to <paramref name="dtos"/> (full set, full state per entry) and
+    /// returns the resulting link set. Must be called after validation.
+    /// </summary>
+    private static List<ProductOption> ApplyOptionLinks(OosDbContext ctx, Guid productId, List<ProductOption> existing,
+        ICollection<CatalogProductOptionDto> dtos, Dictionary<Guid, Option> options)
+    {
+        var keep = dtos.Select(d => d.OptionId!.Value).ToHashSet();
+        ctx.ProductOptions.RemoveRange(existing.Where(po => !keep.Contains(po.OptionId)));
+
+        var byOption = existing.Where(po => keep.Contains(po.OptionId)).ToDictionary(po => po.OptionId);
+        var result = new List<ProductOption>(dtos.Count);
+        foreach (var dto in dtos)
+        {
+            var optionId = dto.OptionId!.Value;
+            if (!byOption.TryGetValue(optionId, out var link))
+            {
+                link = new ProductOption { ProductId = productId, OptionId = optionId, Option = options[optionId] };
+                ctx.ProductOptions.Add(link);
+            }
+
+            link.DefaultState       = dto.DefaultState ?? ProductOptionDefaultState.Optional;
+            link.PriceDeltaOverride = dto.PriceDeltaOverride;
+            result.Add(link);
+        }
+        return result;
+    }
+
+    // ========================
     // Snapshot helpers
     // ========================
 
-    private async Task StageSnapshotAsync(OosDbContext ctx, Product entity, ICollection<CatalogOptionDto>? options)
+    private async Task StageSnapshotAsync(OosDbContext ctx, Product entity, ICollection<CatalogProductOptionDto>? options)
     {
         var flags = ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia | ProductLocatorFlags.IncludeMetadata;
-        var dto = ToProductDto(entity, options, flags);
+        // Archive state and flags are operational state, not product content, so they never produce a new snapshot.
+        var dto = ToProductDto(entity, options, flags) with { IsArchived = null, Flags = null, FlagStates = null };
         var json = JsonSerializer.Serialize(dto);
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
 
@@ -660,7 +874,7 @@ public class CatalogService : ICatalogManager
     {
         foreach (var productId in productIds)
         {
-            var product = await BuildProductQuery(ctx, ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia)
+            var product = await BuildProductQuery(ctx, ProductLocatorFlags.IncludeVariants | ProductLocatorFlags.IncludeMedia | ProductLocatorFlags.IncludeArchived)
                 .FirstOrDefaultAsync(p => p.Id == productId);
             if (product is null) continue;
             var options = await LoadOptionsIfRequested(ctx, productId, ProductLocatorFlags.IncludeOptions);
@@ -675,6 +889,8 @@ public class CatalogService : ICatalogManager
     private static IQueryable<Product> BuildProductQuery(OosDbContext ctx, ProductLocatorFlags flags)
     {
         IQueryable<Product> query = ctx.Products;
+        if (!flags.HasFlag(ProductLocatorFlags.IncludeArchived))
+            query = query.Where(p => !p.IsArchived);
         if (flags.HasFlag(ProductLocatorFlags.IncludeVariants))
             query = query.Include(p => p.Variants);
         if (flags.HasFlag(ProductLocatorFlags.IncludeMedia))
@@ -696,6 +912,7 @@ public class CatalogService : ICatalogManager
             .FirstOrDefaultAsync();
 
         return snapshot is null ? null : new CatalogProductSnapshotDto(
+            snapshot.Id,
             snapshot.ProductId,
             snapshot.PreviousSnapshotId,
             snapshot.SchemaVersion,
@@ -703,18 +920,17 @@ public class CatalogService : ICatalogManager
             snapshot.SnapshotHash);
     }
 
-    private static async Task<ICollection<CatalogOptionDto>?> LoadOptionsIfRequested(OosDbContext ctx, Guid productId, ProductLocatorFlags flags)
+    private static async Task<ICollection<CatalogProductOptionDto>?> LoadOptionsIfRequested(OosDbContext ctx, Guid productId, ProductLocatorFlags flags)
     {
         if (!flags.HasFlag(ProductLocatorFlags.IncludeOptions))
             return null;
 
-        var options = await ctx.ProductOptions
+        var links = await ctx.ProductOptions
             .Where(po => po.ProductId == productId)
             .Include(po => po.Option)
-            .Select(po => po.Option!)
             .ToListAsync();
 
-        return options.Select(ToOptionDto).ToList();
+        return links.Select(ToProductOptionDto).ToList();
     }
 
     private async Task<List<CatalogProductDto>> MapProducts(OosDbContext ctx, List<Product> entities, ProductLocatorFlags flags)
@@ -806,7 +1022,7 @@ public class CatalogService : ICatalogManager
     // DTO mapping
     // ========================
 
-    private static CatalogProductDto ToProductDto(Product p, ICollection<CatalogOptionDto>? options, ProductLocatorFlags flags, CatalogProductSnapshotDto? snapshot = null) =>
+    private static CatalogProductDto ToProductDto(Product p, ICollection<CatalogProductOptionDto>? options, ProductLocatorFlags flags, CatalogProductSnapshotDto? snapshot = null) =>
         new(
             p.Id,
             p.Name,
@@ -818,8 +1034,18 @@ public class CatalogService : ICatalogManager
             flags.HasFlag(ProductLocatorFlags.IncludeMedia) ? (p.CoverMedia is null ? null : ToMediaDto(p.CoverMedia)) : null,
             flags.HasFlag(ProductLocatorFlags.IncludeMedia) ? (p.Album is null ? null : ToGroupDto(p.Album)) : null,
             p.Group is null ? null : ToGroupDto(p.Group),
-            snapshot
+            snapshot,
+            p.IsArchived,
+            p.Flags,
+            ToFlagStates(p.Flags)
         );
+
+    private static readonly ProductFlags[] NamedProductFlags =
+        Enum.GetValues<ProductFlags>().Where(f => f != ProductFlags.None).ToArray();
+
+    /// <summary>Every named <see cref="ProductFlags"/> value, keyed by name, so frontends never decode the bitmask.</summary>
+    private static IReadOnlyDictionary<string, bool> ToFlagStates(ProductFlags flags) =>
+        NamedProductFlags.ToDictionary(f => f.ToString(), f => flags.HasFlag(f));
 
     private static CatalogVariantDto ToVariantDto(Variant v) =>
         new(v.Id, v.GroupId, v.ProductId, v.Name, v.Price, v.StrikePrice, v.Cost, v.Sku, v.Barcode,
@@ -827,6 +1053,13 @@ public class CatalogService : ICatalogManager
 
     private static CatalogOptionDto ToOptionDto(Option o) =>
         new(o.Id, o.GroupId, o.Name, o.PriceDelta, o.Flags);
+
+    private static CatalogProductOptionDto ToProductOptionDto(ProductOption po) =>
+        new(po.ProductId, po.OptionId, po.DefaultState, po.PriceDeltaOverride,
+            po.Option is null ? null : ToOptionDto(po.Option),
+            po.Option is null && po.PriceDeltaOverride is null && po.DefaultState != ProductOptionDefaultState.Included
+                ? null
+                : po.EffectivePriceDelta);
 
     private static CatalogMediaDto ToMediaDto(Media m) =>
         new(m.Id, m.GroupId, m.Name, m.Description, m.Filepath, m.OriginalFileName,
