@@ -1,0 +1,7 @@
+/* Sizing for icons from IIconProvider. Icons scale with the surrounding text and use its colour. */
+.oos-icon {
+    width: 1.25em;
+    height: 1.25em;
+    flex-shrink: 0;
+    vertical-align: -0.25em;
+}

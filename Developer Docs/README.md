@@ -14,13 +14,15 @@ that area and links to its topic files.
 | Catalog (products, variants, options, media, groups, snapshots) | [Services/Catalog](Services/Catalog/README.md) |
 | Ordering (carts, order placement, queue, stages) | [Services/Ordering](Services/Ordering/README.md) |
 | Email (sending, SMTP security, templates, email settings and the keyring) | [Services/EmailService](Services/EmailService/README.md) |
+| Icons (icon keys, icon packs, the Default Pack) | [Services/UI/Theme/Icons](Services/UI/Theme/Icons/README.md) |
+| Navigation (nav menu model, targets, policies) | [Services/UI/Nav](Services/UI/Nav/README.md) |
 
 ## Services layout
 
 | Folder | Namespace | Contains |
 |---|---|---|
 | `Services/Legacy/` | `Services.Legacy` | Services from the original system (`ApplicationDbContext`, `SiteConfig`). Kept running until their V2 replacements are finished; don't build new features on them. |
-| `Services/<Domain>/` | `Services.<Domain>` | V2 services grouped by domain: `Catalog`, `Config`, `Devices`, `EmailService`, `Keyring`, `Ordering`, `Sms` |
+| `Services/<Domain>/` | `Services.<Domain>` | V2 services grouped by domain: `Catalog`, `Config`, `Devices`, `EmailService`, `Keyring`, `Ordering`, `Sms`, `UI` |
 
 Within a domain, interfaces live in an `Interfaces/` subfolder and namespace. `Services/Sms/` predates V2 but is
 carried forward and will be improved, so it's a domain rather than legacy.

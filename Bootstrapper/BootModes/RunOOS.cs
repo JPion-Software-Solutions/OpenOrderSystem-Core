@@ -20,6 +20,10 @@ using OpenOrderSystem.Core.Services.Sms;
 using OpenOrderSystem.Core.Services.Sms.Interfaces;
 using OpenOrderSystem.Core.Services.EmailService;
 using OpenOrderSystem.Core.Services.EmailService.Interfaces;
+using OpenOrderSystem.Core.Services.UI.Nav.Admin;
+using OpenOrderSystem.Core.Services.UI.Nav.Admin.Interface;
+using OpenOrderSystem.Core.Services.UI.Theme.Icons.BuiltinPacks;
+using OpenOrderSystem.Core.Services.UI.Theme.Icons.Interface;
 using OpenOrderSystem.Core.Utilities;
 using Quartz;
 using Serilog;
@@ -162,6 +166,8 @@ public class RunOosBootstrap : IBootMode
         _bob.Services.AddSingleton<PrintSpoolerService>();
         _bob.Services.AddScoped<IConfigurationStore, DatabaseConfigurationStore<OosDbContext>>();
         _bob.Services.AddScoped<ITimeNormalizationService, DatabaseConfigurationStore<OosDbContext>>();
+        _bob.Services.AddSingleton<IIconProvider, DefaultIconPack>();
+        _bob.Services.AddSingleton<IAdminNavService, AdminNavService>();
 
         // OosDbContext and DataProtectionKeyContext are backed by provider-specific subclasses,
         // each with its own migration set (see Data/Providers).
