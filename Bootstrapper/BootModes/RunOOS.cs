@@ -69,7 +69,12 @@ public class RunOosBootstrap : IBootMode
             oosContext.Database.Migrate();
 
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            context.Database.Migrate();
+            // The legacy context only has SQL Server migrations (they use SQL Server column types such
+            // as nvarchar(max)). On any other provider, build its schema straight from the model instead.
+            if (Configuration?.GetConfig<DbProviders>("LEGACY:DB_PROVIDER") == DbProviders.SQLServer)
+                context.Database.Migrate();
+            else
+                context.Database.EnsureCreated();
 
             //Set confirmation code count
             ConfirmationCode.CodesIssued = context.ConfirmationCodes.Count();
