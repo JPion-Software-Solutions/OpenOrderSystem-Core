@@ -73,6 +73,8 @@
     <Folder Include="Data/Interfaces/" />
     <Folder Include="DevelopmentTools/" />
     <Folder Include="Extensions\Core\" />
+    <Folder Include="Services\UI\Theme\Icons\BuiltinPacks\" />
+    <Folder Include="Store\DevPacks\" />
     <Folder Include="Utilities/" />
     <Folder Include="wwwroot\media\temp\" />
     <Folder Include="wwwroot\NewFolder\" />
@@ -87,7 +89,7 @@
 
   <ItemGroup>
     <Reference Include="PizzaPartry.tools">
-      <HintPath>/mnt/30a81885-5cea-4422-959e-70565dc376b8/PizzaPartry.tools/PizzaPartry.tools/bin/Release/net8.0/PizzaPartry.tools.dll</HintPath>
+      <HintPath>/mnt/storage/PizzaPartry.tools/PizzaPartry.tools/bin/Release/net8.0/PizzaPartry.tools.dll</HintPath>
     </Reference>
   </ItemGroup>
 

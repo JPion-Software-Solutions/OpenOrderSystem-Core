@@ -371,3 +371,15 @@ FodyWeavers.xsd
 /config/
 /wwwroot/**/user/
 /Store/
+.claude
+
+# SQLite databases and their sidecar files
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
