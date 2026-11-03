@@ -245,7 +245,7 @@ public static class KeyringBuilder
         => options.GetEnvironmentVariable(name) is { } value && !string.IsNullOrWhiteSpace(value) ? value : null;
 
     /// <summary>Unwraps every data key, or returns false if any fails (wrong KEK or tampering).</summary>
-    private static bool TryUnwrap(KeyringFile file, byte[] kek, out Dictionary<int, byte[]> keys)
+    internal static bool TryUnwrap(KeyringFile file, byte[] kek, out Dictionary<int, byte[]> keys)
     {
         keys = new Dictionary<int, byte[]>();
         try
