@@ -1,9 +1,9 @@
 namespace OpenOrderSystem.Core.Services.Keyring.Interfaces;
 
 /// <summary>
-/// Full keyring access: everything in <see cref="IReadOnlyKeyring"/> plus writes and
+/// Full keyring access: everything in <see cref="IReadOnlyKeyringService"/> plus writes and
 /// maintenance. Only the keyring admin path should depend on this interface; everything
-/// else, including the config service, depends on <see cref="IReadOnlyKeyring"/>.
+/// else, including the config service, depends on <see cref="IReadOnlyKeyringService"/>.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -24,7 +24,7 @@ namespace OpenOrderSystem.Core.Services.Keyring.Interfaces;
 /// string) pick up changes on the next restart. No member ever returns a secret value.
 /// </para>
 /// </remarks>
-public interface IKeyring : IReadOnlyKeyring
+public interface IKeyringService : IReadOnlyKeyringService
 {
     /// <summary>
     /// Current protection mode, data key version, environment key fingerprint, and any

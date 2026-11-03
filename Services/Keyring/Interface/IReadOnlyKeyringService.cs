@@ -9,7 +9,7 @@ namespace OpenOrderSystem.Core.Services.Keyring.Interfaces;
 /// and must never cache, log, or persist them. Secret names (not values) are safe to
 /// display to admins.
 /// </remarks>
-public interface IReadOnlyKeyring
+public interface IReadOnlyKeyringService
 {
     /// <summary>
     /// The token format recognized by <see cref="ExpandSecrets"/>: <c>&lt;&lt;key:name&gt;&gt;</c>.

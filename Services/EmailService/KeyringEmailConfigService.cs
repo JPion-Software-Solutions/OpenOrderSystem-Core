@@ -14,7 +14,7 @@ namespace OpenOrderSystem.Core.Services.EmailService;
 /// <para>Only keys listed in <see cref="KeySources"/> are accepted; anything else throws, so a new key can't
 /// silently end up stored in plain text.</para>
 /// <para><see cref="KeySource.Secret"/> keys always resolve through the keyring. Their config value defaults to a
-/// token for a keyring secret of the same name (e.g. <c>&lt;&lt;key:smtp:password&gt;&gt;</c>), so nothing has to be
+/// token for a keyring secret of the same name (e.g. <c>&lt;&lt;key:smtp.password&gt;&gt;</c>), so nothing has to be
 /// seeded. They can't be written here: <see cref="SetKeyAsync{T}"/> throws <see cref="SecretConfigKeyException"/>
 /// so the UI can send the admin to the keyring instead.</para>
 /// <para>Any config value may contain tokens, so an admin can move other values into the keyring too.</para>
@@ -22,10 +22,10 @@ namespace OpenOrderSystem.Core.Services.EmailService;
 public class KeyringEmailConfigService : IEmailConfigService
 {
     private readonly IConfigurationStore _config;
-    private readonly IReadOnlyKeyring _keyring;
+    private readonly IReadOnlyKeyringService _keyring;
     private readonly ILogger<KeyringEmailConfigService> _logger;
 
-    public KeyringEmailConfigService(IConfigurationStore config, IReadOnlyKeyring keyring, ILogger<KeyringEmailConfigService> logger)
+    public KeyringEmailConfigService(IConfigurationStore config, IReadOnlyKeyringService keyring, ILogger<KeyringEmailConfigService> logger)
     {
         _config = config;
         _keyring = keyring;
@@ -59,7 +59,7 @@ public class KeyringEmailConfigService : IEmailConfigService
     public async Task SetKeyAsync<T>(string key, string value)
     {
         if (key == SmtpEmailService.ConfigKeys.Username)
-            await _config.SetConfigurationAsync(SmtpEmailService.ConfigKeys.Password, IReadOnlyKeyring.TokenPrefix + SmtpEmailService.ConfigKeys.Password + IReadOnlyKeyring.TokenSuffix);
+            await _config.SetConfigurationAsync(SmtpEmailService.ConfigKeys.Password, IReadOnlyKeyringService.TokenPrefix + SmtpEmailService.ConfigKeys.Password + IReadOnlyKeyringService.TokenSuffix);
         
         if (key == SmtpEmailService.ConfigKeys.Password)
             throw new SecretConfigKeyException(key, key);

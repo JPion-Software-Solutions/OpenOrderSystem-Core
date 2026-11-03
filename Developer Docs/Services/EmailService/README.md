@@ -34,8 +34,9 @@ services.AddScoped<IEmailService, SmtpEmailService>();
 services.AddSingleton<IEmailConfigService, InsecureEmailConfigService>();
 ```
 
-`KeyringEmailConfigService` can't be registered until the keyring is implemented (only its interfaces exist).
-When it is, register it as **scoped**, because it depends on the scoped `IConfigurationStore`.
+`KeyringEmailConfigService` needs `IReadOnlyKeyringService` to be registered first (the keyring is implemented as
+`FileKeyringService`, opened at boot by `KeyringBuilder`, but not yet registered). Register it as **scoped**, because it
+depends on the scoped `IConfigurationStore`.
 
 ## Known issues
 
