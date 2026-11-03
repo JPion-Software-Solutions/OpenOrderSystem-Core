@@ -17,17 +17,17 @@ public class SmtpEmailService : IEmailService, IEmailFormService
 
     public static class ConfigKeys
     {
-        public const string Host = "smtp:host";
-        public const string Port = "smtp:port";
-        public const string Username = "smtp:username";
-        public const string Password = "smtp:password";
-        public const string DefaultSender = "smtp:sender";
-        public const string DefaultSenderName = "smtp:sendername";
-        public const string OverrideDirectory = "email:overridedir";
-        public const string BuiltInDirectory = "email:builtindir";
-        public const string SecureSocketOption = "smtp:securesocket";
-        public const string AcceptAllCerts = "smtp:acceptallcerts";
-        public const string AcceptCertThumbprint = "smtp:acceptcertthumbprint";
+        public const string Host = "smtp.host";
+        public const string Port = "smtp.port";
+        public const string Username = "smtp.username";
+        public const string Password = "smtp.password";
+        public const string DefaultSender = "smtp.sender";
+        public const string DefaultSenderName = "smtp.sendername";
+        public const string OverrideDirectory = "email.overridedir";
+        public const string BuiltInDirectory = "email.builtindir";
+        public const string SecureSocketOption = "smtp.securesocket";
+        public const string AcceptAllCerts = "smtp.acceptallcerts";
+        public const string AcceptCertThumbprint = "smtp.acceptcertthumbprint";
     }
 
     public SmtpEmailService(IEmailConfigService config, ILogger<SmtpEmailService> logger)
@@ -190,8 +190,8 @@ public class SmtpEmailService : IEmailService, IEmailFormService
     }
 
     /// <summary>
-    /// Accepts a certificate the system already trusts. Otherwise accepts it only when <c>smtp:acceptallcerts</c> is
-    /// <c>true</c>, or its SHA-1 or SHA-256 thumbprint matches <c>smtp:acceptcertthumbprint</c> (separators and case ignored),
+    /// Accepts a certificate the system already trusts. Otherwise accepts it only when <c>smtp.acceptallcerts</c> is
+    /// <c>true</c>, or its SHA-1 or SHA-256 thumbprint matches <c>smtp.acceptcertthumbprint</c> (separators and case ignored),
     /// for servers with self-signed or privately issued certificates.
     /// </summary>
     private async Task<RemoteCertificateValidationCallback> BuildCertificateValidatorAsync()
@@ -207,7 +207,7 @@ public class SmtpEmailService : IEmailService, IEmailFormService
 
             if (acceptAll)
             {
-                logger.LogWarning("Accepting an untrusted SMTP server certificate ({Errors}) because smtp:acceptallcerts is enabled.", errors);
+                logger.LogWarning("Accepting an untrusted SMTP server certificate ({Errors}) because smtp.acceptallcerts is enabled.", errors);
                 return true;
             }
 
@@ -218,7 +218,7 @@ public class SmtpEmailService : IEmailService, IEmailFormService
                     return true;
             }
 
-            logger.LogError("Rejected the SMTP server certificate ({Errors}). Trust it with smtp:acceptcertthumbprint if it is expected.", errors);
+            logger.LogError("Rejected the SMTP server certificate ({Errors}). Trust it with smtp.acceptcertthumbprint if it is expected.", errors);
             return false;
         };
     }

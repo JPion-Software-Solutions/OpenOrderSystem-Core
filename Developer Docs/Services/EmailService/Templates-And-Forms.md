@@ -22,7 +22,7 @@ yourself.
 
 | Method | Behavior |
 |---|---|
-| `GetTemplateAsync(name)` | Looks for `<name>.html` in `email:overridedir`, then `email:builtindir`, and returns the first file found. Throws `EmailTemplateNotFoundException` if neither has it. Operators customize a template by putting a file with the same name in the override folder. |
+| `GetTemplateAsync(name)` | Looks for `<name>.html` in `email.overridedir`, then `email.builtindir`, and returns the first file found. Throws `EmailTemplateNotFoundException` if neither has it. Operators customize a template by putting a file with the same name in the override folder. |
 | `CreateHtmlEmailForm(template, parameters)` | An `HtmlEmailForm` with the template and data set. |
 | `CreatePlaintextEmailForm(sender, senderName, recipient, subject, body, cc?, bcc?)` | A ready-to-send plain-text form. |
 | `ValidateTemplate(template)` | Checks a template for email-client problems (see below). |
