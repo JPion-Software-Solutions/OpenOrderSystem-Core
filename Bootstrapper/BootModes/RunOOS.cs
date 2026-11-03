@@ -12,7 +12,9 @@ using OpenOrderSystem.Core.Data.Providers;
 using OpenOrderSystem.Core.Extensions.AspNet;
 using OpenOrderSystem.Core.Extensions.Development;
 using OpenOrderSystem.Core.Middleware;
+using OpenOrderSystem.Core.Middleware.__WebApplicationExtensions;
 using OpenOrderSystem.Core.Quartz.AutomatedTasks;
+using OpenOrderSystem.Core.Services.__BuilderExtensions;
 using OpenOrderSystem.Core.Services.Config;
 using OpenOrderSystem.Core.Services.Config.Interfaces;
 using OpenOrderSystem.Core.Services.Legacy;
@@ -58,35 +60,11 @@ public class RunOosBootstrap : IBootMode
 
         _app.UseCors(_corsPolicy);
 
-
-        //DBCleanup
-        using (var scope = _app.Services.CreateScope())
-        {
-            var dataKeyContext = scope.ServiceProvider.GetRequiredService<DataProtectionKeyContext>();
-            dataKeyContext.Database.Migrate();
-
-            var oosContext = scope.ServiceProvider.GetRequiredService<OosDbContext>();
-            oosContext.Database.Migrate();
-
-            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            // The legacy context only has SQL Server migrations (they use SQL Server column types such
-            // as nvarchar(max)). On any other provider, build its schema straight from the model instead.
-            if (Configuration?.GetConfig<DbProviders>("LEGACY:DB_PROVIDER") == DbProviders.SQLServer)
-                context.Database.Migrate();
-            else
-                context.Database.EnsureCreated();
-
-            //Set confirmation code count
-            ConfirmationCode.CodesIssued = context.ConfirmationCodes.Count();
-        }
-
-        // Roles live in the Identity tables, so they can only be seeded once migrations have run.
-        _app.EnsureCoreUserRolesCreated().Wait();
+        _app.MigrateOosDatabases(Configuration);
 
         // Configure the HTTP request pipeline.
         if (_app.Environment.IsDevelopment())
         {
-            _app.UseMigrationsEndPoint();
             _app.EnsureDevEnvironmentReady().Wait()/*  */;
         }
         else
@@ -173,20 +151,8 @@ public class RunOosBootstrap : IBootMode
         _bob.Services.AddScoped<ITimeNormalizationService, DatabaseConfigurationStore<OosDbContext>>();
         _bob.Services.AddSingleton<IIconProvider, DefaultIconPack>();
         _bob.Services.AddSingleton<IAdminNavService, AdminNavService>();
-
-        // OosDbContext and DataProtectionKeyContext are backed by provider-specific subclasses,
-        // each with its own migration set (see Data/Providers).
-        _bob.Services.AddOosDbContexts(Configuration);
-
-        _bob.Services.AddDataProtection()
-            .PersistKeysToDbContext<DataProtectionKeyContext>()
-            .SetApplicationName("OpenOrderSystem");
-
-        _bob.Services.AddDbContext<ApplicationDbContext>(options =>
-        {
-            options.UseDynamicSQLProvider(Configuration, "LEGACY");
-            options.EnableDetailedErrors();
-        });
+        
+        _bob.AddOosDatabaseServices(Configuration);
 
         _bob.Services.AddHttpClient();
         _bob.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -281,20 +247,32 @@ public class RunOosBootstrap : IBootMode
             CheckDatabase("Database", dbConnectionTools, allowMissingDatabase, foundErrors);
         }
 
-        // Legacy database connection check.
+        // Legacy database connection check. Only when the legacy database is enabled; a leftover
+        // connection string for a disabled component must not send boot to recovery.
+        var legacyComponents = bootConfig.GetConfig<string[]>("LEGACY_COMPONENTS");
+        var legacyDatabaseEnabled = legacyComponents != null && legacyComponents.Contains("DATABASE");
         var legacyProvider = bootConfig.GetConfig<DbProviders>("LEGACY:DB_PROVIDER");
         var legacyConnectionString = bootConfig.GetConfig("LEGACY:DB_CONNECTION_STRING");
 
-        if (!string.IsNullOrEmpty(legacyConnectionString) && !legacyProvider.IsAvailable())
+        if (!legacyDatabaseEnabled)
+        {
+            // Nothing to check.
+        }
+        else if (string.IsNullOrEmpty(legacyConnectionString))
+        {
+            foundErrors.Add("Legacy database is enabled in LEGACY_COMPONENTS, but LEGACY:DB_CONNECTION_STRING is not set.");
+            _fallback = "recovery";
+        }
+        else if (!legacyProvider.IsAvailable())
         {
             var message = $"Legacy database: {legacyProvider.NotAvailable().Message}";
             Log.Warning("Preflight: {Message}", message);
             foundErrors.Add(message);
             _fallback = "recovery";
         }
-        else if (!string.IsNullOrEmpty(legacyConnectionString))
+        else
         {
-            var legacyConnectionTools = new DatabaseConnectionTool<ApplicationDbContext>(legacyProvider, legacyConnectionString ?? "");
+            var legacyConnectionTools = new DatabaseConnectionTool<ApplicationDbContext>(legacyProvider, legacyConnectionString);
             CheckDatabase("Legacy database", legacyConnectionTools, allowMissingDatabase, foundErrors);
         }
 
