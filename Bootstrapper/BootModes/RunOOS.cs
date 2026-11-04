@@ -268,10 +268,7 @@ public class RunOosBootstrap : IBootMode
         {
             foundErrors.Add("Connection string not found in boot config, falling back to no-db-boot");
 
-            if (bootConfig.SetupComplete)
-                _fallback = "initial_setup";
-            else
-                _fallback = "recovery";
+            _fallback = !bootConfig.SetupComplete ? "initial_setup" : "recovery";
         }
         else if (!dbProvider.IsAvailable())
         {
