@@ -244,6 +244,17 @@ public class RunOosBootstrap : IBootMode
     public bool PreflightCheck(string[] args, Configuration bootConfig, out string[] errors)
     {
         var foundErrors = new List<string>();
+        
+        //attempt to open the keyring.
+        try
+        {
+            _keyringBuildResult = KeyringBuilder.Build(OpenOrderSystemApplication.ProtectedRootPath);
+        }
+        catch (KeyringUnavailableException e)
+        {
+            foundErrors.Add(e.Message);
+            _fallback = "recovery";
+        }
 
         // In the prefab development environment a missing database is created by migrations at
         // startup. Elsewhere it must already exist (initial setup will handle creation).
@@ -273,16 +284,6 @@ public class RunOosBootstrap : IBootMode
         {
             var dbConnectionTools = new DatabaseConnectionTool<OosDbContext>(dbProvider, dbConnectionString ?? "");
             CheckDatabase("Database", dbConnectionTools, allowMissingDatabase, foundErrors);
-        }
-
-        try
-        {
-            _keyringBuildResult = KeyringBuilder.Build(OpenOrderSystemApplication.ProtectedRootPath);
-        }
-        catch (KeyringUnavailableException e)
-        {
-            foundErrors.Add(e.Message);
-            _fallback = "recovery";
         }
 
         // Legacy database connection check. Only when the legacy database is enabled; a leftover
