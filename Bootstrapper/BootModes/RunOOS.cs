@@ -22,6 +22,8 @@ using OpenOrderSystem.Core.Services.Sms;
 using OpenOrderSystem.Core.Services.Sms.Interfaces;
 using OpenOrderSystem.Core.Services.EmailService;
 using OpenOrderSystem.Core.Services.EmailService.Interfaces;
+using OpenOrderSystem.Core.Services.Keyring;
+using OpenOrderSystem.Core.Services.Keyring.Interfaces;
 using OpenOrderSystem.Core.Services.UI.Nav.Admin;
 using OpenOrderSystem.Core.Services.UI.Nav.Admin.Interface;
 using OpenOrderSystem.Core.Services.UI.Theme.Icons.BuiltinPacks;
@@ -42,6 +44,7 @@ public class RunOosBootstrap : IBootMode
     private readonly string _corsPolicy = "OOS_CORS_ACCESS_POLICY";
 
     private string? _fallback = null;
+    private KeyringBuildResult? _keyringBuildResult;
 
     public string? RequestedFallback => _fallback;
 
@@ -58,9 +61,34 @@ public class RunOosBootstrap : IBootMode
         _app = _bob?.Build()
             ?? throw new InvalidOperationException("Unable to build OOS Server, missing builder! Please ensure Initialize is called before attempting to build.");
 
+        using (var scope = _app.Services.CreateScope())
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<OpenOrderSystemApplication>>();
+
+            //log any keyring build actions taken.
+            var actions = _keyringBuildResult?.Actions ?? KeyringBootActions.None;
+
+            if (actions.HasFlag(KeyringBootActions.Created))
+                logger.LogInformation("Keyring: no keyring was found, so a new one was created.");
+            if (actions.HasFlag(KeyringBootActions.EncryptionEnabled))
+                logger.LogInformation("Keyring: existing pass-through secrets were encrypted under a new data key.");
+            if (actions.HasFlag(KeyringBootActions.MovedToEnvironment))
+                logger.LogInformation("Keyring: the data key is now protected by OOS_MASTERKEY.");
+            if (actions.HasFlag(KeyringBootActions.EnvironmentKeyReplaced))
+                logger.LogWarning("Keyring: unlocked with OOS_MASTERKEY_PREVIOUS and re-protected with OOS_MASTERKEY. " +
+                                  "Remove OOS_MASTERKEY_PREVIOUS from the environment.");
+            if (actions.HasFlag(KeyringBootActions.KdfUpgraded))
+                logger.LogInformation("Keyring: the master key derivation was upgraded to stronger settings.");
+            if (actions.HasFlag(KeyringBootActions.ReleasedToDisk))
+                logger.LogWarning("Keyring: OOS_MASTERKEY_RELEASE is set, so the data key was moved back to disk unprotected. " +
+                                  "Remove OOS_MASTERKEY_RELEASE from the environment.");
+            if (actions.HasFlag(KeyringBootActions.PreviousKeyStillSet))
+                logger.LogWarning("Keyring: OOS_MASTERKEY_PREVIOUS is set but was not needed. Remove it from the environment.");
+        }
+        
         _app.UseCors(_corsPolicy);
 
-        _app.MigrateOosDatabases(Configuration);
+        _app.MigrateOosDatabases(Configuration!);
 
         // Configure the HTTP request pipeline.
         if (_app.Environment.IsDevelopment())
@@ -147,12 +175,12 @@ public class RunOosBootstrap : IBootMode
         _bob.Services.AddSingleton<StaffTerminalMonitoringService>();
         _bob.Services.AddSingleton<CartService>();
         _bob.Services.AddSingleton<PrintSpoolerService>();
-        _bob.Services.AddScoped<IConfigurationStore, DatabaseConfigurationStore<OosDbContext>>();
-        _bob.Services.AddScoped<ITimeNormalizationService, DatabaseConfigurationStore<OosDbContext>>();
         _bob.Services.AddSingleton<IIconProvider, DefaultIconPack>();
         _bob.Services.AddSingleton<IAdminNavService, AdminNavService>();
         
         _bob.AddOosDatabaseServices(Configuration);
+        _bob.AddOosConfigurationServices(_keyringBuildResult!); //null state ignored because preflight would have
+                                                                //thrown and dropped to recovery mode.
 
         _bob.Services.AddHttpClient();
         _bob.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -245,6 +273,16 @@ public class RunOosBootstrap : IBootMode
         {
             var dbConnectionTools = new DatabaseConnectionTool<OosDbContext>(dbProvider, dbConnectionString ?? "");
             CheckDatabase("Database", dbConnectionTools, allowMissingDatabase, foundErrors);
+        }
+
+        try
+        {
+            _keyringBuildResult = KeyringBuilder.Build(OpenOrderSystemApplication.ProtectedRootPath);
+        }
+        catch (KeyringUnavailableException e)
+        {
+            foundErrors.Add(e.Message);
+            _fallback = "recovery";
         }
 
         // Legacy database connection check. Only when the legacy database is enabled; a leftover
