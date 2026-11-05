@@ -63,6 +63,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="API\V2\Orders\" />
     <Folder Include="Areas/InitialSetup/" />
     <Folder Include="Areas/InitialSetup/Controllers/" />
     <Folder Include="Areas/InitialSetup/Views/" />

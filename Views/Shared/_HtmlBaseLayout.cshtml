@@ -1,10 +1,10 @@
 ﻿@using System.Reflection
-@using OpenOrderSystem.Core.Areas.API.Legacy.Controllers
+@using OpenOrderSystem.Core.API.Legacy.System
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env
 @inject IConfiguration _config
 
 @{
-    var version = SystemController.Version;
+    var version = SystemApi.Version;
 
     var useFontAwesomePro = _config.GetValue<bool>("OOS:FontAwesomeConfig:UseFontAwesomePro");
     var isDev = _env.IsDevelopment();

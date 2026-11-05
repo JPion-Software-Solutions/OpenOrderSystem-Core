@@ -13,7 +13,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-using OpenOrderSystem.Core.Areas.API.Legacy.DTO;
+using OpenOrderSystem.Core.API.Legacy.DTO;
 
 namespace OpenOrderSystem.Core.Data.DataModels
 {

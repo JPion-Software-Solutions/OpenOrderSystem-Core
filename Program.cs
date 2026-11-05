@@ -1,5 +1,7 @@
+using System.Net.NetworkInformation;
 using System.Reflection;
-using OpenOrderSystem.Core.Areas.API.Legacy.Controllers;
+using OpenOrderSystem.Core.API.V2.System;
+using OpenOrderSystem.Core.API.Legacy.System;
 using OpenOrderSystem.Core.Bootstrapper;
 using OpenOrderSystem.Core.Services.Legacy;
 
@@ -15,15 +17,15 @@ internal static class Program
         OpenOrderSystemApplication.ProtectedRootPath = Environment.GetEnvironmentVariable("OOS_PROTECTEDROOT")
                                                        ?? DefaultProtectedRoot();
         
-        SystemController.Version = Assembly
+        SystemApi.Version = Assembly
             .GetExecutingAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion ?? "unknown";
 
-        if (SystemController.Version.Contains('+'))
-            SystemController.Version = SystemController.Version.Remove(SystemController.Version.IndexOf('+'));
+        if (SystemApi.Version.Contains('+'))
+            SystemApi.Version = SystemApi.Version.Remove(SystemApi.Version.IndexOf('+'));
         
-        SystemController.SystemBoot = DateTime.Now;
+        SystemApi.SystemBoot = DateTime.Now;
 
         var oosApp = new OpenOrderSystemApplication();
         var app = await oosApp.BuildApp(args);
@@ -31,6 +33,8 @@ internal static class Program
         
         MediaManagerService.MediaRootPath = Path.Combine(OpenOrderSystemApplication.DataRootPath, "public", "wwwroot", "media");
         OpenOrderSystem.Core.Areas.Staff.Controllers.Manager.MenuController.ImageDirectoryPath = Path.Combine(MediaManagerService.MediaRootPath, "images");
+        
+        PingUtility.Lock();
         
         app.Run();
     }

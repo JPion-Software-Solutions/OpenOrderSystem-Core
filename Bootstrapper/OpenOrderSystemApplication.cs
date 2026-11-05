@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.FileProviders;
-using OpenOrderSystem.Core.Areas.API.Legacy.Controllers;
+using OpenOrderSystem.Core.API.Legacy.System;
 using OpenOrderSystem.Core.Bootstrapper.Interfaces;
 
 namespace OpenOrderSystem.Core.Bootstrapper;
@@ -143,7 +143,7 @@ public class OpenOrderSystemApplication
         Console.WriteLine("  Open Order System");
         Console.WriteLine("  ©2026 JPion Software Solutions, LLC");
         Console.WriteLine("  ────────────────────────────────");
-        Console.WriteLine($"  Version:        {SystemController.Version}");
+        Console.WriteLine($"  Version:        {SystemApi.Version}");
         Console.WriteLine($"  Boot Mode:      {bootMode}");
         Console.WriteLine($"  Environment:    {(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")}");
         Console.WriteLine($"  OS:             {Environment.OSVersion.Platform}");

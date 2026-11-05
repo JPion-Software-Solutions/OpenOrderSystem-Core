@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenOrderSystem.Core.API.Legacy;
+using OpenOrderSystem.Core.API.V1;
+using OpenOrderSystem.Core.API.V2;
+using OpenOrderSystem.Core.API.V2.System;
 using OpenOrderSystem.Core.Bootstrapper.Interfaces;
 using OpenOrderSystem.Core.Data;
 using OpenOrderSystem.Core.Data.DataModels.V2;
@@ -113,10 +117,13 @@ public class RunOosBootstrap : IBootMode
         _app.UseMiddleware<InitialConfigAuth>();
         _app.UseMiddleware<PrinterBridgeAuth>();
 
-        _app.MapAreaControllerRoute(
-            name: "api",
-            areaName: "API",
-            pattern: "API/{controller}/{action=Index}/{id?}");
+        _app.MapV1ApiRoutes();
+        _app.MapV2ApiRoutes();
+
+        var legacyComponents = Configuration!.GetConfig<string[]>("LEGACY_COMPONENTS");
+        if (legacyComponents != null && legacyComponents.Contains("API/ALL"))
+            _app.MapLegacyApiRoutes();
+        
         _app.MapAreaControllerRoute(
             name: "identity",
             areaName: "Identity",
@@ -129,6 +136,8 @@ public class RunOosBootstrap : IBootMode
         _app.MapControllerRoute(
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}");
+
+        PingUtility.RegisterData("Boot_Mode", _ => PingUtility.Value("Default"));
         
         return _app;
     }
