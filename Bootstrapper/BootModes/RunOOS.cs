@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OpenOrderSystem.Core.API.Legacy;
-using OpenOrderSystem.Core.API.V1;
 using OpenOrderSystem.Core.API.V2;
 using OpenOrderSystem.Core.API.V2.System;
 using OpenOrderSystem.Core.Bootstrapper.Interfaces;
@@ -117,7 +116,6 @@ public class RunOosBootstrap : IBootMode
         _app.UseMiddleware<InitialConfigAuth>();
         _app.UseMiddleware<PrinterBridgeAuth>();
 
-        _app.MapV1ApiRoutes();
         _app.MapV2ApiRoutes();
 
         var legacyComponents = Configuration!.GetConfig<string[]>("LEGACY_COMPONENTS");
