@@ -22,7 +22,10 @@ namespace OpenOrderSystem.Core.Services.__BuilderExtensions;
 /// </summary>
 /// <remarks>
 /// Both need <see cref="DatabaseBuilderExtensions.AddOosDatabaseServices"/>. Ordering also needs
-/// <see cref="ConfigurationBuilderExtensions.AddOosConfigurationServices"/>.
+/// <see cref="ConfigurationBuilderExtensions.AddOosConfigurationServices"/>, and the event bus group
+/// (<see cref="EventBusBuilderExtensions.AddOosEventBusServices"/>): order placement raises
+/// <c>order.placed</c> through <see cref="EventBus.Interfaces.ISystemEventBus"/>. Neither is registered
+/// here; a boot mode using ordering adds them itself.
 /// </remarks>
 public static class OrderingBuilderExtensions
 {

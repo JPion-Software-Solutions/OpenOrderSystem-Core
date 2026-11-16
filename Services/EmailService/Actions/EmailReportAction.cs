@@ -53,7 +53,7 @@ public sealed record EmailReportSettings(string TemplateName, string[] Recipient
         for (var i = 0; i < Recipients.Length; i++)
         {
             if (string.IsNullOrWhiteSpace(Recipients[i]))
-                problems.Add(new("recipients", $"Recipient {i + 1} is blank."));
+                problems.Add(new($"recipients[{i}]", "Must not be blank."));
         }
 
         return problems;

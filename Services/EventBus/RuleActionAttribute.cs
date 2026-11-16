@@ -79,11 +79,31 @@ public sealed class RuleActionAttribute(string key, RuleActionKind kind) : Attri
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Must be a non-abstract class or record, or startup fails. Rule validation deserializes each rule's
-    /// settings for this action into it with <see cref="RuleActionSettings.StrictOptions"/>, and runs
-    /// <see cref="IValidatableSettings.Validate"/> when it implements that, so a rule that would fail at
-    /// runtime fails when it is saved. The handler reads it with
-    /// <see cref="RuleActionSettings.TryReadSettings{TSettings}"/>.
+    /// Must be a non-abstract class or record, or startup fails. Rule validation rejects keys the type
+    /// does not declare, deserializes each rule's settings for this action into it with
+    /// <see cref="RuleActionSettings.SettingsOptions"/>, and runs <see cref="IValidatableSettings.Validate"/>
+    /// when it implements that, so a rule that would fail at runtime fails when it is saved. The handler
+    /// reads it with <see cref="RuleActionSettings.TryReadSettings{TSettings}"/>, which uses the same
+    /// options.
+    /// </para>
+    /// <para>
+    /// At startup, <c>{}</c> is deserialized into the type with
+    /// <see cref="RuleActionSettings.SettingsOptions"/>. Failing only because required properties are
+    /// missing is fine; any other failure, such as a type with more than one public constructor and no
+    /// <c>[JsonConstructor]</c>, or a constructor parameter that matches no property, fails startup. So
+    /// deserializing settings later can only fail for bad input, never for a broken type.
+    /// </para>
+    /// <para>
+    /// That check only covers the top-level type. A broken type nested inside it, such as a list item
+    /// record with two constructors, is only found when a rule's settings reach it; rule validation and
+    /// <see cref="RuleActionSettings.TryReadSettings{TSettings}"/> then report it as a settings error at
+    /// <c>actions[n].settings</c> instead of throwing. Likewise, only top-level keys are checked one by
+    /// one: an unknown key inside a nested object is reported as one error at <c>actions[n].settings</c>,
+    /// not at its own path.
+    /// </para>
+    /// <para>
+    /// The type's constructors must not throw. Checks on the values belong in
+    /// <see cref="IValidatableSettings.Validate"/>, where they are reported as rule errors.
     /// </para>
     /// <para>
     /// When not set, a rule's <c>settings</c> for this action must be omitted or an empty object.

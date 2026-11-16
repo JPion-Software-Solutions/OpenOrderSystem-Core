@@ -669,6 +669,76 @@ namespace OpenOrderSystem.Core.Migrations.V2.Npgsql
                     b.ToTable("Devices");
                 });
 
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.EventBus.EventRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EventKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Flags")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Rules")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RulesVersion")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventKey", "Priority")
+                        .HasDatabaseName("IX_EventRule_EventKey_Priority");
+
+                    b.ToTable("EventRules");
+                });
+
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.EventBus.OutboxEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EventKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LastError")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedAt", "OccurredAt")
+                        .HasDatabaseName("IX_OutboxEvent_ProcessedAt_OccurredAt");
+
+                    b.ToTable("OutboxEvents");
+                });
+
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.Cart", b =>
                 {
                     b.Property<Guid>("Id")

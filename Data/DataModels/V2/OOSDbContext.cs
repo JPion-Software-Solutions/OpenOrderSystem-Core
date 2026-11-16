@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenOrderSystem.Core.Data.DataModels.V2.Catalog;
 using OpenOrderSystem.Core.Data.DataModels.V2.Core;
 using OpenOrderSystem.Core.Data.DataModels.V2.Devices;
+using OpenOrderSystem.Core.Data.DataModels.V2.EventBus;
 using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Data.Interfaces;
 using OpenOrderSystem.Core.Services.Catalog.Interfaces;
@@ -82,6 +83,22 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
     /// Registered devices and integration endpoints in the OOS device registry.
     /// </summary>
     public DbSet<DeviceHead> Devices { get; set; }
+
+    // -----------------------------
+    // Event bus (V2)
+    // -----------------------------
+
+    /// <summary>
+    /// The transactional outbox: system events raised through
+    /// <see cref="Services.EventBus.Interfaces.ISystemEventBus"/>, saved in the same transaction as the
+    /// change that raised them, waiting for or already handled by the dispatcher.
+    /// </summary>
+    public DbSet<OutboxEvent> OutboxEvents { get; set; }
+
+    /// <summary>
+    /// Data-driven rules that decide which actions run when a system event is dispatched.
+    /// </summary>
+    public DbSet<EventRule> EventRules { get; set; }
     
     
     // -----------------------------
@@ -151,6 +168,16 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
             .IsUnique()
             .HasDatabaseName("UIX_DeviceHead_Key");
         
+        // The dispatcher reads unprocessed events (ProcessedAt IS NULL) in OccurredAt order.
+        modelBuilder.Entity<OutboxEvent>()
+            .HasIndex(e => new { e.ProcessedAt, e.OccurredAt })
+            .HasDatabaseName("IX_OutboxEvent_ProcessedAt_OccurredAt");
+
+        // The dispatcher loads the rules for one event key in Priority order.
+        modelBuilder.Entity<EventRule>()
+            .HasIndex(r => new { r.EventKey, r.Priority })
+            .HasDatabaseName("IX_EventRule_EventKey_Priority");
+
         // OrderHeader indexes
         modelBuilder.Entity<OrderHeader>()
             .HasIndex(o => o.StageAdvanceTime)

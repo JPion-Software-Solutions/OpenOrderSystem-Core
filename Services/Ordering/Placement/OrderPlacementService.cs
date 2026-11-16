@@ -6,9 +6,11 @@ using OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 using OpenOrderSystem.Core.Services.Catalog;
 using OpenOrderSystem.Core.Services.Catalog.Interfaces;
 using OpenOrderSystem.Core.Services.Config.Interfaces;
+using OpenOrderSystem.Core.Services.EventBus.Interfaces;
 using OpenOrderSystem.Core.Services.Ordering.CartServices;
 using OpenOrderSystem.Core.Services.Ordering.CartServices.Dto;
 using OpenOrderSystem.Core.Services.Ordering.CartServices.Interfaces;
+using OpenOrderSystem.Core.Services.Ordering.Events;
 using OpenOrderSystem.Core.Services.Ordering.OrderNumbers;
 using OpenOrderSystem.Core.Services.Ordering.OrderNumbers.Interfaces;
 using OpenOrderSystem.Core.Services.Ordering.Placement.Interfaces;
@@ -20,6 +22,10 @@ namespace OpenOrderSystem.Core.Services.Ordering.Placement;
 /// <summary>
 /// Default scoped implementation of <see cref="IOrderPlacementService"/>.
 /// </summary>
+/// <remarks>
+/// Raises <see cref="OrderPlaced"/> through <see cref="ISystemEventBus"/> on the same context that saves
+/// the order, so the order and its event are committed together, or neither is.
+/// </remarks>
 public class OrderPlacementService : IOrderPlacementService
 {
     // Two placements on the same business day can pick the same next number; the unique index on
@@ -33,6 +39,7 @@ public class OrderPlacementService : IOrderPlacementService
     private readonly IConfigurationStore _config;
     private readonly ITimeNormalizationService _time;
     private readonly IDbContextFactory<OosDbContext> _contextFactory;
+    private readonly ISystemEventBus _events;
     private readonly ILogger<OrderPlacementService> _logger;
 
     /// <summary>
@@ -46,6 +53,7 @@ public class OrderPlacementService : IOrderPlacementService
         IConfigurationStore config,
         ITimeNormalizationService time,
         IDbContextFactory<OosDbContext> contextFactory,
+        ISystemEventBus events,
         ILogger<OrderPlacementService> logger)
     {
         _carts = carts;
@@ -55,6 +63,7 @@ public class OrderPlacementService : IOrderPlacementService
         _config = config;
         _time = time;
         _contextFactory = contextFactory;
+        _events = events;
         _logger = logger;
     }
 
@@ -147,6 +156,10 @@ public class OrderPlacementService : IOrderPlacementService
             db.CustomerRecords.Add(customer);
             db.Orders.Add(order);
             db.OrderQueue.Add(queueEntry);
+
+            // Saved with the order. A failed attempt's context, and this event with it, is disposed; the
+            // retry raises again for its new order.
+            _events.Raise(db, OrderPlaced.From(order));
 
             try
             {

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace OpenOrderSystem.Core.Data.DataModels.V2.EventBus;
 
 /// <summary>
@@ -25,11 +27,14 @@ public class EventRule
     public Guid Id { get; set; } = Guid.CreateVersion7();
 
     /// <summary>
-    /// The key of the system event this rule responds to, such as <c>order.submitted</c>.
+    /// The key of the system event this rule responds to, such as <c>order.placed</c>.
     /// </summary>
     /// <remarks>
-    /// Should match one of the event keys defined for the system event bus. Must not be blank.
+    /// Must be the key of an event in the <see cref="Services.EventBus.Interfaces.ISystemEventCatalog"/>, and
+    /// not blank. At most <see cref="OutboxEvent.EventKeyMaxLength"/> characters, like the event keys
+    /// themselves.
     /// </remarks>
+    [MaxLength(OutboxEvent.EventKeyMaxLength)]
     public string EventKey { get; set; } = string.Empty;
 
     /// <summary>

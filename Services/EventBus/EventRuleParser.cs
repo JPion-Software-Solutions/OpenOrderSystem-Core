@@ -21,6 +21,18 @@ namespace OpenOrderSystem.Core.Services.EventBus;
 /// reports every problem it finds and returns whatever parsed cleanly. The <c>Parse</c> overloads wrap
 /// it for callers that just want a complete result or an exception.
 /// </para>
+/// <para>
+/// Settings are read with <see cref="RuleActionSettings.SettingsOptions"/>, the same options handlers use,
+/// so a rule that saves is one its handler can read. Before deserializing an action's settings, every
+/// top-level key is checked, case-insensitively as the options match them: each key that repeats an
+/// earlier one (including one differing only in case, such as <c>TemplateName</c> after
+/// <c>templateName</c>) is reported at its own <c>actions[n].settings.&lt;key&gt;</c>, and every other key
+/// that is not a property of the settings type is reported as unknown at that path. When any key is
+/// repeated or unknown, that action's settings are not deserialized, so the key is not reported a
+/// second time. This means a misspelled required key, such as <c>tempalteName</c> for
+/// <c>templateName</c>, is reported only as unknown, not also as a missing <c>templateName</c>: the typo
+/// explains both.
+/// </para>
 /// </remarks>
 public static class EventRuleParser
 {
@@ -49,10 +61,14 @@ public static class EventRuleParser
     /// <item><c>actions[n].target</c>: a non-blank string; required for device actions and not allowed for service actions.</item>
     /// <item>
     /// <c>actions[n].settings</c>: a JSON object if present. For an action without a
-    /// <see cref="RuleActionDescriptor.SettingsType"/>, absent or empty. Otherwise it must deserialize
-    /// into that type with <see cref="RuleActionSettings.StrictOptions"/>, and any
-    /// <see cref="IValidatableSettings"/> problems are reported at <c>actions[n].settings.&lt;property&gt;</c>
-    /// (or <c>actions[n].settings</c> for a problem with the whole object).
+    /// <see cref="RuleActionDescriptor.SettingsType"/>, absent or empty. Otherwise each top-level key must
+    /// appear once (compared case-insensitively) and be a property of that type; every repeated or unknown
+    /// key is reported at <c>actions[n].settings.&lt;key&gt;</c>. When all keys are known and none repeats,
+    /// the settings must deserialize into the type with
+    /// <see cref="RuleActionSettings.SettingsOptions"/>, and any <see cref="IValidatableSettings"/> problems
+    /// are reported at <c>actions[n].settings.&lt;property&gt;</c>, such as
+    /// <c>actions[n].settings.recipients[2]</c>, or at <c>actions[n].settings</c> for a problem with the
+    /// whole object.
     /// </item>
     /// </list>
     /// </remarks>
@@ -296,7 +312,13 @@ public static class EventRuleParser
             return settings;
         }
 
-        if (!RuleActionSettings.TryDeserialize(settings, descriptor.SettingsType, out var value, out var reason))
+        // Repeated and unknown keys first, each reported on its own. Deserializing would stop at the first,
+        // would quietly keep only the last of a repeated key, and would also report a misspelled required
+        // key as missing; skip it so each problem is reported once.
+        if (ReportBadKeys(settings, settingsPath, descriptor, errors))
+            return settings;
+
+        if (!RuleActionSettings.TryDeserialize(settings, descriptor.SettingsType, RuleActionSettings.SettingsOptions, out var value, out var reason))
         {
             errors.Add(settingsPath, $"Settings for action \"{descriptor.Key}\" are invalid: {reason}");
             return settings;
@@ -311,5 +333,50 @@ public static class EventRuleParser
         }
 
         return settings;
+    }
+
+    /// <summary>
+    /// Reports each top-level key of <paramref name="settings"/> that repeats an earlier key, then each
+    /// other key that is not a property of the action's settings type. Keys are compared
+    /// case-insensitively, as <see cref="RuleActionSettings.SettingsOptions"/> matches them. Returns whether
+    /// any was reported.
+    /// </summary>
+    /// <remarks>
+    /// A repeated key is reported at its own spelling, once per extra occurrence, the same way
+    /// <see cref="RuleJson.CheckKeys"/> reports repeated keys elsewhere in a rule. It is not also reported
+    /// as unknown.
+    /// </remarks>
+    private static bool ReportBadKeys(JsonElement settings, string settingsPath, RuleActionDescriptor descriptor, RuleErrorList errors)
+    {
+        var properties = RuleActionSettings.SettingsOptions.GetTypeInfo(descriptor.SettingsType!).Properties;
+        var known = new HashSet<string>(properties.Select(p => p.Name), StringComparer.OrdinalIgnoreCase);
+        var seen = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var any = false;
+        foreach (var property in settings.EnumerateObject())
+        {
+            var keyPath = RulePath.Property(settingsPath, property.Name);
+
+            if (!seen.TryAdd(property.Name, property.Name))
+            {
+                var first = seen[property.Name];
+                errors.Add(keyPath, string.Equals(first, property.Name, StringComparison.Ordinal)
+                    ? $"The key \"{property.Name}\" appears more than once."
+                    : $"The key \"{property.Name}\" appears more than once: settings keys are not case-sensitive, so it repeats \"{first}\".");
+                any = true;
+                continue;
+            }
+
+            if (known.Contains(property.Name)) continue;
+
+            var expected = known.Count == 0
+                ? "it takes no settings"
+                : $"known settings are {string.Join(", ", properties.Select(p => $"\"{p.Name}\""))}";
+            errors.Add(keyPath,
+                $"Unknown setting \"{property.Name}\" for action \"{descriptor.Key}\": {expected}.");
+            any = true;
+        }
+
+        return any;
     }
 }

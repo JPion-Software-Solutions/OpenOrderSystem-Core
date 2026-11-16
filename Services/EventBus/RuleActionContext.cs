@@ -41,7 +41,7 @@ public sealed record RuleActionContext
     public required Guid EventId { get; init; }
 
     /// <summary>
-    /// The key of the triggering event, such as <c>order.submitted</c>.
+    /// The key of the triggering event, such as <c>order.placed</c>.
     /// </summary>
     public required string EventKey { get; init; }
 

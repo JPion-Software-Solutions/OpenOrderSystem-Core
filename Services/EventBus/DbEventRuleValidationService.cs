@@ -14,7 +14,10 @@ namespace OpenOrderSystem.Core.Services.EventBus;
 /// Builds one error list from, in order:
 /// </para>
 /// <list type="number">
-/// <item><c>eventKey</c>: <see cref="EventRule.EventKey"/> must not be blank.</item>
+/// <item>
+/// <c>eventKey</c>: <see cref="EventRule.EventKey"/> must not be blank, and must be the key of an event in
+/// the <see cref="ISystemEventCatalog"/>. A blank key is only reported as blank.
+/// </item>
 /// <item><c>flags</c>: <see cref="EventRule.Flags"/> must have a defined flow mode.</item>
 /// <item>
 /// Everything <see cref="EventRuleParser.TryParse(IRuleActionCatalog, EventRule, RuleErrorList)"/>
@@ -27,10 +30,11 @@ namespace OpenOrderSystem.Core.Services.EventBus;
 /// </item>
 /// </list>
 /// </remarks>
-public sealed class DbEventRuleValidationService(IRuleActionCatalog catalog, OosDbContext db)
+public sealed class DbEventRuleValidationService(IRuleActionCatalog catalog, ISystemEventCatalog events, OosDbContext db)
     : IEventRuleValidationService
 {
     private readonly IRuleActionCatalog _catalog = catalog;
+    private readonly ISystemEventCatalog _events = events;
     private readonly OosDbContext _db = db;
 
     /// <inheritdoc />
@@ -42,6 +46,8 @@ public sealed class DbEventRuleValidationService(IRuleActionCatalog catalog, Oos
 
         if (string.IsNullOrWhiteSpace(rule.EventKey))
             errors.Add("eventKey", "Must not be blank.");
+        else if (!_events.TryGet(rule.EventKey, out _))
+            errors.Add("eventKey", $"Unknown event \"{rule.EventKey}\".");
 
         if (!rule.Flags.HasValidFlowMode())
             errors.Add("flags", $"Flow mode {(int)rule.Flags.FlowMode()} is not defined. Use {nameof(EventRuleFlags.Continue)} (0), {nameof(EventRuleFlags.StopAfterPriority)} (1) or {nameof(EventRuleFlags.StopAfterRule)} (2).");

@@ -9,7 +9,7 @@ namespace OpenOrderSystem.Core.Services.EmailService.Actions;
 /// </summary>
 /// <remarks>
 /// Runs entirely on the server and never uses the device job queue. Typically triggered by an order
-/// event such as <c>order.submitted</c>. The rule only chooses the template; the order data and the
+/// event such as <c>order.placed</c>. The rule only chooses the template; the order data and the
 /// customer's email address come from the event.
 /// </remarks>
 [RuleAction("email.order", RuleActionKind.Service,

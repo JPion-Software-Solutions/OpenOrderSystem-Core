@@ -14,6 +14,11 @@ namespace OpenOrderSystem.Core.Services.EventBus.Interfaces;
 /// Only check the settings themselves. Never look anything up or depend on the event; this runs when no
 /// event exists yet.
 /// </para>
+/// <para>
+/// Put every check here, never in a constructor. Settings constructors must not throw: an exception there
+/// is not a rule error but a broken settings type, and can fail startup (see
+/// <see cref="RuleActionAttribute.SettingsType"/>).
+/// </para>
 /// </remarks>
 public interface IValidatableSettings
 {
@@ -28,8 +33,11 @@ public interface IValidatableSettings
 /// One problem with an action's settings, returned by <see cref="IValidatableSettings.Validate"/>.
 /// </summary>
 /// <param name="Property">
-/// The JSON property name the problem is with, in camelCase as written in the rule, such as
-/// <c>templateName</c>. <see langword="null"/> for a problem with the settings as a whole.
+/// Where the problem is: a camelCase property name as written in the rule, such as <c>templateName</c>,
+/// optionally followed by a zero-based <c>[index]</c> for one item of a list, such as
+/// <c>recipients[2]</c>, matching the other rule paths (<c>actions[n]</c>, <c>value[i]</c>).
+/// <see langword="null"/> for a problem with the settings as a whole. Rule validation reports it at
+/// <c>actions[n].settings.&lt;property&gt;</c>, so the message does not need to repeat the index.
 /// </param>
 /// <param name="Message">What is wrong, written for the person editing the rule.</param>
 public sealed record SettingsProblem(string? Property, string Message)
