@@ -64,21 +64,7 @@
 
   <ItemGroup>
     <Folder Include="API\V2\Orders\" />
-    <Folder Include="Areas/InitialSetup/" />
-    <Folder Include="Areas/InitialSetup/Controllers/" />
-    <Folder Include="Areas/InitialSetup/Views/" />
-    <Folder Include="Areas\Configuration\Data\" />
-    <Folder Include="Areas\Staff\Data\" />
-    <Folder Include="Bootstrapper/BootModes/" />
-    <Folder Include="Bootstrapper/UI/" />
-    <Folder Include="Data/Interfaces/" />
-    <Folder Include="DevelopmentTools/" />
-    <Folder Include="Extensions\Core\" />
-    <Folder Include="Services\UI\Theme\Icons\BuiltinPacks\" />
     <Folder Include="Store\DevPacks\" />
-    <Folder Include="Utilities/" />
-    <Folder Include="wwwroot\media\temp\" />
-    <Folder Include="wwwroot\NewFolder\" />
   </ItemGroup>
 
   <ItemGroup>
