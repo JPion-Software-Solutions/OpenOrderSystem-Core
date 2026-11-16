@@ -26,8 +26,10 @@ Turns a cart into a queued order. The only writer of new `OrderHeader`, `OrderLi
 7. **Order number:** next number for today's business day (see [OrderNumbers](../OrderNumbers/README.md)).
    Past 999 → `DailyLimitReached`.
 8. **Save in one transaction:** `CustomerRecord`, `OrderHeader` (`IsQueued`, no current stage,
-   `AssignedTimeSlot` = held slot), one `OrderLine` per cart line, and an `OrderQueue` entry
-   (`ScheduledFor` = slot, `EntryStageId`).
+   `AssignedTimeSlot` = held slot), one `OrderLine` per cart line, an `OrderQueue` entry
+   (`ScheduledFor` = slot, `EntryStageId`), and an `order.placed` outbox row raised through
+   `ISystemEventBus` on the same context. If a retry happens because two orders grabbed the same
+   number, the next attempt raises the event again on its own context.
 9. **Finish:** complete the hold, store the confirmation number on the cart, dispose the cart.
 
 Any failure from step 5 on unclaims the hold, so the customer keeps their slot and can retry. Nothing is written
