@@ -951,6 +951,9 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.Property<int>("Flags")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("HeaderId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("IsProtected")
                         .HasColumnType("bit");
 
@@ -967,7 +970,12 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                     b.Property<Guid?>("PreviousStageId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ShadowAnchorStageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("HeaderId");
 
                     b.HasIndex("NextStageId")
                         .IsUnique()
@@ -977,7 +985,36 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                         .IsUnique()
                         .HasFilter("[PreviousStageId] IS NOT NULL");
 
+                    b.HasIndex("ShadowAnchorStageId");
+
                     b.ToTable("OrderStages");
+                });
+
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStageHeader", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsProtected")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ShadowOfHeaderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShadowOfHeaderId");
+
+                    b.ToTable("OrderStageHeaders");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1279,6 +1316,12 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
 
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", b =>
                 {
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStageHeader", "Header")
+                        .WithMany("Stages")
+                        .HasForeignKey("HeaderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", "NextStage")
                         .WithOne()
                         .HasForeignKey("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", "NextStageId")
@@ -1289,9 +1332,27 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
                         .HasForeignKey("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", "PreviousStageId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStage", "ShadowAnchorStage")
+                        .WithMany()
+                        .HasForeignKey("ShadowAnchorStageId");
+
+                    b.Navigation("Header");
+
                     b.Navigation("NextStage");
 
                     b.Navigation("PreviousStage");
+
+                    b.Navigation("ShadowAnchorStage");
+                });
+
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStageHeader", b =>
+                {
+                    b.HasOne("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStageHeader", "ShadowOf")
+                        .WithMany("Shadows")
+                        .HasForeignKey("ShadowOfHeaderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ShadowOf");
                 });
 
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Catalog.MediaGroup", b =>
@@ -1339,6 +1400,13 @@ namespace OpenOrderSystem.Core.Migrations.V2.SqlServer
             modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderHeader", b =>
                 {
                     b.Navigation("LineItems");
+                });
+
+            modelBuilder.Entity("OpenOrderSystem.Core.Data.DataModels.V2.Ordering.OrderStageHeader", b =>
+                {
+                    b.Navigation("Shadows");
+
+                    b.Navigation("Stages");
                 });
 #pragma warning restore 612, 618
         }

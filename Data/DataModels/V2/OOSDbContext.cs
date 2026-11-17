@@ -106,7 +106,12 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
     // -----------------------------
     
     /// <summary>
-    /// The configured stages that define the order fulfillment workflow.
+    /// Stage chains: each main chain is an order fulfillment workflow, each shadow chain a view of one.
+    /// </summary>
+    public DbSet<OrderStageHeader> OrderStageHeaders { get; set; }
+
+    /// <summary>
+    /// The configured stages that make up the stage chains.
     /// </summary>
     public DbSet<OrderStage> OrderStages { get; set; }
 
@@ -246,5 +251,26 @@ public class OosDbContext : IdentityDbContext, IConfigurationStoreContext, ICata
             .WithOne()
             .HasForeignKey<OrderStage>(s => s.PreviousStageId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // A chain can't be deleted while it still has stages or shadow chains.
+        modelBuilder.Entity<OrderStage>()
+            .HasOne(s => s.Header)
+            .WithMany(h => h.Stages)
+            .HasForeignKey(s => s.HeaderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OrderStageHeader>()
+            .HasOne(h => h.ShadowOf)
+            .WithMany(h => h.Shadows)
+            .HasForeignKey(h => h.ShadowOfHeaderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Deleting an anchor stage clears the shadow stages' anchors. Client-side only: SQL Server rejects
+        // SET NULL on a self-referencing FK, so the shadow stages must be loaded in the deleting context.
+        modelBuilder.Entity<OrderStage>()
+            .HasOne(s => s.ShadowAnchorStage)
+            .WithMany()
+            .HasForeignKey(s => s.ShadowAnchorStageId)
+            .OnDelete(DeleteBehavior.ClientSetNull);
     }
 }

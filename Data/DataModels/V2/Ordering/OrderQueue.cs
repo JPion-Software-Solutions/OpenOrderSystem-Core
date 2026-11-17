@@ -49,7 +49,8 @@ public class OrderQueue
 
     /// <summary>
     /// The stage the order enters when promoted. Chosen by the caller at placement because an instance
-    /// may run several flows, each with its own initial stage.
+    /// may run several main chains (see <see cref="OrderStageHeader"/>), each with its own initial stage.
+    /// Always a main-chain stage.
     /// </summary>
     public Guid EntryStageId { get; set; }
 

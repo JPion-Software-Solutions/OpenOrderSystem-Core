@@ -120,7 +120,8 @@ public class OrderPlacementService : IOrderPlacementService
     {
         await using (var db = await _contextFactory.CreateDbContextAsync())
         {
-            if (!await db.OrderStages.AnyAsync(s => s.Id == entryStageId))
+            // Orders only ever sit on main-chain stages; a shadow stage is treated as not found.
+            if (!await db.OrderStages.AnyAsync(s => s.Id == entryStageId && s.Header!.ShadowOfHeaderId == null))
                 return Fail(OrderPlacementStatus.StageNotFound, "Ordering isn't set up correctly. Please contact the store.");
         }
 

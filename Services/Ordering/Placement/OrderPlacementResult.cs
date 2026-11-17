@@ -39,7 +39,7 @@ public enum OrderPlacementStatus
     /// <summary>The cart has no valid slot hold (never held, expired, or another submission is using it).</summary>
     SlotUnavailable,
 
-    /// <summary>The entry stage doesn't exist.</summary>
+    /// <summary>The entry stage doesn't exist, or belongs to a shadow chain.</summary>
     StageNotFound,
 
     /// <summary>A product in the cart has no snapshot (shouldn't happen; the catalog writes one on create).</summary>

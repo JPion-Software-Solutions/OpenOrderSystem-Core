@@ -138,6 +138,22 @@ public class OrderStageService : IOrderStageService
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<OrderStageChainView?> GetChainViewAsync(Guid headerId)
+    {
+        await using var db = await _contextFactory.CreateDbContextAsync();
+        var header = await db.OrderStageHeaders.AsNoTracking().FirstOrDefaultAsync(h => h.Id == headerId);
+        if (header is null)
+            return null;
+
+        var stages = await db.OrderStages.AsNoTracking().Where(s => s.HeaderId == headerId).ToListAsync();
+        var mainStages = header.ShadowOfHeaderId is { } mainId
+            ? await db.OrderStages.AsNoTracking().Where(s => s.HeaderId == mainId).ToListAsync()
+            : [];
+
+        return OrderStageChainView.Build(header, stages, mainStages);
+    }
+
     private static void Promote(OosDbContext db, OrderQueue entry, DateTimeOffset now)
     {
         var order = entry.OrderHeader!;

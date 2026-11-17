@@ -20,7 +20,7 @@ public interface IOrderPlacementService
     /// including archived products, so archiving a product mid-session doesn't block checkout.</para>
     /// </remarks>
     /// <param name="cartId">The cart to submit.</param>
-    /// <param name="entryStageId">The stage the order enters when promoted from the queue.</param>
+    /// <param name="entryStageId">The stage the order enters when promoted from the queue. Must be a main-chain stage.</param>
     /// <param name="orderOrigin">The ordering channel, set by the API layer (e.g. from the API key; <c>"legacy"</c> for the legacy shim).</param>
     Task<OrderPlacementResult> PlaceOrderAsync(Guid cartId, Guid entryStageId, string orderOrigin);
 }

@@ -7,9 +7,18 @@ namespace OpenOrderSystem.Core.Data.DataModels.V2.Ordering;
 /// Represents a single stage in an order's progression through the fulfillment workflow.
 /// </summary>
 /// <remarks>
-/// Stages are organized as a doubly-linked list, where each stage references its
-/// predecessor and successor. The chain is anchored by <see cref="OrderStageFlags.IsInitial"/>
-/// and <see cref="OrderStageFlags.IsTerminal"/> flags on the respective endpoint stages.
+/// <para>
+/// Stages are organized as doubly-linked lists, where each stage references its predecessor and
+/// successor within its own chain (<see cref="Header"/>). Each chain is anchored by
+/// <see cref="OrderStageFlags.IsInitial"/> and <see cref="OrderStageFlags.IsTerminal"/> flags on its
+/// endpoint stages. Previous/next links never cross chains.
+/// </para>
+/// <para>
+/// A stage in a shadow chain (see <see cref="OrderStageHeader"/>) sets <see cref="ShadowAnchorStageId"/> and
+/// covers the main-chain stages from its anchor up to, but not including, the next anchor met walking the
+/// main chain. Orders never sit on a shadow stage, and shadow stages ignore order-scoped flags and
+/// <see cref="AutoCompleteTime"/>.
+/// </para>
 /// </remarks>
 public class OrderStage
 {
@@ -20,6 +29,16 @@ public class OrderStage
     /// The unique identifier for this stage.
     /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    /// <summary>
+    /// The chain this stage belongs to.
+    /// </summary>
+    public Guid HeaderId { get; set; }
+
+    /// <summary>
+    /// Navigation property for <see cref="HeaderId"/>.
+    /// </summary>
+    public OrderStageHeader? Header { get; set; } = null;
 
     /// <summary>
     /// The display name of this stage (e.g., "In Progress", "Ready for Pickup").
@@ -52,8 +71,25 @@ public class OrderStage
     public OrderStage? NextStage { get; set; } = null;
 
     /// <summary>
+    /// Shadow-chain stages only: the main-chain stage where this stage's coverage begins. This stage covers
+    /// the anchor and every following main-chain stage up to the next anchor. <see langword="null"/> on
+    /// main-chain stages; on a shadow stage it means the stage covers nothing.
+    /// </summary>
+    /// <remarks>
+    /// Deleting the anchor stage clears this link (client-side set null: the shadow stages must be loaded
+    /// in the deleting context).
+    /// </remarks>
+    public Guid? ShadowAnchorStageId { get; set; } = null;
+
+    /// <summary>
+    /// Navigation property for <see cref="ShadowAnchorStageId"/>.
+    /// </summary>
+    public OrderStage? ShadowAnchorStage { get; set; } = null;
+
+    /// <summary>
     /// The duration in minutes after which an order in this stage is automatically advanced
     /// to the next stage, or <see langword="null"/> to require manual progression.
+    /// Ignored on shadow-chain stages.
     /// </summary>
     public decimal? AutoCompleteTime { get; set; } = null;
 
@@ -166,6 +202,18 @@ public class OrderStage
 /// Behavioral flags for an <see cref="OrderStage"/>, controlling workflow position,
 /// order mutability, system integrations, and visibility to customers and staff.
 /// </summary>
+/// <remarks>
+/// Every flag has one scope, given in its documentation and collected by the masks in
+/// <see cref="OrderStageFlagsExtensions"/>:
+/// <list type="bullet">
+/// <item><b>Structural</b>: describes the chain itself. Applies to main and shadow chains.</item>
+/// <item><b>Order-scoped</b>: acts on an individual order as it enters or leaves the stage. Applies only
+/// to main-chain stages; ignored on shadow-chain stages, since orders never sit on them.</item>
+/// <item><b>View-scoped</b>: acts on a stage-level view (staff order terminal, customer status board,
+/// etc.) showing the stage's chain. Applies to main and shadow chains.</item>
+/// </list>
+/// A new flag must pick a scope and be added to the matching mask.
+/// </remarks>
 [Flags]
 public enum OrderStageFlags
 {
@@ -175,56 +223,79 @@ public enum OrderStageFlags
     None = 0,
 
     /// <summary>
-    /// Marks this as the first stage in the workflow chain. Orders enter the pipeline at this stage.
+    /// Structural. Marks this as the first stage in its chain. Orders enter a main chain at this stage.
     /// </summary>
     IsInitial = 1 << 0,
 
     /// <summary>
-    /// Marks this as the last stage in the workflow chain. Orders reaching this stage are considered complete.
+    /// Structural. Marks this as the last stage in its chain. Orders reaching this stage of a main chain
+    /// are considered complete.
     /// </summary>
     IsTerminal = 1 << 1,
 
     /// <summary>
-    /// Prevents further modification or cancellation of an order once it reaches this stage.
+    /// Order-scoped. Prevents further modification or cancellation of an order once it reaches this stage.
     /// </summary>
     IsOrderLocked = 1 << 2,
 
     /// <summary>
-    /// Triggers an order ticket to be sent to the configured printer when an order enters this stage.
+    /// Order-scoped. Triggers an order ticket to be sent to the configured printer when an order enters this stage.
     /// </summary>
     PrintsOrderTicket = 1 << 3,
 
     /// <summary>
-    /// Triggers an audible alert on the configured output device when an order enters this stage.
+    /// View-scoped. Plays an audible cue on any view showing this stage's chain when an order appears in
+    /// this stage.
     /// </summary>
-    PlaysAudibleSound = 1 << 4,
+    PlaysAudibleSound = 1 << 4,  
+    
+    /// <summary>
+    /// View-scoped. Orders in this stage aren't shown by default. A view that can reveal them on request
+    /// (e.g. an expandable section on a staff terminal) may do so; a view that can't (e.g. a customer pickup
+    /// board) doesn't show them.
+    /// </summary>
+    IsCollapsed = 1 << 7,
 
     /// <summary>
-    /// Sends a customer notification when an order enters this stage.
+    /// Order-scoped. Sends a customer notification when an order enters this stage.
     /// </summary>
     NotifiesCustomerOnStart = 1 << 5,
 
     /// <summary>
-    /// Sends a customer notification when an order leaves this stage.
+    /// Order-scoped. Sends a customer notification when an order leaves this stage.
     /// </summary>
     NotifiesCustomerOnFinish = 1 << 6,
+}
+
+/// <summary>
+/// Scope masks for <see cref="OrderStageFlags"/>. Consumers filter with these instead of keeping their own
+/// lists of flags.
+/// </summary>
+public static class OrderStageFlagsExtensions
+{
+    /// <summary>
+    /// Flags that describe the chain itself. Apply to main and shadow chains.
+    /// </summary>
+    public const OrderStageFlags StructuralMask = OrderStageFlags.IsInitial | OrderStageFlags.IsTerminal;
 
     /// <summary>
-    /// Hides this stage from customer-facing views. When set, the stage collapses to the nearest
-    /// previous visible stage by default, or the next visible stage if <see cref="CollapseUp"/> is also set.
+    /// Flags that act on an individual order. Apply only to main-chain stages.
     /// </summary>
-    IsHiddenFromCustomers = 1 << 7,
+    public const OrderStageFlags OrderScopedMask = OrderStageFlags.IsOrderLocked
+                                                 | OrderStageFlags.PrintsOrderTicket
+                                                 | OrderStageFlags.NotifiesCustomerOnStart
+                                                 | OrderStageFlags.NotifiesCustomerOnFinish;
 
     /// <summary>
-    /// Hides this stage from staff-facing views. When set, the stage collapses to the nearest
-    /// previous visible stage by default, or the next visible stage if <see cref="CollapseUp"/> is also set.
+    /// Flags that act on a stage-level view showing the stage's chain. Apply to main and shadow chains.
     /// </summary>
-    IsHiddenFromStaff = 1 << 8,
+    public const OrderStageFlags ViewScopedMask = OrderStageFlags.PlaysAudibleSound | OrderStageFlags.IsCollapsed;
 
     /// <summary>
-    /// Modifies the collapse direction for hidden stages. When combined with <see cref="IsHiddenFromCustomers"/>
-    /// or <see cref="IsHiddenFromStaff"/>, the stage is represented by the next visible stage rather than
-    /// the previous one. Has no effect if neither hidden flag is set.
+    /// Returns the flags that are in effect for a stage, dropping order-scoped flags on a shadow-chain stage.
     /// </summary>
-    CollapseUp = 1 << 9,
+    /// <param name="flags">The stage's flags.</param>
+    /// <param name="isShadowStage"><see langword="true"/> when the stage belongs to a shadow chain.</param>
+    public static OrderStageFlags Effective(this OrderStageFlags flags, bool isShadowStage)
+        => isShadowStage ? flags & ~OrderScopedMask : flags;
 }
