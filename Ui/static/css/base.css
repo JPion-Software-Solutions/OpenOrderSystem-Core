@@ -1,0 +1,23 @@
+#dev_warning {
+    position: fixed;
+    pointer-events: none;
+    bottom: .25rem;
+    right: .25rem;
+    opacity: .75;
+    background-color: orangered;
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    z-index: 999999;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body html {
+    min-height: 100dvh;
+    min-width: 100dvw;
+}

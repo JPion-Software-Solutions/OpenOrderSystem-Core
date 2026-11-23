@@ -19,18 +19,9 @@ public class OpenOrderSystemApplication
     {
         _bootModes.Clear();
 
-        var bootModeType = typeof(IBootMode);
-
-        var candidates = Assembly.GetExecutingAssembly()
-            .GetTypes()
-            .Where(t =>
-                t is { IsClass: true, IsAbstract: false } &&
-                bootModeType.IsAssignableFrom(t));
-
-        foreach (var type in candidates)
+        foreach (var type in FindBootModeTypes())
         {
-            var key = ToSnakeCase(type.Name)
-                .Replace("_bootstrap", "", StringComparison.OrdinalIgnoreCase);
+            var key = GetBootModeKey(type);
 
             if (_bootModes.ContainsKey(key))
                 throw new InvalidOperationException(
@@ -90,6 +81,24 @@ public class OpenOrderSystemApplication
 
         return (IBootMode)instance;
     }
+
+    /// <summary>
+    /// Every boot mode class in the app: non-abstract classes implementing <see cref="IBootMode"/>.
+    /// </summary>
+    public static IEnumerable<Type> FindBootModeTypes() =>
+        Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t =>
+                t is { IsClass: true, IsAbstract: false } &&
+                typeof(IBootMode).IsAssignableFrom(t));
+
+    /// <summary>
+    /// The key a boot mode is selected by: its class name in snake case without the <c>_bootstrap</c>
+    /// suffix (<c>RunOosBootstrap</c> → <c>run_oos</c>).
+    /// </summary>
+    public static string GetBootModeKey(Type bootModeType) =>
+        ToSnakeCase(bootModeType.Name)
+            .Replace("_bootstrap", "", StringComparison.OrdinalIgnoreCase);
 
     private static string ToSnakeCase(string name)
     {

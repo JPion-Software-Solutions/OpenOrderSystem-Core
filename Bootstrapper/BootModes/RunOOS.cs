@@ -31,6 +31,7 @@ using OpenOrderSystem.Core.Services.UI.Nav.Admin;
 using OpenOrderSystem.Core.Services.UI.Nav.Admin.Interface;
 using OpenOrderSystem.Core.Services.UI.Theme.Icons.BuiltinPacks;
 using OpenOrderSystem.Core.Services.UI.Theme.Icons.Interface;
+using OpenOrderSystem.Core.Ui;
 using OpenOrderSystem.Core.Utilities;
 using Quartz;
 using Serilog;
@@ -100,15 +101,16 @@ public class RunOosBootstrap : IBootMode
         }
         else
         {
-            _app.UseExceptionHandler("/Home/Error");
+            _app.UseExceptionHandler("/oos/Error");
             // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             _app.UseHsts();
         }
 
         _app.UseHttpsRedirection();
         _app.UseStaticFiles(OpenOrderSystemApplication.UserStaticFiles);
+        _app.UseOosUiStaticFiles();
         _app.UseStaticFiles();
-
+        
         _app.UseRouting();
 
         _app.UseAuthorization();
@@ -117,23 +119,26 @@ public class RunOosBootstrap : IBootMode
         _app.UseMiddleware<PrinterBridgeAuth>();
 
         _app.MapV2ApiRoutes();
+        _app.MapOosUiRoutes(this);
 
         var legacyComponents = Configuration!.GetConfig<string[]>("LEGACY_COMPONENTS");
         if (legacyComponents != null && legacyComponents.Contains("API/ALL"))
             _app.MapLegacyApiRoutes();
         
-        _app.MapAreaControllerRoute(
-            name: "identity",
-            areaName: "Identity",
-            pattern: "Identity/{controller}/{action=Index}/{id?}");
-        _app.MapAreaControllerRoute(
-            name: "staff",
-            areaName: "Staff",
-            pattern: "Staff/{controller}/{action=Index}/{id?}");
-
-        _app.MapControllerRoute(
-            name: "default",
-            pattern: "{controller=Home}/{action=Index}/{id?}");
+        
+        
+        // _app.MapAreaControllerRoute(
+        //     name: "identity",
+        //     areaName: "Identity",
+        //     pattern: "Identity/{controller}/{action=Index}/{id?}");
+        // _app.MapAreaControllerRoute(
+        //     name: "staff",
+        //     areaName: "Staff",
+        //     pattern: "Staff/{controller}/{action=Index}/{id?}");
+        //
+        // _app.MapControllerRoute(
+        //     name: "default",
+        //     pattern: "{controller=Home}/{action=Index}/{id?}");
 
         PingUtility.RegisterData("Boot_Mode", _ => PingUtility.Value("Default"));
         
@@ -232,7 +237,7 @@ public class RunOosBootstrap : IBootMode
         });
 
         _bob.Services.AddQuartzHostedService();
-        _bob.Services.AddControllersWithViews();
+        _bob.AddOosUi(this);
 
         _bob.Services.AddCors(options =>
         {

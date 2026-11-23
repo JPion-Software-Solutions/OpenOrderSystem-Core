@@ -23,6 +23,19 @@
     <None Remove="wwwroot\lib\mdbootstrap\**" />
   </ItemGroup>
 
+  <!-- Ui/static is the source of the app's static files (the old wwwroot). Its contents are copied to
+       <output>/static on build and publish, keeping the folder structure. TargetPath (not Link) sets the
+       output location, so IDEs still show the files under Ui/static. -->
+  <ItemGroup>
+    <None Remove="Ui\static\**" />
+    <Content Remove="Ui\static\**" />
+    <Content Include="Ui\static\**"
+             TargetPath="static\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest"
+             ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Remove="config\siteSettings.json" />
     <Content Remove="wwwroot\js\ActiveTimer_0.0.6.js" />
@@ -64,15 +77,13 @@
 
   <ItemGroup>
     <Folder Include="API\V2\Orders\" />
-    <Folder Include="Areas\V2\" />
     <Folder Include="Store\DevPacks\" />
+    <Folder Include="Ui\Staff\Admin\" />
+    <Folder Include="Ui\Staff\Terminal\Orders\" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="bin\Release\net8.0\OgDbData.sql" />
-    <None Include="config\siteSettings.json" />
-    <None Include="wwwroot\js\ActiveTimer_0.0.6.js" />
-    <None Include="wwwroot\js\Notifications_1.1.0.js" />
   </ItemGroup>
 
   <ItemGroup>
