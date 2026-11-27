@@ -23,7 +23,7 @@ public static class PingUtility
         {
             "Store_Name",
             async services => services.GetService<IConfigurationStore>() is { } store
-                ? await store.GetConfigurationAsync("StoreName", "unknown")
+                ? await store.GetConfigurationAsync("site:store_name", "unknown")
                 : "unknown"
         },
         {
