@@ -20,6 +20,8 @@ using OpenOrderSystem.Core.Quartz.AutomatedTasks;
 using OpenOrderSystem.Core.Services.__BuilderExtensions;
 using OpenOrderSystem.Core.Services.Config;
 using OpenOrderSystem.Core.Services.Config.Interfaces;
+using OpenOrderSystem.Core.Services.Devices.JobQueue;
+using OpenOrderSystem.Core.Services.Devices.JobQueue.Interfaces;
 using OpenOrderSystem.Core.Services.Legacy;
 using OpenOrderSystem.Core.Services.Sms;
 using OpenOrderSystem.Core.Services.Sms.Interfaces;
@@ -190,10 +192,14 @@ public class RunOosBootstrap : IBootMode
         _bob.Services.AddSingleton<PrintSpoolerService>();
         _bob.Services.AddSingleton<IIconProvider, DefaultIconPack>();
         _bob.Services.AddSingleton<IAdminNavService, AdminNavService>();
+        _bob.Services.AddSingleton<IDeviceJobQueue, NoOpDeviceJobQueue>();
         
         _bob.AddOosDatabaseServices(Configuration);
         _bob.AddOosConfigurationServices(_keyringBuildResult!); //null state ignored because preflight would have
                                                                 //thrown and dropped to recovery mode.
+        _bob.AddOosDeviceServices();
+        _bob.AddOosEventBusServices();
+        _bob.AddOosOrderingServices();
 
         _bob.Services.AddHttpClient();
         _bob.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
