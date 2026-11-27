@@ -116,7 +116,7 @@ internal static class AttributedTypeScanner
     /// The loaded assemblies that can declare implementations of a type in <paramref name="core"/>: that
     /// assembly, and any that reference it.
     /// </summary>
-    private static IEnumerable<Assembly> CandidateAssemblies(Assembly core)
+    internal static IEnumerable<Assembly> CandidateAssemblies(Assembly core)
     {
         var coreName = core.GetName().Name;
 

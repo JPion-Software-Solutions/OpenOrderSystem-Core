@@ -27,6 +27,7 @@ using OpenOrderSystem.Core.Services.EmailService;
 using OpenOrderSystem.Core.Services.EmailService.Interfaces;
 using OpenOrderSystem.Core.Services.Keyring;
 using OpenOrderSystem.Core.Services.Keyring.Interfaces;
+using OpenOrderSystem.Core.Services.QuartzScheduler.Jobs;
 using OpenOrderSystem.Core.Services.UI.Nav.Admin;
 using OpenOrderSystem.Core.Services.UI.Nav.Admin.Interface;
 using OpenOrderSystem.Core.Services.UI.Theme.Icons.BuiltinPacks;
@@ -205,35 +206,27 @@ public class RunOosBootstrap : IBootMode
         .AddEntityFrameworkStores<OosDbContext>()
         .AddDefaultTokenProviders();
 
+        PostBootTaskRunnerJob.QueueTask(new PostBootTask
+        {
+            Name = "Build Schedule",
+            Callback = PostBootTaskRunnerJob.InitializeQuartzTaskSchedule
+        });
+        
         _bob.Services.AddQuartz(q =>
         {
-            var dailyKey = new JobKey(nameof(DailyCleanup));
-            var customerKey = new JobKey(nameof(CustomerCleanup));
-            var endOfDayKey = new JobKey(nameof(DailyReportPrint));
-
-            var timezone = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
-
-            q.AddJob<DailyCleanup>(opts => opts.WithIdentity(dailyKey));
-            q.AddJob<CustomerCleanup>(opts => opts.WithIdentity(customerKey));
-            q.AddJob<DailyReportPrint>(opts => opts.WithIdentity(endOfDayKey));
-
-            q.AddTrigger(opts => opts
-                .ForJob(customerKey)
-                .WithIdentity($"{nameof(CustomerCleanup)}-trigger")
-                .WithDailyTimeIntervalSchedule(6, IntervalUnit.Hour)
-            );
-
-            q.AddTrigger(opts => opts
-                .ForJob(dailyKey)
-                .WithIdentity($"{nameof(DailyCleanup)}-trigger")
-                .WithCronSchedule("0 59 23 * * ?", x => x.InTimeZone(timezone))
-            );
-
-            q.AddTrigger(opts => opts
-                .ForJob(endOfDayKey)
-                .WithIdentity($"{nameof(DailyReportPrint)}-trigger")
-                .WithCronSchedule("0 0 21 * * ?", x => x.InTimeZone(timezone))
-            );
+            q.AddJob<PostBootTaskRunnerJob>(j =>
+                {
+                    j.WithIdentity(PostBootTaskRunnerJob.Key);
+                })
+                .AddTrigger(t => t
+                    .ForJob(PostBootTaskRunnerJob.Key)    
+                    .WithIdentity($"{nameof(PostBootTaskRunnerJob)}-trigger", PostBootTaskRunnerJob.Group)
+                    .StartNow()
+                    .WithSimpleSchedule(x => x
+                        .WithInterval(TimeSpan.FromSeconds(30))
+                        .RepeatForever()
+                        .WithMisfireHandlingInstructionNextWithRemainingCount())
+                );
         });
 
         _bob.Services.AddQuartzHostedService();
