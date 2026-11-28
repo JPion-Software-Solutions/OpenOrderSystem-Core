@@ -41,6 +41,21 @@ public sealed class OrderStageChainView
         => mainStageId is { } id && _byMainStage.TryGetValue(id, out var stage) ? stage : null;
 
     /// <summary>
+    /// The main-chain stages whose orders appear in the given stage of this chain: the inverse of
+    /// <see cref="Resolve"/>. For a main chain, that is the stage itself.
+    /// </summary>
+    /// <param name="stageId">A stage of this chain.</param>
+    /// <returns>The covered main-chain stage IDs; empty if the stage is not in <see cref="Stages"/>.</returns>
+    public IReadOnlyList<Guid> MainStagesCoveredBy(Guid stageId)
+        => _byMainStage.Where(kv => kv.Value?.Id == stageId).Select(kv => kv.Key).ToList();
+
+    /// <summary>
+    /// Every main-chain stage whose orders appear somewhere in this chain.
+    /// </summary>
+    public IReadOnlyList<Guid> CoveredMainStages
+        => _byMainStage.Where(kv => kv.Value is not null).Select(kv => kv.Key).ToList();
+
+    /// <summary>
     /// The flags in effect for one of this chain's stages: order-scoped flags are dropped on a shadow chain.
     /// </summary>
     public OrderStageFlags EffectiveFlags(OrderStage stage) => stage.Flags.Effective(Header.IsShadow);
