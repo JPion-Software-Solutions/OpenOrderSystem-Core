@@ -9,6 +9,8 @@ using OpenOrderSystem.Core.Services.Ordering.Placement;
 using OpenOrderSystem.Core.Services.Ordering.Placement.Interfaces;
 using OpenOrderSystem.Core.Services.Ordering.Queries;
 using OpenOrderSystem.Core.Services.Ordering.Queries.Interfaces;
+using OpenOrderSystem.Core.Services.Ordering.Reporting;
+using OpenOrderSystem.Core.Services.Ordering.Reporting.Interfaces;
 using OpenOrderSystem.Core.Services.Ordering.Stages;
 using OpenOrderSystem.Core.Services.Ordering.Stages.Interfaces;
 using OpenOrderSystem.Core.Services.Ordering.Timekeeping;
@@ -42,7 +44,7 @@ public static class OrderingBuilderExtensions
         return bob;
     }
 
-    /// <summary>Registers carts, pickup timekeeping, order placement, order stages and order queries, plus the catalog.</summary>
+    /// <summary>Registers carts, pickup timekeeping, order placement, order stages, order queries and reporting, plus the catalog.</summary>
     public static WebApplicationBuilder AddOosOrderingServices(this WebApplicationBuilder bob)
     {
         bob.AddOosCatalogServices();
@@ -57,6 +59,7 @@ public static class OrderingBuilderExtensions
         bob.Services.AddScoped<IOrderPlacementService, OrderPlacementService>();
         bob.Services.AddScoped<IOrderStageService, OrderStageService>();
         bob.Services.AddScoped<IOrderQueryService, DatabaseOrderQueryService>();
+        bob.Services.AddScoped<IOrderReportingService, DatabaseOrderReportingService>();
 
         return bob;
     }
