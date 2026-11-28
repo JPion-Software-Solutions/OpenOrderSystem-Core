@@ -108,7 +108,7 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore, ITimeNo
     {
         var row = await _context.Configuration.FirstOrDefaultAsync(c => c.Key == key);
 
-        if (row is not null && row.IsLocked && options?.forceOverwrite != true)
+        if (row is not null && row.IsLocked && options?.ForceOverwrite != true)
         {
             _logger.LogError($"Cannot set key: {key}. Key stored as locked, please call with options.forceOverwrite to overwrite value.");
             return null;
@@ -120,7 +120,7 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore, ITimeNo
             {
                 Key = key,
                 Value = JsonSerializer.Serialize(value, new JsonSerializerOptions(JsonSerializerDefaults.Web)),
-                IsLocked = options?.setLocked ?? false,
+                IsLocked = options?.SetLocked ?? false,
                 Timestamp = DateTime.UtcNow
             };
         }
@@ -128,7 +128,7 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore, ITimeNo
         {
             row.Value = JsonSerializer.Serialize(value, new JsonSerializerOptions(JsonSerializerDefaults.Web));
             row.Timestamp = DateTime.UtcNow;
-            row.IsLocked = options?.setLocked ?? false;
+            row.IsLocked = options?.SetLocked ?? false;
         }
 
         _context.Configuration.Update(row);

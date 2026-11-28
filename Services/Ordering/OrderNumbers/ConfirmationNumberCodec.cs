@@ -64,7 +64,7 @@ public class ConfirmationNumberCodec : IConfirmationNumberCodec
             // If another request generated one first, the set is refused and the re-read picks theirs up.
             await _config.SetConfigurationAsync(OrderingConfigKeys.ConfirmationKey,
                 Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
-                new IConfigurationStore.SetConfigOptions(setLocked: true));
+                new IConfigurationStore.SetConfigOptions(SetLocked: true));
             stored = await _config.GetConfigurationAsync<string>(OrderingConfigKeys.ConfirmationKey)
                      ?? throw new InvalidOperationException("Failed to create the confirmation number key.");
         }

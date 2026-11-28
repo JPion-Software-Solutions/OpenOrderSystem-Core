@@ -13,8 +13,8 @@ public interface IConfigurationStore
 
     public sealed record SetConfigOptions(
         string? ActorId = null,
-        bool forceOverwrite = false,
-        string? reason = null,
-        bool setLocked = false
+        bool ForceOverwrite = false,
+        string? Reason = null,
+        bool SetLocked = false
     );
 }
