@@ -23,7 +23,7 @@ namespace OpenOrderSystem.Core.Services.Ordering.CartServices.Interfaces;
 /// <item><description>Active carts whose <see cref="Data.DataModels.V2.Ordering.Cart.LastActive"/> exceeds the abandoned
 /// cart threshold are purged regardless of disposal state.</description></item>
 /// </list>
-/// <see cref="SweepAsync"/> handles both conditions and is intended to be called by the cart GC Quartz job.
+/// <see cref="SweepAsync"/> handles both conditions and is called by <see cref="Jobs.OrderingTickJob"/> at its own slower pace.
 /// </para>
 /// </remarks>
 public interface ICartCacheService

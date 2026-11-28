@@ -66,7 +66,8 @@ services.AddScoped<ICartService, CartService>();   // needs IReadOnlyCatalog reg
 
 ## Known issues
 
-- **Nothing schedules `SweepAsync`.** There is no Quartz job yet, so carts are never purged.
+- **Sweeps run at most every 5 minutes.** `OrderingTickJob` calls `SweepAsync` on its own slower pace,
+  so an expired cart can outlive its TTL by up to that long plus one tick.
 - **The cache shares mutable `Cart` instances between requests.** Two simultaneous writes to the same
   cart can race, and the last write wins. This is acceptable for one customer per cart, but worth knowing.
 - **A corrupt `DraftOrder` is replaced silently.** If the JSON doesn't deserialize, the service starts

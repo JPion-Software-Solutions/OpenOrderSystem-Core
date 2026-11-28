@@ -24,8 +24,8 @@ Deletes carts from the database and removes them from the cache when either:
 - `IsDisposed` and `LastActive` is older than the disposed TTL (default 5 min), or
 - not disposed and `LastActive` is older than the abandoned TTL (default 120 min).
 
-TTL settings are covered in [README → Configuration](README.md#configuration). Intended to be run by
-a cart garbage-collection Quartz job, **which doesn't exist yet**.
+TTL settings are covered in [README → Configuration](README.md#configuration). Run by
+`OrderingTickJob` at most every 5 minutes.
 
 ## Known issues
 
