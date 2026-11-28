@@ -123,15 +123,19 @@ public class DatabaseConfigurationStore<TContext> : IConfigurationStore, ITimeNo
                 IsLocked = options?.SetLocked ?? false,
                 Timestamp = DateTime.UtcNow
             };
+
+            // Key is a caller-set primary key, so Update() would treat a new row as existing and
+            // issue an UPDATE that matches nothing. New rows must be added explicitly.
+            _context.Configuration.Add(row);
         }
         else
         {
+            // The row was loaded by this context and is tracked; the changes below are saved as-is.
             row.Value = JsonSerializer.Serialize(value, new JsonSerializerOptions(JsonSerializerDefaults.Web));
             row.Timestamp = DateTime.UtcNow;
             row.IsLocked = options?.SetLocked ?? false;
         }
 
-        _context.Configuration.Update(row);
         await _context.SaveChangesAsync();
 
         // Refresh (not just evict) so a read immediately after this write sees the new
