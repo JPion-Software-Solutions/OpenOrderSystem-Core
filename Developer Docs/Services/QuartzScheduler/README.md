@@ -13,11 +13,11 @@ runs the first rebuild at boot, as the "Build Schedule" task.
   `RegisterAsync` is one call:
 
   ```csharp
-  [OosQuartzJob("system.heartbeat", Name = "Heartbeat")]
-  public class HeartbeatJob : IOosJob
+  [OosQuartzJob("ordering.daily-report", Name = "Daily report")]
+  public class DailyReportJob : IOosJob
   {
       public static Task RegisterAsync(IServiceProvider services, IScheduler scheduler, CancellationToken ct) =>
-          services.GetRequiredService<IJobScheduleService>().ScheduleFromManifestAsync<HeartbeatJob>(services, scheduler, ct);
+          services.GetRequiredService<IJobScheduleService>().ScheduleFromManifestAsync<DailyReportJob>(services, scheduler, ct);
   }
   ```
 
@@ -32,10 +32,10 @@ runs the first rebuild at boot, as the "Build Schedule" task.
 {
   "version": 1,
   "jobs": {
-    "system.heartbeat": {
+    "ordering.daily-report": {
       "enabled": true,
       "instances": {
-        "front-counter": { "enabled": true, "cron": "0 0 21 * * ?", "settings": { "message": "closing time" } }
+        "front-counter": { "enabled": true, "cron": "0 0 21 * * ?", "settings": { "recipients": ["manager@example.com"] } }
       }
     }
   }

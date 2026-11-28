@@ -15,7 +15,7 @@ namespace OpenOrderSystem.Core.Services.QuartzScheduler;
 /// </para>
 /// </remarks>
 /// <param name="key">
-/// The job's key in the schedule manifest, such as <c>system.heartbeat</c>. It must be unique across every
+/// The job's key in the schedule manifest, such as <c>ordering.daily-report</c>. It must be unique across every
 /// <see cref="Interfaces.IOosJob"/> and must never change once released: renaming it orphans every manifest
 /// entry written under the old key. Renaming the class is safe.
 /// </param>
