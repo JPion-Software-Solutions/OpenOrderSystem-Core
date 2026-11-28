@@ -200,6 +200,7 @@ public class RunOosBootstrap : IBootMode
         _bob.AddOosDeviceServices();
         _bob.AddOosEventBusServices();
         _bob.AddOosOrderingServices();
+        _bob.AddOosSchedulingServices();
 
         _bob.Services.AddHttpClient();
         _bob.Services.AddIdentity<IdentityUser, IdentityRole>(options =>

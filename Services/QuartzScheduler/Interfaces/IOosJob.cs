@@ -8,7 +8,7 @@ namespace OpenOrderSystem.Core.Services.QuartzScheduler.Interfaces;
 /// <remarks>
 /// <para>
 /// Every non-abstract class implementing this interface is found by
-/// <c>PostBootTaskRunnerJob.InitializeQuartzTaskSchedule</c>, which calls its <see cref="RegisterAsync"/>
+/// <see cref="IJobScheduleService.RebuildAsync"/>, which calls its <see cref="RegisterAsync"/>
 /// to add it to the scheduler. A job does not need registering anywhere else.
 /// </para>
 /// <para>

@@ -1,8 +1,5 @@
-using System.Reflection;
-using OpenOrderSystem.Core.Services.__BuilderExtensions;
 using OpenOrderSystem.Core.Services.QuartzScheduler.Interfaces;
 using Quartz;
-using Quartz.Impl.Matchers;
 
 namespace OpenOrderSystem.Core.Services.QuartzScheduler.Jobs;
 
@@ -63,9 +60,6 @@ public class PostBootTaskRunnerJob : IJob
     private static bool _locked;
     private static int _runCount;
 
-    private static readonly SemaphoreSlim _scheduleLock = new(1, 1);
-    private static readonly MethodInfo _registerOne = typeof(PostBootTaskRunnerJob)
-        .GetMethod(nameof(RegisterOneAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     /// <summary>
     /// Adds a task to run once the service container is live.
@@ -89,107 +83,20 @@ public class PostBootTaskRunnerJob : IJob
     }
 
     /// <summary>
-    /// Builds the schedule of every <see cref="IOosJob"/> from scratch: deletes every job in
-    /// <see cref="IOosJob.Group"/>, then calls each job's <see cref="IOosJob.RegisterAsync"/>.
+    /// The "Build Schedule" post-boot task: rebuilds the schedule of every <see cref="IOosJob"/> through
+    /// <see cref="IJobScheduleService.RebuildAsync"/>.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Queued as a post-boot task, and also safe to call whenever the schedule changes. Rebuilds never
-    /// overlap: a call waits until any rebuild already running has finished. Starting from an empty group
-    /// means a retry, or a rebuild after a change, never leaves stale or duplicate jobs behind.
-    /// </para>
-    /// <para>
-    /// A job that throws from <see cref="IOosJob.RegisterAsync"/> is logged and skipped, and the rest are
-    /// still registered. The result is unsuccessful if any job failed, so the post-boot runner retries the
-    /// whole rebuild.
-    /// </para>
-    /// <para>
-    /// Deleting a job does not stop a run of it already in progress. That run finishes, and can overlap the
-    /// first run of the job registered in its place.
-    /// </para>
+    /// The result is unsuccessful if any job failed to register, so the runner retries the whole rebuild.
+    /// Post-boot callbacks take no cancellation token, so the rebuild runs uncancelled.
     /// </remarks>
-    /// <param name="serviceProvider">
-    /// A scoped service provider. The scheduler and anything the jobs need are resolved from it.
-    /// </param>
+    /// <param name="serviceProvider">The task's scoped service provider.</param>
     /// <returns>A successful result when every job registered.</returns>
     public static async Task<PostBootTaskResult> InitializeQuartzTaskSchedule(IServiceProvider serviceProvider)
     {
-        const string name = nameof(InitializeQuartzTaskSchedule);
-        var logger = serviceProvider.GetRequiredService<ILogger<PostBootTaskRunnerJob>>();
-        var scheduler = await serviceProvider.GetRequiredService<ISchedulerFactory>().GetScheduler();
-
-        await _scheduleLock.WaitAsync();
-        try
-        {
-            var existing = await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals(IOosJob.Group));
-            if (existing.Count > 0)
-                await scheduler.DeleteJobs(existing);
-
-            var jobTypes = FindOosJobTypes();
-            var failures = new List<string>();
-            foreach (var type in jobTypes)
-            {
-                try
-                {
-                    var register = (Task)_registerOne.MakeGenericMethod(type)
-                        .Invoke(null, [serviceProvider, scheduler, CancellationToken.None])!;
-                    await register;
-                }
-                catch (Exception ex)
-                {
-                    var cause = ex is TargetInvocationException { InnerException: { } inner } ? inner : ex;
-                    logger.LogError(cause, "Job '{Job}' could not be registered.", AttributedTypeScanner.Describe(type));
-                    failures.Add($"{type.Name}: {cause.Message}");
-                }
-            }
-
-            var scheduled = (await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals(IOosJob.Group))).Count;
-            var summary = $"{scheduled} job(s) scheduled from {jobTypes.Count} job type(s).";
-            return failures.Count == 0
-                ? new PostBootTaskResult(true, name, summary)
-                : new PostBootTaskResult(false, name, $"{summary} {failures.Count} failed to register: {string.Join("; ", failures)}");
-        }
-        finally
-        {
-            _scheduleLock.Release();
-        }
+        var result = await serviceProvider.GetRequiredService<IJobScheduleService>().RebuildAsync();
+        return new PostBootTaskResult(result.Succeeded, nameof(InitializeQuartzTaskSchedule), result.ToString());
     }
-
-    /// <summary>
-    /// Every non-abstract, closed class implementing <see cref="IOosJob"/> in the assemblies that can
-    /// declare one, in name order.
-    /// </summary>
-    private static List<Type> FindOosJobTypes() =>
-        AttributedTypeScanner.CandidateAssemblies(typeof(IOosJob).Assembly)
-            .SelectMany(LoadableTypes)
-            .Where(t => t is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
-                        && typeof(IOosJob).IsAssignableFrom(t))
-            .OrderBy(t => t.FullName, StringComparer.Ordinal)
-            .ToList();
-
-    /// <summary>
-    /// An assembly's types, skipping any that cannot be loaded.
-    /// </summary>
-    private static IEnumerable<Type> LoadableTypes(Assembly assembly)
-    {
-        try
-        {
-            return assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException ex)
-        {
-            return ex.Types.OfType<Type>();
-        }
-    }
-
-    /// <summary>
-    /// Calls <see cref="IOosJob.RegisterAsync"/> on <typeparamref name="TJob"/>. Static abstract members
-    /// cannot be called from a <see cref="Type"/> found at runtime, so the scan closes this method over each
-    /// job type instead.
-    /// </summary>
-    private static async Task RegisterOneAsync<TJob>(IServiceProvider services, IScheduler scheduler, CancellationToken cancellationToken)
-        where TJob : IOosJob
-        => await TJob.RegisterAsync(services, scheduler, cancellationToken);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHostApplicationLifetime _lifetime;
